@@ -19,7 +19,9 @@ def schema() -> Schema:
 @pytest.fixture
 def client(schema: Schema) -> DuckDbClient:
     # return client without opening connection
-    return DuckDbClient(schema, DuckDbClientConfiguration(dataset_name="test_" + uniq_id()))
+    return DuckDbClient(
+        schema, DuckDbClientConfiguration(dataset_name="test_" + uniq_id())
+    )
 
 
 def test_create_table(client: DuckDbClient) -> None:
@@ -82,7 +84,7 @@ def test_create_table_with_hints(client: DuckDbClient) -> None:
     mod_update[0]["sort"] = True
     mod_update[1]["unique"] = True
     mod_update[4]["foreign_key"] = True
-    sql = ';'.join(client._get_table_update_sql("event_test_table", mod_update, False))
+    sql = ";".join(client._get_table_update_sql("event_test_table", mod_update, False))
     assert '"col1" BIGINT  NOT NULL' in sql
     assert '"col2" DOUBLE  NOT NULL' in sql
     assert '"col5" VARCHAR ' in sql
@@ -92,7 +94,12 @@ def test_create_table_with_hints(client: DuckDbClient) -> None:
     assert '"col4" TIMESTAMP WITH TIME ZONE  NOT NULL' in sql
 
     # same thing with indexes
-    client = DuckDbClient(client.schema, DuckDbClientConfiguration(dataset_name="test_" + uniq_id(), create_indexes=True))
+    client = DuckDbClient(
+        client.schema,
+        DuckDbClientConfiguration(
+            dataset_name="test_" + uniq_id(), create_indexes=True
+        ),
+    )
     sql = client._get_table_update_sql("event_test_table", mod_update, False)[0]
     sqlfluff.parse(sql)
     assert '"col2" DOUBLE UNIQUE NOT NULL' in sql

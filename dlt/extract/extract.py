@@ -12,7 +12,11 @@ from dlt.common.runtime.collector import Collector, NULL_COLLECTOR
 from dlt.common.utils import uniq_id
 from dlt.common.typing import TDataItems, TDataItem
 from dlt.common.schema import Schema, utils, TSchemaUpdate
-from dlt.common.storages import NormalizeStorageConfiguration, NormalizeStorage, DataItemStorage
+from dlt.common.storages import (
+    NormalizeStorageConfiguration,
+    NormalizeStorage,
+    DataItemStorage,
+)
 from dlt.common.configuration.specs import known_sections
 
 from dlt.extract.decorators import SourceSchemaInjectableContext
@@ -48,9 +52,15 @@ class ExtractorStorage(DataItemStorage, NormalizeStorage):
         if with_delete:
             self.storage.delete_folder(extract_path, recursively=True)
 
-    def _get_data_item_path_template(self, load_id: str, schema_name: str, table_name: str) -> str:
-        template = NormalizeStorage.build_extracted_file_stem(schema_name, table_name, "%s")
-        return self.storage.make_full_path(os.path.join(self._get_extract_path(load_id), template))
+    def _get_data_item_path_template(
+        self, load_id: str, schema_name: str, table_name: str
+    ) -> str:
+        template = NormalizeStorage.build_extracted_file_stem(
+            schema_name, table_name, "%s"
+        )
+        return self.storage.make_full_path(
+            os.path.join(self._get_extract_path(load_id), template)
+        )
 
     def _get_extract_path(self, extract_id: str) -> str:
         return os.path.join(ExtractorStorage.EXTRACT_FOLDER, extract_id)
@@ -64,9 +74,8 @@ def extract(
     *,
     max_parallel_items: int = None,
     workers: int = None,
-    futures_poll_interval: float = None
+    futures_poll_interval: float = None,
 ) -> TSchemaUpdate:
-
     dynamic_tables: TSchemaUpdate = {}
     schema = source.schema
     resources_with_items: Set[str] = set()
@@ -111,11 +120,15 @@ def extract(
                 dynamic_tables[table_name] = [static_table]
 
         # yield from all selected pipes
-        with PipeIterator.from_pipes(source.resources.selected_pipes, max_parallel_items=max_parallel_items, workers=workers, futures_poll_interval=futures_poll_interval) as pipes:
+        with PipeIterator.from_pipes(
+            source.resources.selected_pipes,
+            max_parallel_items=max_parallel_items,
+            workers=workers,
+            futures_poll_interval=futures_poll_interval,
+        ) as pipes:
             left_gens = total_gens = len(pipes._sources)
             collector.update("Resources", 0, total_gens)
             for pipe_item in pipes:
-
                 curr_gens = len(pipes._sources)
                 if left_gens > curr_gens:
                     delta = left_gens - curr_gens
@@ -150,7 +163,10 @@ def extract(
             data_tables = {t["name"]: t for t in schema.data_tables()}
             tables_by_resources = utils.group_tables_by_resource(data_tables)
             for resource in source.resources.selected.values():
-                if resource.write_disposition != "replace" or resource.name in resources_with_items:
+                if (
+                    resource.write_disposition != "replace"
+                    or resource.name in resources_with_items
+                ):
                     continue
                 if resource.name not in tables_by_resources:
                     continue
@@ -176,24 +192,35 @@ def extract_with_schema(
     schema: Schema,
     collector: Collector,
     max_parallel_items: int,
-    workers: int
+    workers: int,
 ) -> str:
     # generate extract_id to be able to commit all the sources together later
     extract_id = storage.create_extract_id()
     with Container().injectable_context(SourceSchemaInjectableContext(schema)):
         # inject the config section with the current source name
-        with inject_section(ConfigSectionContext(sections=(known_sections.SOURCES, source.section, source.name), source_state_key=source.name)):
+        with inject_section(
+            ConfigSectionContext(
+                sections=(known_sections.SOURCES, source.section, source.name),
+                source_state_key=source.name,
+            )
+        ):
             # reset resource states
             for resource in source.resources.extracted.values():
                 with contextlib.suppress(DataItemRequiredForDynamicTableHints):
                     if resource.write_disposition == "replace":
                         _reset_resource_state(resource._name)
 
-            extractor = extract(extract_id, source, storage, collector, max_parallel_items=max_parallel_items, workers=workers)
+            extractor = extract(
+                extract_id,
+                source,
+                storage,
+                collector,
+                max_parallel_items=max_parallel_items,
+                workers=workers,
+            )
             # iterate over all items in the pipeline and update the schema if dynamic table hints were present
             for _, partials in extractor.items():
                 for partial in partials:
                     schema.update_schema(schema.normalize_table_identifiers(partial))
 
     return extract_id
-

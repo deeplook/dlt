@@ -3,7 +3,11 @@ from collections.abc import Mapping as C_Mapping
 
 from dlt.common.exceptions import MissingDependencyException
 from dlt.extract.typing import TTableHintTemplate, TDataItem, TFunHintTemplate
-from dlt.common.schema.typing import TColumnNames, TAnySchemaColumns, TTableSchemaColumns
+from dlt.common.schema.typing import (
+    TColumnNames,
+    TAnySchemaColumns,
+    TTableSchemaColumns,
+)
 from dlt.common.typing import TDataItem
 
 try:
@@ -12,7 +16,9 @@ except MissingDependencyException:
     pydantic = None
 
 
-def resolve_column_value(column_hint: TTableHintTemplate[TColumnNames], item: TDataItem) -> Union[Any, List[Any]]:
+def resolve_column_value(
+    column_hint: TTableHintTemplate[TColumnNames], item: TDataItem
+) -> Union[Any, List[Any]]:
     """Extract values from the data item given a column hint.
     Returns either a single value or list of values when hint is a composite.
     """
@@ -36,22 +42,29 @@ def ensure_table_schema_columns(columns: TAnySchemaColumns) -> TTableSchemaColum
         return columns
     elif isinstance(columns, Sequence):
         # Assume list of columns
-        return {col['name']: col for col in columns}
+        return {col["name"]: col for col in columns}
     elif pydantic is not None and (
-        isinstance(columns, pydantic.BaseModel) or issubclass(columns, pydantic.BaseModel)
+        isinstance(columns, pydantic.BaseModel)
+        or issubclass(columns, pydantic.BaseModel)
     ):
         return pydantic.pydantic_to_table_schema_columns(columns)
 
     raise ValueError(f"Unsupported columns type: {type(columns)}")
 
 
-def ensure_table_schema_columns_hint(columns: TTableHintTemplate[TAnySchemaColumns]) -> TTableHintTemplate[TTableSchemaColumns]:
+def ensure_table_schema_columns_hint(
+    columns: TTableHintTemplate[TAnySchemaColumns],
+) -> TTableHintTemplate[TTableSchemaColumns]:
     """Convert column schema hint to a hint returning `TTableSchemaColumns`.
     A callable hint is wrapped in another function which converts the original result.
     """
     if callable(columns) and not isinstance(columns, type):
+
         def wrapper(item: TDataItem) -> TTableSchemaColumns:
-            return ensure_table_schema_columns(cast(TFunHintTemplate[TAnySchemaColumns], columns)(item))
+            return ensure_table_schema_columns(
+                cast(TFunHintTemplate[TAnySchemaColumns], columns)(item)
+            )
+
         return wrapper
 
     return ensure_table_schema_columns(columns)

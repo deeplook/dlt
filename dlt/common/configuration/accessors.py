@@ -6,17 +6,22 @@ from typing import Any, ClassVar, List, Sequence, Tuple, Type, TypeVar
 from dlt.common.configuration.container import Container
 from dlt.common.configuration.exceptions import ConfigFieldMissingException, LookupTrace
 from dlt.common.configuration.providers.provider import ConfigProvider
-from dlt.common.configuration.specs import BaseConfiguration, is_base_configuration_inner_hint
+from dlt.common.configuration.specs import (
+    BaseConfiguration,
+    is_base_configuration_inner_hint,
+)
 from dlt.common.configuration.utils import deserialize_value, log_traces, auto_cast
-from dlt.common.configuration.specs.config_providers_context import ConfigProvidersContext
+from dlt.common.configuration.specs.config_providers_context import (
+    ConfigProvidersContext,
+)
 from dlt.common.typing import AnyType, ConfigValue, TSecretValue
 
 DLT_SECRETS_VALUE = "secrets.value"
 DLT_CONFIG_VALUE = "config.value"
 TConfigAny = TypeVar("TConfigAny", bound=Any)
 
-class _Accessor(abc.ABC):
 
+class _Accessor(abc.ABC):
     def __getitem__(self, field: str) -> Any:
         value, traces = self._get_value(field)
         if value is None:
@@ -60,7 +65,9 @@ class _Accessor(abc.ABC):
     def _get_providers_from_context(self) -> Sequence[ConfigProvider]:
         return Container()[ConfigProvidersContext].providers
 
-    def _get_value(self, field: str, type_hint: Type[Any] = None) -> Tuple[Any, List[LookupTrace]]:
+    def _get_value(
+        self, field: str, type_hint: Type[Any] = None
+    ) -> Tuple[Any, List[LookupTrace]]:
         # get default hint type, in case of dlt.secrets it it TSecretValue
         type_hint = type_hint or self.default_type
         # split field into sections and a key
@@ -100,7 +107,11 @@ class _ConfigAccessor(_Accessor):
     @property
     def writable_provider(self) -> ConfigProvider:
         """find first writable provider that does not support secrets - should be config.toml"""
-        return next(p for p in self._get_providers_from_context() if p.is_writable and not p.supports_secrets)
+        return next(
+            p
+            for p in self._get_providers_from_context()
+            if p.is_writable and not p.supports_secrets
+        )
 
     value: ClassVar[None] = ConfigValue
     "A placeholder that tells dlt to replace it with actual config value during the call to a source or resource decorated function."
@@ -121,7 +132,11 @@ class _SecretsAccessor(_Accessor):
     @property
     def writable_provider(self) -> ConfigProvider:
         """find first writable provider that supports secrets - should be secrets.toml"""
-        return next(p for p in self._get_providers_from_context() if p.is_writable and p.supports_secrets)
+        return next(
+            p
+            for p in self._get_providers_from_context()
+            if p.is_writable and p.supports_secrets
+        )
 
     value: ClassVar[None] = ConfigValue
     "A placeholder that tells dlt to replace it with actual secret during the call to a source or resource decorated function."

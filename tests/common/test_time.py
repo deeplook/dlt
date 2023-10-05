@@ -3,12 +3,20 @@ from datetime import datetime, date, timezone, timedelta  # noqa: I251
 from pendulum.tz import UTC
 
 from dlt.common import pendulum
-from dlt.common.time import timestamp_before, timestamp_within, ensure_pendulum_datetime, ensure_pendulum_date
+from dlt.common.time import (
+    timestamp_before,
+    timestamp_within,
+    ensure_pendulum_datetime,
+    ensure_pendulum_date,
+)
 from dlt.common.typing import TAnyDateTime
 
 
 def test_timestamp_within() -> None:
-    assert timestamp_within(1643470504.782716, 1643470504.782716, 1643470504.782716) is False
+    assert (
+        timestamp_within(1643470504.782716, 1643470504.782716, 1643470504.782716)
+        is False
+    )
     # true for all timestamps
     assert timestamp_within(1643470504.782716, None, None) is True
     # upper bound inclusive
@@ -16,9 +24,15 @@ def test_timestamp_within() -> None:
     # lower bound exclusive
     assert timestamp_within(1643470504.782716, 1643470504.782716, None) is False
     assert timestamp_within(1643470504.782716, 1643470504.782715, None) is True
-    assert timestamp_within(1643470504.782716, 1643470504.782715, 1643470504.782716) is True
+    assert (
+        timestamp_within(1643470504.782716, 1643470504.782715, 1643470504.782716)
+        is True
+    )
     # typical case
-    assert timestamp_within(1643470504.782716, 1543470504.782716, 1643570504.782716) is True
+    assert (
+        timestamp_within(1643470504.782716, 1543470504.782716, 1643570504.782716)
+        is True
+    )
 
 
 def test_before() -> None:
@@ -85,5 +99,9 @@ def test_ensure_pendulum_datetime(
 
 def test_ensure_pendulum_date_utc() -> None:
     # when converting from datetimes make sure to shift to UTC before doing date
-    assert ensure_pendulum_date("2021-01-01T00:00:00+05:00") == pendulum.date(2020, 12, 31)
-    assert ensure_pendulum_date(datetime(2021, 1, 1, 0, 0, 0, tzinfo=timezone(timedelta(hours=8)))) == pendulum.date(2020, 12, 31)
+    assert ensure_pendulum_date("2021-01-01T00:00:00+05:00") == pendulum.date(
+        2020, 12, 31
+    )
+    assert ensure_pendulum_date(
+        datetime(2021, 1, 1, 0, 0, 0, tzinfo=timezone(timedelta(hours=8)))
+    ) == pendulum.date(2020, 12, 31)

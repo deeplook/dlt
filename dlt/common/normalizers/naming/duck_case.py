@@ -1,12 +1,13 @@
 import re
 from functools import lru_cache
 
-from dlt.common.normalizers.naming.snake_case import NamingConvention as SnakeCaseNamingConvention
+from dlt.common.normalizers.naming.snake_case import (
+    NamingConvention as SnakeCaseNamingConvention,
+)
 
 
 class NamingConvention(SnakeCaseNamingConvention):
-
-    _CLEANUP_TABLE = str.maketrans("\n\r\"", "___")
+    _CLEANUP_TABLE = str.maketrans('\n\r"', "___")
     _RE_LEADING_DIGITS = None  # do not remove leading digits
 
     @staticmethod
@@ -20,5 +21,5 @@ class NamingConvention(SnakeCaseNamingConvention):
         return NamingConvention.shorten_identifier(
             NamingConvention._RE_UNDERSCORES.sub("_", normalized_ident),
             identifier,
-            max_length
+            max_length,
         )

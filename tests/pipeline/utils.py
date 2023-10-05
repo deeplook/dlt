@@ -37,10 +37,8 @@ def load_json_case(name: str) -> DictStrAny:
 
 @dlt.source
 def airtable_emojis():
-
     @dlt.resource(name="📆 Schedule")
     def schedule():
-
         yield [1, 2, 3]
 
     @dlt.resource(name="💰Budget", primary_key=("🔑book_id", "asset_id"))
@@ -56,6 +54,5 @@ def airtable_emojis():
     @dlt.resource(name="🦚WidePeacock", selected=False)
     def wide_peacock():
         yield [{"peacock": [1, 2, 3]}]
-
 
     return budget, schedule, peacock, wide_peacock

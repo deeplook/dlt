@@ -55,7 +55,6 @@ def test_validator_model_in_apply_hints(yield_list: bool) -> None:
 
 @pytest.mark.parametrize("yield_list", [True, False])
 def test_remove_validator(yield_list: bool) -> None:
-
     @dlt.resource(columns=SimpleModel)
     def some_data() -> t.Iterator[TDataItems]:
         items = [{"a": 1, "b": "2"}, {"a": 2, "b": "3"}]
@@ -73,7 +72,6 @@ def test_remove_validator(yield_list: bool) -> None:
 
 @pytest.mark.parametrize("yield_list", [True, False])
 def test_replace_validator_model(yield_list: bool) -> None:
-
     @dlt.resource(columns=SimpleModel)
     def some_data() -> t.Iterator[TDataItems]:
         items = [{"a": 1, "b": "2"}, {"a": 2, "b": "3"}]
@@ -106,7 +104,6 @@ def test_replace_validator_model(yield_list: bool) -> None:
 
 @pytest.mark.parametrize("yield_list", [True, False])
 def test_validator_property_setter(yield_list: bool) -> None:
-
     @dlt.resource(columns=SimpleModel)
     def some_data() -> t.Iterator[TDataItems]:
         items = [{"a": 1, "b": "2"}, {"a": 2, "b": "3"}]
@@ -117,7 +114,10 @@ def test_validator_property_setter(yield_list: bool) -> None:
 
     resource = some_data()
 
-    assert isinstance(resource.validator, PydanticValidator) and resource.validator.model is SimpleModel
+    assert (
+        isinstance(resource.validator, PydanticValidator)
+        and resource.validator.model is SimpleModel
+    )
 
     class AnotherModel(BaseModel):
         a: int

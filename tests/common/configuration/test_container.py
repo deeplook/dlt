@@ -6,7 +6,11 @@ from dlt.common.configuration.providers.context import ContextProvider
 from dlt.common.configuration.resolve import resolve_configuration
 from dlt.common.configuration.specs import BaseConfiguration, ContainerInjectableContext
 from dlt.common.configuration.container import Container
-from dlt.common.configuration.exceptions import ConfigFieldMissingException, ContainerInjectableContextMangled, ContextDefaultCannotBeCreated
+from dlt.common.configuration.exceptions import (
+    ConfigFieldMissingException,
+    ContainerInjectableContextMangled,
+    ContextDefaultCannotBeCreated,
+)
 
 from tests.utils import preserve_environ
 from tests.common.configuration.utils import environment
@@ -20,6 +24,7 @@ class InjectableTestContext(ContainerInjectableContext):
         raise ValueError(native_value)
 
     if TYPE_CHECKING:
+
         def __init__(self, current_value: str = None) -> None:
             ...
 
@@ -31,7 +36,6 @@ class EmbeddedWithInjectableContext(BaseConfiguration):
 
 @configspec
 class NoDefaultInjectableContext(ContainerInjectableContext):
-
     can_create_default: ClassVar[bool] = False
 
 
@@ -163,9 +167,13 @@ def test_container_provider(container: Container) -> None:
     assert k == "typing.Literal['a']"
 
 
-def test_container_provider_embedded_inject(container: Container, environment: Any) -> None:
+def test_container_provider_embedded_inject(
+    container: Container, environment: Any
+) -> None:
     environment["INJECTED"] = "unparsable"
-    with container.injectable_context(InjectableTestContext(current_value="Embed")) as injected:
+    with container.injectable_context(
+        InjectableTestContext(current_value="Embed")
+    ) as injected:
         # must have top precedence - over the environ provider. environ provider is returning a value that will cannot be parsed
         # but the container provider has a precedence and the lookup in environ provider will never happen
         C = resolve_configuration(EmbeddedWithInjectableContext())

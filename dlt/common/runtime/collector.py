@@ -4,11 +4,28 @@ import logging
 import time
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from typing import Any, ContextManager, Dict, Type, TYPE_CHECKING, DefaultDict, NamedTuple, Optional, Union, TextIO, TypeVar
+from typing import (
+    Any,
+    ContextManager,
+    Dict,
+    Type,
+    TYPE_CHECKING,
+    DefaultDict,
+    NamedTuple,
+    Optional,
+    Union,
+    TextIO,
+    TypeVar,
+)
+
 if TYPE_CHECKING:
     from tqdm import tqdm
     import enlighten
-    from enlighten import Counter as EnlCounter, StatusBar as EnlStatusBar, Manager as EnlManager
+    from enlighten import (
+        Counter as EnlCounter,
+        StatusBar as EnlStatusBar,
+        Manager as EnlManager,
+    )
     from alive_progress import alive_bar
 else:
     tqdm = EnlCounter = EnlStatusBar = EnlManager = Any
@@ -20,11 +37,17 @@ TCollector = TypeVar("TCollector", bound="Collector")
 
 
 class Collector(ABC):
-
     step: str
 
     @abstractmethod
-    def update(self, name: str, inc: int = 1, total: int = None, message: str = None, label: str = None) -> None:
+    def update(
+        self,
+        name: str,
+        inc: int = 1,
+        total: int = None,
+        message: str = None,
+        label: str = None,
+    ) -> None:
         """Creates or updates a counter
 
         This function updates a counter `name` with a value `inc`. If counter does not exist, it is created with optional total value of `total`.
@@ -58,14 +81,23 @@ class Collector(ABC):
         self._start(self.step)
         return self
 
-    def __exit__(self, exc_type: Type[BaseException], exc_val: BaseException, exc_tb: Any) -> None:
+    def __exit__(
+        self, exc_type: Type[BaseException], exc_val: BaseException, exc_tb: Any
+    ) -> None:
         self._stop()
 
 
 class NullCollector(Collector):
     """A default counter that does not count anything."""
 
-    def update(self, name: str, inc: int = 1, total: int = None, message: str = None, label: str = None) -> None:
+    def update(
+        self,
+        name: str,
+        inc: int = 1,
+        total: int = None,
+        message: str = None,
+        label: str = None,
+    ) -> None:
         pass
 
     def _start(self, step: str) -> None:
@@ -81,7 +113,14 @@ class DictCollector(Collector):
     def __init__(self) -> None:
         self.counters: DefaultDict[str, int] = None
 
-    def update(self, name: str, inc: int = 1, total: int = None, message: str = None, label: str = None) -> None:
+    def update(
+        self,
+        name: str,
+        inc: int = 1,
+        total: int = None,
+        message: str = None,
+        label: str = None,
+    ) -> None:
         assert not label, "labels not supported in dict collector"
         self.counters[name] += inc
 
@@ -103,7 +142,13 @@ class LogCollector(Collector):
         start_time: float
         total: Optional[int]
 
-    def __init__(self, log_period: float = 1.0, logger: Union[logging.Logger, TextIO] = sys.stdout, log_level: int = logging.INFO, dump_system_stats: bool = True) -> None:
+    def __init__(
+        self,
+        log_period: float = 1.0,
+        logger: Union[logging.Logger, TextIO] = sys.stdout,
+        log_level: int = logging.INFO,
+        dump_system_stats: bool = True,
+    ) -> None:
         """
         Collector writing to a `logger` every `log_period` seconds. The logger can be a Python logger instance, text stream, or None that will attach `dlt` logger
 
@@ -123,12 +168,22 @@ class LogCollector(Collector):
             try:
                 import psutil
             except ImportError:
-                self._log(logging.WARNING, "psutil dependency is not installed and mem stats will not be available. add psutil to your environment or pass dump_system_stats argument as False to disable warning.")
+                self._log(
+                    logging.WARNING,
+                    "psutil dependency is not installed and mem stats will not be available. add psutil to your environment or pass dump_system_stats argument as False to disable warning.",
+                )
                 dump_system_stats = False
         self.dump_system_stats = dump_system_stats
         self.last_log_time: float = None
 
-    def update(self, name: str, inc: int = 1, total: int = None, message: str = None, label: str = None) -> None:
+    def update(
+        self,
+        name: str,
+        inc: int = 1,
+        total: int = None,
+        message: str = None,
+        label: str = None,
+    ) -> None:
         counter_key = f"{name}_{label}" if label else name
 
         if counter_key not in self.counters:
@@ -147,7 +202,10 @@ class LogCollector(Collector):
 
     def maybe_log(self) -> None:
         current_time = time.time()
-        if self.last_log_time is None or current_time - self.last_log_time >= self.log_period:
+        if (
+            self.last_log_time is None
+            or current_time - self.last_log_time >= self.log_period
+        ):
             self.dump_counters()
             self.last_log_time = current_time
 
@@ -164,10 +222,14 @@ class LogCollector(Collector):
             items_per_second = (count / elapsed_time) if elapsed_time > 0 else 0
 
             progress = f"{count}/{info.total}" if info.total is not None else f"{count}"
-            percentage = f"({count / info.total * 100:.1f}%)" if info.total is not None else ""
+            percentage = (
+                f"({count / info.total * 100:.1f}%)" if info.total is not None else ""
+            )
             elapsed_time_str = f"{elapsed_time:.2f}s"
             items_per_second_str = f"{items_per_second:.2f}/s"
-            message = f"[{self.messages[name]}]" if self.messages[name] is not None else ""
+            message = (
+                f"[{self.messages[name]}]" if self.messages[name] is not None else ""
+            )
 
             counter_line = f"{info.description}: {progress} {percentage} | Time: {elapsed_time_str} | Rate: {items_per_second_str} {message}"
             log_lines.append(counter_line.strip())
@@ -177,10 +239,12 @@ class LogCollector(Collector):
 
             process = psutil.Process(os.getpid())
             mem_info = process.memory_info()
-            current_mem = mem_info.rss / (1024 ** 2)  # Convert to MB
+            current_mem = mem_info.rss / (1024**2)  # Convert to MB
             mem_percent = psutil.virtual_memory().percent
             cpu_percent = process.cpu_percent()
-            log_lines.append(f"Memory usage: {current_mem:.2f} MB ({mem_percent:.2f}%) | CPU usage: {cpu_percent:.2f}%")
+            log_lines.append(
+                f"Memory usage: {current_mem:.2f} MB ({mem_percent:.2f}%) | CPU usage: {cpu_percent:.2f}%"
+            )
 
         log_lines.append("")
         log_message = "\n".join(log_lines)
@@ -218,12 +282,21 @@ class TqdmCollector(Collector):
             global tqdm
             from tqdm import tqdm
         except ModuleNotFoundError:
-            raise MissingDependencyException("TqdmCollector", ["tqdm"], "We need tqdm to display progress bars.")
+            raise MissingDependencyException(
+                "TqdmCollector", ["tqdm"], "We need tqdm to display progress bars."
+            )
         self.single_bar = single_bar
         self._bars: Dict[str, tqdm[None]] = {}
         self.tqdm_kwargs = tqdm_kwargs or {}
 
-    def update(self, name: str, inc: int = 1, total: int = None, message: str = None, label: str = "") -> None:
+    def update(
+        self,
+        name: str,
+        inc: int = 1,
+        total: int = None,
+        message: str = None,
+        label: str = "",
+    ) -> None:
         key = f"{name}_{label}"
         bar = self._bars.get(key)
         if bar is None:
@@ -263,13 +336,24 @@ class AliveCollector(Collector):
             from alive_progress import alive_bar
 
         except ModuleNotFoundError:
-            raise MissingDependencyException("AliveCollector", ["alive-progress"], "We need alive-progress to display progress bars.")
+            raise MissingDependencyException(
+                "AliveCollector",
+                ["alive-progress"],
+                "We need alive-progress to display progress bars.",
+            )
         self.single_bar = single_bar
         self._bars: Dict[str, Any] = {}
         self._bars_contexts: Dict[str, ContextManager[Any]] = {}
         self.alive_kwargs = alive_kwargs or {}
 
-    def update(self, name: str, inc: int = 1, total: int = None, message: str = None, label: str = "") -> None:
+    def update(
+        self,
+        name: str,
+        inc: int = 1,
+        total: int = None,
+        message: str = None,
+        label: str = "",
+    ) -> None:
         key = f"{name}_{label}"
         bar = self._bars.get(key)
         if bar is None:
@@ -313,13 +397,28 @@ class EnlightenCollector(Collector):
             global enlighten
 
             import enlighten
-            from enlighten import Counter as EnlCounter, StatusBar as EnlStatusBar, Manager as EnlManager
+            from enlighten import (
+                Counter as EnlCounter,
+                StatusBar as EnlStatusBar,
+                Manager as EnlManager,
+            )
         except ModuleNotFoundError:
-            raise MissingDependencyException("EnlightenCollector", ["enlighten"], "We need enlighten to display progress bars with a space for log messages.")
+            raise MissingDependencyException(
+                "EnlightenCollector",
+                ["enlighten"],
+                "We need enlighten to display progress bars with a space for log messages.",
+            )
         self.single_bar = single_bar
         self.enlighten_kwargs = enlighten_kwargs
 
-    def update(self,  name: str, inc: int = 1, total: int = None, message: str = None, label: str = "") -> None:
+    def update(
+        self,
+        name: str,
+        inc: int = 1,
+        total: int = None,
+        message: str = None,
+        label: str = "",
+    ) -> None:
         key = f"{name}_{label}"
         bar = self._bars.get(key)
         if bar is None:
@@ -328,7 +427,9 @@ class EnlightenCollector(Collector):
             if len(self._bars) > 0 and self.single_bar:
                 # do not add any more counters
                 return
-            bar = self._manager.counter(desc=name, total=total, leave=True, force=True, **self.enlighten_kwargs)
+            bar = self._manager.counter(
+                desc=name, total=total, leave=True, force=True, **self.enlighten_kwargs
+            )
             bar.refresh()
             self._bars[key] = bar
         bar.update(inc)
@@ -336,7 +437,9 @@ class EnlightenCollector(Collector):
     def _start(self, step: str) -> None:
         self._bars = {}
         self._manager = enlighten.get_manager(enabled=True)
-        self._status = self._manager.status_bar(leave=True, justify=enlighten.Justify.CENTER, fill="=")
+        self._status = self._manager.status_bar(
+            leave=True, justify=enlighten.Justify.CENTER, fill="="
+        )
         self._status.update(step)
 
     def _stop(self) -> None:
@@ -352,4 +455,4 @@ class EnlightenCollector(Collector):
         self._status = None
 
 
-NULL_COLLECTOR =  NullCollector()
+NULL_COLLECTOR = NullCollector()

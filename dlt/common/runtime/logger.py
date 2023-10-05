@@ -20,6 +20,7 @@ class LogMethod(Protocol):
 
 def __getattr__(name: str) -> LogMethod:
     """Forwards log method calls (debug, info, error etc.) to LOGGER"""
+
     def wrapper(msg: str, *args: Any, **kwargs: Any) -> None:
         if LOGGER:
             # skip stack frames when displaying log so the original logging frame is displayed
@@ -28,6 +29,7 @@ def __getattr__(name: str) -> LogMethod:
                 # exception has one more frame
                 stacklevel = 3
             getattr(LOGGER, name)(msg, *args, **kwargs, stacklevel=stacklevel)
+
     return wrapper
 
 
@@ -54,7 +56,8 @@ def init_logging(config: RunConfiguration) -> None:
         config.log_level,
         config.log_format,
         config.pipeline_name,
-        version)
+        version,
+    )
 
 
 def is_logging() -> bool:
@@ -84,7 +87,9 @@ class _MetricsFormatter(logging.Formatter):
         return s
 
 
-def _init_logging(logger_name: str, level: str, fmt: str, component: str, version: StrStr) -> Logger:
+def _init_logging(
+    logger_name: str, level: str, fmt: str, component: str, version: StrStr
+) -> Logger:
     if logger_name == "root":
         logging.basicConfig(level=level)
         handler = logging.getLogger().handlers[0]
@@ -105,7 +110,9 @@ def _init_logging(logger_name: str, level: str, fmt: str, component: str, versio
             version: StrStr = None
 
             def _format_log_object(self, record: LogRecord) -> Any:
-                json_log_object = super(_CustomJsonFormatter, self)._format_log_object(record)
+                json_log_object = super(_CustomJsonFormatter, self)._format_log_object(
+                    record
+                )
                 if self.version:
                     json_log_object.update({"version": self.version})
                 return json_log_object
@@ -120,6 +127,6 @@ def _init_logging(logger_name: str, level: str, fmt: str, component: str, versio
         if logger_name == "root":
             json_logging.config_root_logger()
     else:
-        handler.setFormatter(_MetricsFormatter(fmt=fmt, style='{'))
+        handler.setFormatter(_MetricsFormatter(fmt=fmt, style="{"))
 
     return logger

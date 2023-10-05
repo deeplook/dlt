@@ -8,7 +8,12 @@ from typing import cast, TextIO
 from dlt.common.storages.file_storage import FileStorage
 from dlt.common.utils import encoding_for_mode, set_working_dir, uniq_id
 
-from tests.utils import TEST_STORAGE_ROOT, autouse_test_storage, test_storage, skipifnotwindows
+from tests.utils import (
+    TEST_STORAGE_ROOT,
+    autouse_test_storage,
+    test_storage,
+    skipifnotwindows,
+)
 
 
 def test_storage_init(test_storage: FileStorage) -> None:
@@ -69,7 +74,12 @@ def test_in_storage(test_storage: FileStorage) -> None:
     assert test_storage.in_storage(".") is True
     assert test_storage.in_storage(os.curdir) is True
     assert test_storage.in_storage(os.path.realpath(os.curdir)) is False
-    assert test_storage.in_storage(os.path.join(os.path.realpath(os.curdir), TEST_STORAGE_ROOT)) is True
+    assert (
+        test_storage.in_storage(
+            os.path.join(os.path.realpath(os.curdir), TEST_STORAGE_ROOT)
+        )
+        is True
+    )
 
 
 def test_from_wd_to_relative_path(test_storage: FileStorage) -> None:
@@ -127,33 +137,35 @@ def test_validate_file_name_component() -> None:
     FileStorage.validate_file_name_component("BAN__ANA is allowed")
 
 
-@pytest.mark.parametrize("action", ("rename_tree_files", "rename_tree", "atomic_rename"))
+@pytest.mark.parametrize(
+    "action", ("rename_tree_files", "rename_tree", "atomic_rename")
+)
 def test_rename_nested_tree(test_storage: FileStorage, action: str) -> None:
-    source_dir = os.path.join(test_storage.storage_path, 'source')
-    nested_dir_1 = os.path.join(source_dir, 'nested1')
-    nested_dir_2 = os.path.join(nested_dir_1, 'nested2')
-    empty_dir = os.path.join(source_dir, 'empty')
+    source_dir = os.path.join(test_storage.storage_path, "source")
+    nested_dir_1 = os.path.join(source_dir, "nested1")
+    nested_dir_2 = os.path.join(nested_dir_1, "nested2")
+    empty_dir = os.path.join(source_dir, "empty")
     os.makedirs(nested_dir_2)
     os.makedirs(empty_dir)
-    with open(os.path.join(source_dir, 'test1.txt'), 'w', encoding="utf-8") as f:
-        f.write('test')
-    with open(os.path.join(nested_dir_1, 'test2.txt'), 'w', encoding="utf-8") as f:
-        f.write('test')
-    with open(os.path.join(nested_dir_2, 'test3.txt'), 'w', encoding="utf-8") as f:
-        f.write('test')
+    with open(os.path.join(source_dir, "test1.txt"), "w", encoding="utf-8") as f:
+        f.write("test")
+    with open(os.path.join(nested_dir_1, "test2.txt"), "w", encoding="utf-8") as f:
+        f.write("test")
+    with open(os.path.join(nested_dir_2, "test3.txt"), "w", encoding="utf-8") as f:
+        f.write("test")
 
-    dest_dir = os.path.join(test_storage.storage_path, 'dest')
+    dest_dir = os.path.join(test_storage.storage_path, "dest")
 
     getattr(test_storage, action)(source_dir, dest_dir)
 
     assert not os.path.exists(source_dir)
     assert os.path.exists(dest_dir)
-    assert os.path.exists(os.path.join(dest_dir, 'nested1'))
-    assert os.path.exists(os.path.join(dest_dir, 'nested1', 'nested2'))
-    assert os.path.exists(os.path.join(dest_dir, 'empty'))
-    assert os.path.exists(os.path.join(dest_dir, 'test1.txt'))
-    assert os.path.exists(os.path.join(dest_dir, 'nested1', 'test2.txt'))
-    assert os.path.exists(os.path.join(dest_dir, 'nested1', 'nested2', 'test3.txt'))
+    assert os.path.exists(os.path.join(dest_dir, "nested1"))
+    assert os.path.exists(os.path.join(dest_dir, "nested1", "nested2"))
+    assert os.path.exists(os.path.join(dest_dir, "empty"))
+    assert os.path.exists(os.path.join(dest_dir, "test1.txt"))
+    assert os.path.exists(os.path.join(dest_dir, "nested1", "test2.txt"))
+    assert os.path.exists(os.path.join(dest_dir, "nested1", "nested2", "test3.txt"))
 
 
 @skipifnotwindows

@@ -2,12 +2,14 @@ from typing import TYPE_CHECKING, Optional
 
 from dlt.common.configuration import configspec
 from dlt.common.destination import TLoaderFileFormat
-from dlt.common.destination.reference import DestinationClientConfiguration, CredentialsConfiguration
+from dlt.common.destination.reference import (
+    DestinationClientConfiguration,
+    CredentialsConfiguration,
+)
 
 
 @configspec
 class DummyClientCredentials(CredentialsConfiguration):
-
     def __str__(self) -> str:
         return "/dev/null"
 
@@ -26,6 +28,7 @@ class DummyClientConfiguration(DestinationClientConfiguration):
     credentials: DummyClientCredentials = None
 
     if TYPE_CHECKING:
+
         def __init__(
             self,
             destination_name: str = None,

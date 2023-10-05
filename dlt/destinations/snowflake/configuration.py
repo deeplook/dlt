@@ -11,24 +11,28 @@ from dlt.common.typing import TSecretStrValue
 from dlt.common.configuration.specs import ConnectionStringCredentials
 from dlt.common.configuration.exceptions import ConfigurationValueError
 from dlt.common.configuration import configspec
-from dlt.common.destination.reference import DestinationClientDwhWithStagingConfiguration
+from dlt.common.destination.reference import (
+    DestinationClientDwhWithStagingConfiguration,
+)
 from dlt.common.utils import digest128
 
 
 def _read_private_key(private_key: str, password: Optional[str] = None) -> bytes:
-    """Load an encrypted or unencrypted private key from string.
-    """
+    """Load an encrypted or unencrypted private key from string."""
     try:
         from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives.asymmetric import rsa
         from cryptography.hazmat.primitives.asymmetric import dsa
         from cryptography.hazmat.primitives import serialization
     except ModuleNotFoundError as e:
-        raise MissingDependencyException("SnowflakeCredentials with private key", dependencies=[f"{version.DLT_PKG_NAME}[snowflake]"]) from e
+        raise MissingDependencyException(
+            "SnowflakeCredentials with private key",
+            dependencies=[f"{version.DLT_PKG_NAME}[snowflake]"],
+        ) from e
 
     try:
         # decode base64 encoded private key
-        private_key_decoded = base64.b64decode(private_key).decode('utf-8')
+        private_key_decoded = base64.b64decode(private_key).decode("utf-8")
     except binascii.Error:
         # private key is not in base64 -> assume it's already provided in plain-text
         private_key_decoded = private_key
@@ -37,13 +41,15 @@ def _read_private_key(private_key: str, password: Optional[str] = None) -> bytes
         private_key_decoded = private_key
 
     pkey = serialization.load_pem_private_key(
-        private_key_decoded.encode(), password.encode() if password is not None else None, backend=default_backend()
+        private_key_decoded.encode(),
+        password.encode() if password is not None else None,
+        backend=default_backend(),
     )
 
     return pkey.private_bytes(
         encoding=serialization.Encoding.DER,
         format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption()
+        encryption_algorithm=serialization.NoEncryption(),
     )
 
 
@@ -62,29 +68,41 @@ class SnowflakeCredentials(ConnectionStringCredentials):
 
     def parse_native_representation(self, native_value: Any) -> None:
         super().parse_native_representation(native_value)
-        self.warehouse = self.query.get('warehouse')
-        self.role = self.query.get('role')
-        self.private_key = self.query.get('private_key')  # type: ignore
-        self.private_key_passphrase = self.query.get('private_key_passphrase')  # type: ignore
+        self.warehouse = self.query.get("warehouse")
+        self.role = self.query.get("role")
+        self.private_key = self.query.get("private_key")  # type: ignore
+        self.private_key_passphrase = self.query.get("private_key_passphrase")  # type: ignore
         if not self.is_partial() and (self.password or self.private_key):
             self.resolve()
 
     def on_resolved(self) -> None:
         if not self.password and not self.private_key:
-            raise ConfigurationValueError("Please specify password or private_key. SnowflakeCredentials supports password and private key authentication and one of those must be specified.")
+            raise ConfigurationValueError(
+                "Please specify password or private_key. SnowflakeCredentials supports password and private key authentication and one of those must be specified."
+            )
 
     def to_url(self) -> URL:
         query = dict(self.query or {})
-        if self.warehouse and 'warehouse' not in query:
-            query['warehouse'] = self.warehouse
-        if self.role and 'role' not in query:
-            query['role'] = self.role
-        return URL.create(self.drivername, self.username, self.password, self.host, self.port, self.database, query)
+        if self.warehouse and "warehouse" not in query:
+            query["warehouse"] = self.warehouse
+        if self.role and "role" not in query:
+            query["role"] = self.role
+        return URL.create(
+            self.drivername,
+            self.username,
+            self.password,
+            self.host,
+            self.port,
+            self.database,
+            query,
+        )
 
     def to_connector_params(self) -> Dict[str, Any]:
         private_key: Optional[bytes] = None
         if self.private_key:
-            private_key = _read_private_key(self.private_key, self.private_key_passphrase)
+            private_key = _read_private_key(
+                self.private_key, self.private_key_passphrase
+            )
         return dict(
             self.query or {},
             user=self.username,

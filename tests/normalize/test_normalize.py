@@ -17,8 +17,19 @@ from dlt.extract.extract import ExtractorStorage
 from dlt.normalize import Normalize
 
 from tests.cases import JSON_TYPED_DICT, JSON_TYPED_DICT_TYPES
-from tests.utils import TEST_DICT_CONFIG_PROVIDER, assert_no_dict_key_starts_with, clean_test_storage, init_test_logging
-from tests.normalize.utils import json_case_path, INSERT_CAPS, JSONL_CAPS, DEFAULT_CAPS, ALL_CAPABILITIES
+from tests.utils import (
+    TEST_DICT_CONFIG_PROVIDER,
+    assert_no_dict_key_starts_with,
+    clean_test_storage,
+    init_test_logging,
+)
+from tests.normalize.utils import (
+    json_case_path,
+    INSERT_CAPS,
+    JSONL_CAPS,
+    DEFAULT_CAPS,
+    ALL_CAPABILITIES,
+)
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -56,7 +67,9 @@ def rasa_normalize() -> Iterator[Normalize]:
 def init_normalize(default_schemas_path: str = None) -> Iterator[Normalize]:
     clean_test_storage()
     # pass schema config fields to schema storage via dict config provider
-    with TEST_DICT_CONFIG_PROVIDER().values({"import_schema_path": default_schemas_path, "external_schema_format": "json"}):
+    with TEST_DICT_CONFIG_PROVIDER().values(
+        {"import_schema_path": default_schemas_path, "external_schema_format": "json"}
+    ):
         # inject the destination capabilities
         n = Normalize()
         yield n
@@ -73,19 +86,29 @@ def test_initialize(rasa_normalize: Normalize) -> None:
 
 
 @pytest.mark.parametrize("caps", JSONL_CAPS, indirect=True)
-def test_normalize_single_user_event_jsonl(caps: DestinationCapabilitiesContext, raw_normalize: Normalize) -> None:
-    expected_tables, load_files = normalize_event_user(raw_normalize, "event.event.user_load_1", EXPECTED_USER_TABLES)
+def test_normalize_single_user_event_jsonl(
+    caps: DestinationCapabilitiesContext, raw_normalize: Normalize
+) -> None:
+    expected_tables, load_files = normalize_event_user(
+        raw_normalize, "event.event.user_load_1", EXPECTED_USER_TABLES
+    )
     # load, parse and verify jsonl
     for expected_table in expected_tables:
         get_line_from_file(raw_normalize.load_storage, load_files[expected_table])
     # return first line from event_user file
-    event_text, lines = get_line_from_file(raw_normalize.load_storage, load_files["event"], 0)
+    event_text, lines = get_line_from_file(
+        raw_normalize.load_storage, load_files["event"], 0
+    )
     assert lines == 1
     event_json = json.loads(event_text)
     assert event_json["event"] == "user"
     assert event_json["parse_data__intent__name"] == "greet"
     assert event_json["text"] == "hello"
-    event_text, lines = get_line_from_file(raw_normalize.load_storage, load_files["event__parse_data__response_selector__default__ranking"], 9)
+    event_text, lines = get_line_from_file(
+        raw_normalize.load_storage,
+        load_files["event__parse_data__response_selector__default__ranking"],
+        9,
+    )
     assert lines == 10
     event_json = json.loads(event_text)
     assert "id" in event_json
@@ -94,33 +117,55 @@ def test_normalize_single_user_event_jsonl(caps: DestinationCapabilitiesContext,
 
 
 @pytest.mark.parametrize("caps", INSERT_CAPS, indirect=True)
-def test_normalize_single_user_event_insert(caps: DestinationCapabilitiesContext, raw_normalize: Normalize) -> None:
+def test_normalize_single_user_event_insert(
+    caps: DestinationCapabilitiesContext, raw_normalize: Normalize
+) -> None:
     # mock_destination_caps(raw_normalize, caps)
-    expected_tables, load_files = normalize_event_user(raw_normalize, "event.event.user_load_1", EXPECTED_USER_TABLES)
+    expected_tables, load_files = normalize_event_user(
+        raw_normalize, "event.event.user_load_1", EXPECTED_USER_TABLES
+    )
     # verify values line
     for expected_table in expected_tables:
         get_line_from_file(raw_normalize.load_storage, load_files[expected_table])
     # return first values line from event_user file
-    event_text, lines = get_line_from_file(raw_normalize.load_storage, load_files["event"], 2)
+    event_text, lines = get_line_from_file(
+        raw_normalize.load_storage, load_files["event"], 2
+    )
     assert lines == 3
-    assert "'user'" in  event_text
+    assert "'user'" in event_text
     assert "'greet'" in event_text
     assert "'hello'" in event_text
-    event_text, lines = get_line_from_file(raw_normalize.load_storage, load_files["event__parse_data__response_selector__default__ranking"], 11)
+    event_text, lines = get_line_from_file(
+        raw_normalize.load_storage,
+        load_files["event__parse_data__response_selector__default__ranking"],
+        11,
+    )
     assert lines == 12
     assert "(7005479104644416710," in event_text
 
 
 @pytest.mark.parametrize("caps", JSONL_CAPS, indirect=True)
-def test_normalize_filter_user_event(caps: DestinationCapabilitiesContext, rasa_normalize: Normalize) -> None:
-    load_id = extract_and_normalize_cases(rasa_normalize, ["event.event.user_load_v228_1"])
+def test_normalize_filter_user_event(
+    caps: DestinationCapabilitiesContext, rasa_normalize: Normalize
+) -> None:
+    load_id = extract_and_normalize_cases(
+        rasa_normalize, ["event.event.user_load_v228_1"]
+    )
     _, load_files = expect_load_package(
         rasa_normalize.load_storage,
         load_id,
-        ["event", "event_user", "event_user__metadata__user_nicknames",
-        "event_user__parse_data__entities", "event_user__parse_data__entities__processors", "event_user__parse_data__intent_ranking"]
+        [
+            "event",
+            "event_user",
+            "event_user__metadata__user_nicknames",
+            "event_user__parse_data__entities",
+            "event_user__parse_data__entities__processors",
+            "event_user__parse_data__intent_ranking",
+        ],
     )
-    event_text, lines = get_line_from_file(rasa_normalize.load_storage, load_files["event_user"], 0)
+    event_text, lines = get_line_from_file(
+        rasa_normalize.load_storage, load_files["event_user"], 0
+    )
     assert lines == 1
     filtered_row = json.loads(event_text)
     assert "parse_data__intent__name" in filtered_row
@@ -129,10 +174,18 @@ def test_normalize_filter_user_event(caps: DestinationCapabilitiesContext, rasa_
 
 
 @pytest.mark.parametrize("caps", JSONL_CAPS, indirect=True)
-def test_normalize_filter_bot_event(caps: DestinationCapabilitiesContext, rasa_normalize: Normalize) -> None:
-    load_id = extract_and_normalize_cases(rasa_normalize, ["event.event.bot_load_metadata_2987398237498798"])
-    _, load_files = expect_load_package(rasa_normalize.load_storage, load_id, ["event", "event_bot"])
-    event_text, lines = get_line_from_file(rasa_normalize.load_storage, load_files["event_bot"], 0)
+def test_normalize_filter_bot_event(
+    caps: DestinationCapabilitiesContext, rasa_normalize: Normalize
+) -> None:
+    load_id = extract_and_normalize_cases(
+        rasa_normalize, ["event.event.bot_load_metadata_2987398237498798"]
+    )
+    _, load_files = expect_load_package(
+        rasa_normalize.load_storage, load_id, ["event", "event_bot"]
+    )
+    event_text, lines = get_line_from_file(
+        rasa_normalize.load_storage, load_files["event_bot"], 0
+    )
     assert lines == 1
     filtered_row = json.loads(event_text)
     assert "metadata__utter_action" in filtered_row
@@ -140,86 +193,131 @@ def test_normalize_filter_bot_event(caps: DestinationCapabilitiesContext, rasa_n
 
 
 @pytest.mark.parametrize("caps", JSONL_CAPS, indirect=True)
-def test_preserve_slot_complex_value_json_l(caps: DestinationCapabilitiesContext, rasa_normalize: Normalize) -> None:
-    load_id = extract_and_normalize_cases(rasa_normalize, ["event.event.slot_session_metadata_1"])
-    _, load_files = expect_load_package(rasa_normalize.load_storage, load_id, ["event", "event_slot"])
-    event_text, lines = get_line_from_file(rasa_normalize.load_storage, load_files["event_slot"], 0)
+def test_preserve_slot_complex_value_json_l(
+    caps: DestinationCapabilitiesContext, rasa_normalize: Normalize
+) -> None:
+    load_id = extract_and_normalize_cases(
+        rasa_normalize, ["event.event.slot_session_metadata_1"]
+    )
+    _, load_files = expect_load_package(
+        rasa_normalize.load_storage, load_id, ["event", "event_slot"]
+    )
+    event_text, lines = get_line_from_file(
+        rasa_normalize.load_storage, load_files["event_slot"], 0
+    )
     assert lines == 1
     filtered_row = json.loads(event_text)
     assert type(filtered_row["value"]) is dict
-    assert filtered_row["value"] == {
-            "user_id": "world",
-            "mitter_id": "hello"
-        }
+    assert filtered_row["value"] == {"user_id": "world", "mitter_id": "hello"}
 
 
 @pytest.mark.parametrize("caps", INSERT_CAPS, indirect=True)
-def test_preserve_slot_complex_value_insert(caps: DestinationCapabilitiesContext, rasa_normalize: Normalize) -> None:
-    load_id = extract_and_normalize_cases(rasa_normalize, ["event.event.slot_session_metadata_1"])
-    _, load_files = expect_load_package(rasa_normalize.load_storage, load_id, ["event", "event_slot"])
-    event_text, lines = get_line_from_file(rasa_normalize.load_storage, load_files["event_slot"], 2)
+def test_preserve_slot_complex_value_insert(
+    caps: DestinationCapabilitiesContext, rasa_normalize: Normalize
+) -> None:
+    load_id = extract_and_normalize_cases(
+        rasa_normalize, ["event.event.slot_session_metadata_1"]
+    )
+    _, load_files = expect_load_package(
+        rasa_normalize.load_storage, load_id, ["event", "event_slot"]
+    )
+    event_text, lines = get_line_from_file(
+        rasa_normalize.load_storage, load_files["event_slot"], 2
+    )
     assert lines == 3
-    c_val = json.dumps({
-            "user_id": "world",
-            "mitter_id": "hello"
-        })
+    c_val = json.dumps({"user_id": "world", "mitter_id": "hello"})
     assert c_val in event_text
 
 
 @pytest.mark.parametrize("caps", INSERT_CAPS, indirect=True)
-def test_normalize_many_events_insert(caps: DestinationCapabilitiesContext, rasa_normalize: Normalize) -> None:
-    load_id = extract_and_normalize_cases(rasa_normalize, ["event.event.many_load_2", "event.event.user_load_1"])
-    expected_tables = EXPECTED_USER_TABLES_RASA_NORMALIZER + ["event_bot", "event_action"]
-    _, load_files = expect_load_package(rasa_normalize.load_storage, load_id, expected_tables)
+def test_normalize_many_events_insert(
+    caps: DestinationCapabilitiesContext, rasa_normalize: Normalize
+) -> None:
+    load_id = extract_and_normalize_cases(
+        rasa_normalize, ["event.event.many_load_2", "event.event.user_load_1"]
+    )
+    expected_tables = EXPECTED_USER_TABLES_RASA_NORMALIZER + [
+        "event_bot",
+        "event_action",
+    ]
+    _, load_files = expect_load_package(
+        rasa_normalize.load_storage, load_id, expected_tables
+    )
     # return first values line from event_user file
-    event_text, lines = get_line_from_file(rasa_normalize.load_storage, load_files["event"], 4)
+    event_text, lines = get_line_from_file(
+        rasa_normalize.load_storage, load_files["event"], 4
+    )
     # 2 lines header + 3 lines data
     assert lines == 5
     assert f"'{load_id}'" in event_text
 
 
 @pytest.mark.parametrize("caps", JSONL_CAPS, indirect=True)
-def test_normalize_many_events(caps: DestinationCapabilitiesContext, rasa_normalize: Normalize) -> None:
-    load_id = extract_and_normalize_cases(rasa_normalize, ["event.event.many_load_2", "event.event.user_load_1"])
-    expected_tables = EXPECTED_USER_TABLES_RASA_NORMALIZER + ["event_bot", "event_action"]
-    _, load_files = expect_load_package(rasa_normalize.load_storage, load_id, expected_tables)
+def test_normalize_many_events(
+    caps: DestinationCapabilitiesContext, rasa_normalize: Normalize
+) -> None:
+    load_id = extract_and_normalize_cases(
+        rasa_normalize, ["event.event.many_load_2", "event.event.user_load_1"]
+    )
+    expected_tables = EXPECTED_USER_TABLES_RASA_NORMALIZER + [
+        "event_bot",
+        "event_action",
+    ]
+    _, load_files = expect_load_package(
+        rasa_normalize.load_storage, load_id, expected_tables
+    )
     # return first values line from event_user file
-    event_text, lines = get_line_from_file(rasa_normalize.load_storage, load_files["event"], 2)
+    event_text, lines = get_line_from_file(
+        rasa_normalize.load_storage, load_files["event"], 2
+    )
     # 3 lines data
     assert lines == 3
     assert f"{load_id}" in event_text
 
 
 @pytest.mark.parametrize("caps", ALL_CAPABILITIES, indirect=True)
-def test_normalize_raw_no_type_hints(caps: DestinationCapabilitiesContext, raw_normalize: Normalize) -> None:
+def test_normalize_raw_no_type_hints(
+    caps: DestinationCapabilitiesContext, raw_normalize: Normalize
+) -> None:
     normalize_event_user(raw_normalize, "event.event.user_load_1", EXPECTED_USER_TABLES)
     assert_timestamp_data_type(raw_normalize.load_storage, "double")
 
 
 @pytest.mark.parametrize("caps", ALL_CAPABILITIES, indirect=True)
-def test_normalize_raw_type_hints(caps: DestinationCapabilitiesContext, rasa_normalize: Normalize) -> None:
+def test_normalize_raw_type_hints(
+    caps: DestinationCapabilitiesContext, rasa_normalize: Normalize
+) -> None:
     extract_and_normalize_cases(rasa_normalize, ["event.event.user_load_1"])
     assert_timestamp_data_type(rasa_normalize.load_storage, "timestamp")
 
+
 @pytest.mark.parametrize("caps", ALL_CAPABILITIES, indirect=True)
-def test_multiprocess_row_counting(caps: DestinationCapabilitiesContext, raw_normalize: Normalize) -> None:
-    extract_cases(
-        raw_normalize.normalize_storage,
-        ["github.events.load_page_1_duck"]
-    )
+def test_multiprocess_row_counting(
+    caps: DestinationCapabilitiesContext, raw_normalize: Normalize
+) -> None:
+    extract_cases(raw_normalize.normalize_storage, ["github.events.load_page_1_duck"])
     # use real process pool in tests
     with Pool(processes=4) as p:
         raw_normalize.run(p)
 
     assert raw_normalize._row_counts["events"] == 100
-    assert raw_normalize._row_counts["events__payload__pull_request__requested_reviewers"] == 24
+    assert (
+        raw_normalize._row_counts["events__payload__pull_request__requested_reviewers"]
+        == 24
+    )
 
 
 @pytest.mark.parametrize("caps", ALL_CAPABILITIES, indirect=True)
-def test_normalize_many_schemas(caps: DestinationCapabilitiesContext, rasa_normalize: Normalize) -> None:
+def test_normalize_many_schemas(
+    caps: DestinationCapabilitiesContext, rasa_normalize: Normalize
+) -> None:
     extract_cases(
         rasa_normalize.normalize_storage,
-        ["event.event.many_load_2", "event.event.user_load_1", "ethereum.blocks.9c1d9b504ea240a482b007788d5cd61c_2"]
+        [
+            "event.event.many_load_2",
+            "event.event.user_load_1",
+            "ethereum.blocks.9c1d9b504ea240a482b007788d5cd61c_2",
+        ],
     )
     # use real process pool in tests
     with Pool(processes=4) as p:
@@ -234,16 +332,28 @@ def test_normalize_many_schemas(caps: DestinationCapabilitiesContext, rasa_norma
         schemas.append(schema.name)
         # expect event tables
         if schema.name == "event":
-            expected_tables = EXPECTED_USER_TABLES_RASA_NORMALIZER + ["event_bot", "event_action"]
+            expected_tables = EXPECTED_USER_TABLES_RASA_NORMALIZER + [
+                "event_bot",
+                "event_action",
+            ]
             expect_load_package(rasa_normalize.load_storage, load_id, expected_tables)
         if schema.name == "ethereum":
-            expect_load_package(rasa_normalize.load_storage, load_id, EXPECTED_ETH_TABLES, full_schema_update=False)
+            expect_load_package(
+                rasa_normalize.load_storage,
+                load_id,
+                EXPECTED_ETH_TABLES,
+                full_schema_update=False,
+            )
     assert set(schemas) == set(["ethereum", "event"])
 
 
 @pytest.mark.parametrize("caps", ALL_CAPABILITIES, indirect=True)
-def test_normalize_typed_json(caps: DestinationCapabilitiesContext, raw_normalize: Normalize) -> None:
-    extract_items(raw_normalize.normalize_storage, [JSON_TYPED_DICT], "special", "special")
+def test_normalize_typed_json(
+    caps: DestinationCapabilitiesContext, raw_normalize: Normalize
+) -> None:
+    extract_items(
+        raw_normalize.normalize_storage, [JSON_TYPED_DICT], "special", "special"
+    )
     with ThreadPool(processes=1) as pool:
         raw_normalize.run(pool)
     loads = raw_normalize.load_storage.list_packages()
@@ -259,14 +369,18 @@ def test_normalize_typed_json(caps: DestinationCapabilitiesContext, raw_normaliz
 
 
 @pytest.mark.parametrize("caps", ALL_CAPABILITIES, indirect=True)
-def test_schema_changes(caps: DestinationCapabilitiesContext, raw_normalize: Normalize) -> None:
+def test_schema_changes(
+    caps: DestinationCapabilitiesContext, raw_normalize: Normalize
+) -> None:
     doc = {"str": "text", "int": 1}
     extract_items(raw_normalize.normalize_storage, [doc], "evolution", "doc")
     load_id = normalize_pending(raw_normalize, "evolution")
     _, table_files = expect_load_package(raw_normalize.load_storage, load_id, ["doc"])
     get_line_from_file(raw_normalize.load_storage, table_files["doc"], 0)
     assert len(table_files["doc"]) == 1
-    s: Schema = raw_normalize.load_or_create_schema(raw_normalize.schema_storage, "evolution")
+    s: Schema = raw_normalize.load_or_create_schema(
+        raw_normalize.schema_storage, "evolution"
+    )
     doc_table = s.get_table("doc")
     assert "str" in doc_table["columns"]
     assert "int" in doc_table["columns"]
@@ -286,25 +400,49 @@ def test_schema_changes(caps: DestinationCapabilitiesContext, raw_normalize: Nor
     doc_v = {"int": "hundred"}
     doc3_2v = {"comp": [doc2]}
     doc3_doc_v = {"comp": [doc_v]}
-    extract_items(raw_normalize.normalize_storage, [doc3, doc, doc_v], "evolution", "doc")
-    extract_items(raw_normalize.normalize_storage, [doc3_2v, doc3_doc_v], "evolution", "doc")
+    extract_items(
+        raw_normalize.normalize_storage, [doc3, doc, doc_v], "evolution", "doc"
+    )
+    extract_items(
+        raw_normalize.normalize_storage, [doc3_2v, doc3_doc_v], "evolution", "doc"
+    )
     load_id = normalize_pending(raw_normalize, "evolution")
 
-    _, table_files = expect_load_package(raw_normalize.load_storage, load_id, ["doc", "doc__comp"])
+    _, table_files = expect_load_package(
+        raw_normalize.load_storage, load_id, ["doc", "doc__comp"]
+    )
     assert len(table_files["doc"]) == 1
     assert len(table_files["doc__comp"]) == 1
     s = raw_normalize.load_or_create_schema(raw_normalize.schema_storage, "evolution")
     doc_table = s.get_table("doc")
-    assert {"_dlt_load_id", "_dlt_id", "str", "int", "bool", "int__v_text"} == set(doc_table["columns"].keys())
+    assert {"_dlt_load_id", "_dlt_id", "str", "int", "bool", "int__v_text"} == set(
+        doc_table["columns"].keys()
+    )
     doc__comp_table = s.get_table("doc__comp")
     assert doc__comp_table["parent"] == "doc"
-    assert {"_dlt_id", "_dlt_list_idx", "_dlt_parent_id", "str", "int", "bool", "int__v_text"} == set(doc__comp_table["columns"].keys())
+    assert {
+        "_dlt_id",
+        "_dlt_list_idx",
+        "_dlt_parent_id",
+        "str",
+        "int",
+        "bool",
+        "int__v_text",
+    } == set(doc__comp_table["columns"].keys())
 
 
 @pytest.mark.parametrize("caps", ALL_CAPABILITIES, indirect=True)
-def test_normalize_twice_with_flatten(caps: DestinationCapabilitiesContext, raw_normalize: Normalize) -> None:
-    load_id = extract_and_normalize_cases(raw_normalize, ["github.issues.load_page_5_duck"])
-    _, table_files = expect_load_package(raw_normalize.load_storage, load_id, ["issues", "issues__labels", "issues__assignees"])
+def test_normalize_twice_with_flatten(
+    caps: DestinationCapabilitiesContext, raw_normalize: Normalize
+) -> None:
+    load_id = extract_and_normalize_cases(
+        raw_normalize, ["github.issues.load_page_5_duck"]
+    )
+    _, table_files = expect_load_package(
+        raw_normalize.load_storage,
+        load_id,
+        ["issues", "issues__labels", "issues__assignees"],
+    )
     assert len(table_files["issues"]) == 1
     _, lines = get_line_from_file(raw_normalize.load_storage, table_files["issues"], 0)
     # insert writer adds 2 lines
@@ -317,12 +455,18 @@ def test_normalize_twice_with_flatten(caps: DestinationCapabilitiesContext, raw_
         assert "reactions__x1" in _schema.tables["issues"]["columns"]
         assert "reactions__1" not in _schema.tables["issues"]["columns"]
 
-
     schema = raw_normalize.load_or_create_schema(raw_normalize.schema_storage, "github")
     assert_schema(schema)
 
-    load_id = extract_and_normalize_cases(raw_normalize, ["github.issues.load_page_5_duck"])
-    _, table_files = expect_load_package(raw_normalize.load_storage, load_id, ["issues", "issues__labels", "issues__assignees"], full_schema_update=False)
+    load_id = extract_and_normalize_cases(
+        raw_normalize, ["github.issues.load_page_5_duck"]
+    )
+    _, table_files = expect_load_package(
+        raw_normalize.load_storage,
+        load_id,
+        ["issues", "issues__labels", "issues__assignees"],
+        full_schema_update=False,
+    )
     assert len(table_files["issues"]) == 1
     _, lines = get_line_from_file(raw_normalize.load_storage, table_files["issues"], 0)
     # insert writer adds 2 lines
@@ -332,35 +476,82 @@ def test_normalize_twice_with_flatten(caps: DestinationCapabilitiesContext, raw_
 
 
 def test_group_worker_files() -> None:
-
     files = ["f%03d" % idx for idx in range(0, 100)]
 
     assert Normalize.group_worker_files([], 4) == []
     assert Normalize.group_worker_files(["f001"], 1) == [["f001"]]
     assert Normalize.group_worker_files(["f001"], 100) == [["f001"]]
-    assert Normalize.group_worker_files(files[:4], 4) == [["f000"], ["f001"], ["f002"], ["f003"]]
-    assert Normalize.group_worker_files(files[:5], 4) == [["f000"], ["f001"], ["f002"], ["f003", "f004"]]
-    assert Normalize.group_worker_files(files[:8], 4) == [["f000", "f001"], ["f002", "f003"], ["f004", "f005"], ["f006", "f007"]]
-    assert Normalize.group_worker_files(files[:8], 3) == [["f000", "f001"], ["f002", "f003", "f006"], ["f004", "f005", "f007"]]
-    assert Normalize.group_worker_files(files[:5], 3) == [["f000"], ["f001", "f003"], ["f002", "f004"]]
+    assert Normalize.group_worker_files(files[:4], 4) == [
+        ["f000"],
+        ["f001"],
+        ["f002"],
+        ["f003"],
+    ]
+    assert Normalize.group_worker_files(files[:5], 4) == [
+        ["f000"],
+        ["f001"],
+        ["f002"],
+        ["f003", "f004"],
+    ]
+    assert Normalize.group_worker_files(files[:8], 4) == [
+        ["f000", "f001"],
+        ["f002", "f003"],
+        ["f004", "f005"],
+        ["f006", "f007"],
+    ]
+    assert Normalize.group_worker_files(files[:8], 3) == [
+        ["f000", "f001"],
+        ["f002", "f003", "f006"],
+        ["f004", "f005", "f007"],
+    ]
+    assert Normalize.group_worker_files(files[:5], 3) == [
+        ["f000"],
+        ["f001", "f003"],
+        ["f002", "f004"],
+    ]
 
     # check if sorted
     files = ["tab1.1", "chd.3", "tab1.2", "chd.4", "tab1.3"]
-    assert Normalize.group_worker_files(files, 3) == [["chd.3"], ["chd.4", "tab1.2"], ["tab1.1", "tab1.3"]]
+    assert Normalize.group_worker_files(files, 3) == [
+        ["chd.3"],
+        ["chd.4", "tab1.2"],
+        ["tab1.1", "tab1.3"],
+    ]
 
 
-EXPECTED_ETH_TABLES = ["blocks", "blocks__transactions", "blocks__transactions__logs", "blocks__transactions__logs__topics",
-                       "blocks__uncles", "blocks__transactions__access_list", "blocks__transactions__access_list__storage_keys"]
+EXPECTED_ETH_TABLES = [
+    "blocks",
+    "blocks__transactions",
+    "blocks__transactions__logs",
+    "blocks__transactions__logs__topics",
+    "blocks__uncles",
+    "blocks__transactions__access_list",
+    "blocks__transactions__access_list__storage_keys",
+]
 
-EXPECTED_USER_TABLES_RASA_NORMALIZER = ["event", "event_user", "event_user__parse_data__intent_ranking"]
+EXPECTED_USER_TABLES_RASA_NORMALIZER = [
+    "event",
+    "event_user",
+    "event_user__parse_data__intent_ranking",
+]
 
 
-EXPECTED_USER_TABLES = ["event", "event__parse_data__intent_ranking", "event__parse_data__response_selector__all_retrieval_intents",
-         "event__parse_data__response_selector__default__ranking", "event__parse_data__response_selector__default__response__response_templates",
-         "event__parse_data__response_selector__default__response__responses"]
+EXPECTED_USER_TABLES = [
+    "event",
+    "event__parse_data__intent_ranking",
+    "event__parse_data__response_selector__all_retrieval_intents",
+    "event__parse_data__response_selector__default__ranking",
+    "event__parse_data__response_selector__default__response__response_templates",
+    "event__parse_data__response_selector__default__response__responses",
+]
 
 
-def extract_items(normalize_storage: NormalizeStorage, items: Sequence[StrAny], schema_name: str, table_name: str) -> None:
+def extract_items(
+    normalize_storage: NormalizeStorage,
+    items: Sequence[StrAny],
+    schema_name: str,
+    table_name: str,
+) -> None:
     extractor = ExtractorStorage(normalize_storage.config)
     extract_id = extractor.create_extract_id()
     extractor.write_data_item(extract_id, schema_name, table_name, items, None)
@@ -368,7 +559,9 @@ def extract_items(normalize_storage: NormalizeStorage, items: Sequence[StrAny], 
     extractor.commit_extract_files(extract_id)
 
 
-def normalize_event_user(normalize: Normalize, case: str, expected_user_tables: List[str] = None) -> Tuple[List[str], Dict[str, List[str]]]:
+def normalize_event_user(
+    normalize: Normalize, case: str, expected_user_tables: List[str] = None
+) -> Tuple[List[str], Dict[str, List[str]]]:
     expected_user_tables = expected_user_tables or EXPECTED_USER_TABLES_RASA_NORMALIZER
     load_id = extract_and_normalize_cases(normalize, [case])
     return expect_load_package(normalize.load_storage, load_id, expected_user_tables)
@@ -385,25 +578,39 @@ def normalize_pending(normalize: Normalize, schema_name: str = "event") -> str:
     # pool not required for map_single
     files = normalize.normalize_storage.list_files_to_normalize_sorted()
     # create schema if it does not exist
-    for schema_name, files_in_schema in normalize.normalize_storage.group_by_schema(files):
-        normalize.spool_files(schema_name, load_id, normalize.map_single, list(files_in_schema))
+    for schema_name, files_in_schema in normalize.normalize_storage.group_by_schema(
+        files
+    ):
+        normalize.spool_files(
+            schema_name, load_id, normalize.map_single, list(files_in_schema)
+        )
     return load_id
 
 
 def extract_cases(normalize_storage: NormalizeStorage, cases: Sequence[str]) -> None:
     for case in cases:
-        schema_name, table_name, _ = NormalizeStorage.parse_normalize_file_name(case + ".jsonl")
+        schema_name, table_name, _ = NormalizeStorage.parse_normalize_file_name(
+            case + ".jsonl"
+        )
         with open(json_case_path(case), "rb") as f:
             items = json.load(f)
         extract_items(normalize_storage, items, schema_name, table_name)
 
 
-def expect_load_package(load_storage: LoadStorage, load_id: str, expected_tables: Sequence[str], full_schema_update: bool = True) -> Tuple[List[str], Dict[str, List[str]]]:
+def expect_load_package(
+    load_storage: LoadStorage,
+    load_id: str,
+    expected_tables: Sequence[str],
+    full_schema_update: bool = True,
+) -> Tuple[List[str], Dict[str, List[str]]]:
     # normalize tables as paths (original json is snake case so we may do it without real lineage info)
     schema = load_storage.load_package_schema(load_id)
     # we are still in destination caps context so schema contains length
     assert schema.naming.max_length > 0
-    expected_tables = [schema.naming.shorten_fragments(*schema.naming.break_path(table)) for table in expected_tables]
+    expected_tables = [
+        schema.naming.shorten_fragments(*schema.naming.break_path(table))
+        for table in expected_tables
+    ]
 
     # find jobs and processed files
     files = load_storage.list_new_jobs(load_id)
@@ -412,7 +619,9 @@ def expect_load_package(load_storage: LoadStorage, load_id: str, expected_tables
     ofl: Dict[str, List[str]] = {}
     for expected_table in expected_tables:
         # find all files for particular table, ignoring file id
-        file_mask = load_storage.build_job_file_name(expected_table, "*", validate_components=False)
+        file_mask = load_storage.build_job_file_name(
+            expected_table, "*", validate_components=False
+        )
         # files are in normalized/<load_id>/new_jobs
         file_path = load_storage._get_job_file_path(load_id, "new_jobs", file_mask)
         candidates = [f for f in files if fnmatch(f, file_path)]
@@ -427,7 +636,9 @@ def expect_load_package(load_storage: LoadStorage, load_id: str, expected_tables
     return expected_tables, ofl
 
 
-def get_line_from_file(load_storage: LoadStorage, loaded_files: List[str], return_line: int = 0) -> Tuple[str, int]:
+def get_line_from_file(
+    load_storage: LoadStorage, loaded_files: List[str], return_line: int = 0
+) -> Tuple[str, int]:
     lines = []
     for file in loaded_files:
         with load_storage.storage.open_file(file) as f:
@@ -440,4 +651,6 @@ def assert_timestamp_data_type(load_storage: LoadStorage, data_type: TDataType) 
     loads = load_storage.list_packages()
     event_schema = load_storage.load_package_schema(loads[0])
     # in raw normalize timestamp column must not be coerced to timestamp
-    assert event_schema.get_table_columns("event")["timestamp"]["data_type"] == data_type
+    assert (
+        event_schema.get_table_columns("event")["timestamp"]["data_type"] == data_type
+    )

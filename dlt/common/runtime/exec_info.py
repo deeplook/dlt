@@ -7,7 +7,17 @@ from dlt.common.utils import filter_env_vars
 from dlt.version import __version__
 
 
-TExecInfoNames = Literal["kubernetes", "docker", "codespaces", "github_actions", "airflow", "notebook", "colab","aws_lambda","gcp_cloud_function"]
+TExecInfoNames = Literal[
+    "kubernetes",
+    "docker",
+    "codespaces",
+    "github_actions",
+    "airflow",
+    "notebook",
+    "colab",
+    "aws_lambda",
+    "gcp_cloud_function",
+]
 # if one of these environment variables is set, we assume to be running in CI env
 CI_ENVIRONMENT_TELL = [
     "bamboo.buildKey",
@@ -76,7 +86,9 @@ def is_colab() -> bool:
 
 def airflow_info() -> StrAny:
     try:
-        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(
+            io.StringIO()
+        ):
             from airflow.operators.python import get_current_context
 
             get_current_context()
@@ -87,7 +99,9 @@ def airflow_info() -> StrAny:
 
 def is_airflow_installed() -> bool:
     try:
-        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(
+            io.StringIO()
+        ):
             import airflow
         return True
     except Exception:
@@ -96,11 +110,13 @@ def is_airflow_installed() -> bool:
 
 def is_running_in_airflow_task() -> bool:
     try:
-        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(
+            io.StringIO()
+        ):
             from airflow.operators.python import get_current_context
 
             context = get_current_context()
-            return context is not None and 'ti' in context
+            return context is not None and "ti" in context
     except Exception:
         return False
 
@@ -121,7 +137,9 @@ def kube_pod_info() -> StrStr:
 
 def github_info() -> StrStr:
     """Extracts github info"""
-    info = filter_env_vars(["GITHUB_USER", "GITHUB_REPOSITORY", "GITHUB_REPOSITORY_OWNER"])
+    info = filter_env_vars(
+        ["GITHUB_USER", "GITHUB_REPOSITORY", "GITHUB_REPOSITORY_OWNER"]
+    )
     # set GITHUB_REPOSITORY_OWNER as github user if not present. GITHUB_REPOSITORY_OWNER is available in github action context
     if "github_user" not in info and "github_repository_owner" in info:
         info["github_user"] = info["github_repository_owner"]  # type: ignore

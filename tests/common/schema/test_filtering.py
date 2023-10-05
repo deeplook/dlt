@@ -35,10 +35,14 @@ def test_whole_row_filter(schema: Schema) -> None:
     _add_excludes(schema)
     bot_case: DictStrAny = load_json_case("mod_bot_case")
     # the whole row should be eliminated if the exclude matches all the rows
-    filtered_case = schema.filter_row("event_bot__metadata", deepcopy(bot_case)["metadata"])
+    filtered_case = schema.filter_row(
+        "event_bot__metadata", deepcopy(bot_case)["metadata"]
+    )
     assert filtered_case == {}
     # also child rows will be excluded
-    filtered_case = schema.filter_row("event_bot__metadata__user", deepcopy(bot_case)["metadata"])
+    filtered_case = schema.filter_row(
+        "event_bot__metadata__user", deepcopy(bot_case)["metadata"]
+    )
     assert filtered_case == {}
 
 
@@ -46,13 +50,21 @@ def test_whole_row_filter_with_exception(schema: Schema) -> None:
     _add_excludes(schema)
     bot_case: DictStrAny = load_json_case("mod_bot_case")
     # whole row will be eliminated
-    filtered_case = schema.filter_row("event_bot__custom_data", deepcopy(bot_case)["custom_data"])
+    filtered_case = schema.filter_row(
+        "event_bot__custom_data", deepcopy(bot_case)["custom_data"]
+    )
     # mind that path event_bot__custom_data__included_object was also eliminated
     assert filtered_case == {}
     # this child of the row has exception (^event_bot__custom_data__included_object__ - the __ at the end select all childern but not the parent)
-    filtered_case = schema.filter_row("event_bot__custom_data__included_object", deepcopy(bot_case)["custom_data"]["included_object"])
+    filtered_case = schema.filter_row(
+        "event_bot__custom_data__included_object",
+        deepcopy(bot_case)["custom_data"]["included_object"],
+    )
     assert filtered_case == bot_case["custom_data"]["included_object"]
-    filtered_case = schema.filter_row("event_bot__custom_data__excluded_path", deepcopy(bot_case)["custom_data"]["excluded_path"])
+    filtered_case = schema.filter_row(
+        "event_bot__custom_data__excluded_path",
+        deepcopy(bot_case)["custom_data"]["excluded_path"],
+    )
     assert filtered_case == {}
 
 
@@ -60,16 +72,13 @@ def test_filter_parent_table_schema_update(schema: Schema) -> None:
     # filter out parent table and leave just child one. that should break the child-parent relationship and reject schema update
     _add_excludes(schema)
     source_row = {
-        "metadata": [{
-            "elvl1": [{
-                "elvl2": [{
-                    "id": "level3_kept"
-                    }],
-                "f": "elvl1_removed"
-                }],
-            "f": "metadata_removed"
-            }]
-        }
+        "metadata": [
+            {
+                "elvl1": [{"elvl2": [{"id": "level3_kept"}], "f": "elvl1_removed"}],
+                "f": "metadata_removed",
+            }
+        ]
+    }
 
     updates = []
 
@@ -96,7 +105,12 @@ def test_filter_parent_table_schema_update(schema: Schema) -> None:
     updates.clear()
     schema = Schema("event")
     _add_excludes(schema)
-    schema.get_table("event_bot")["filters"]["includes"].extend([TSimpleRegex("re:^metadata___dlt_"), TSimpleRegex("re:^metadata__elvl1___dlt_")])
+    schema.get_table("event_bot")["filters"]["includes"].extend(
+        [
+            TSimpleRegex("re:^metadata___dlt_"),
+            TSimpleRegex("re:^metadata__elvl1___dlt_"),
+        ]
+    )
     schema._compile_settings()
     for (t, p), row in schema.normalize_data_item(source_row, "load_id", "event_bot"):
         row = schema.filter_row(t, row)
@@ -104,7 +118,9 @@ def test_filter_parent_table_schema_update(schema: Schema) -> None:
             assert "_dlt_id" in row
         else:
             # full linking not wiped out
-            assert set(row.keys()).issuperset(["_dlt_id", "_dlt_parent_id", "_dlt_list_idx"])
+            assert set(row.keys()).issuperset(
+                ["_dlt_id", "_dlt_parent_id", "_dlt_list_idx"]
+            )
         row, partial_table = schema.coerce_row(t, p, row)
         updates.append(partial_table)
         schema.update_schema(partial_table)
@@ -118,7 +134,9 @@ def _add_excludes(schema: Schema) -> None:
     bot_table = new_table("event_bot")
     bot_table.setdefault("filters", {})["excludes"] = ["re:^metadata", "re:^is_flagged$", "re:^data", "re:^custom_data"]  # type: ignore[typeddict-item]
     bot_table["filters"]["includes"] = [
-        TSimpleRegex("re:^data__custom$"), TSimpleRegex("re:^custom_data__included_object__"), TSimpleRegex("re:^metadata__elvl1__elvl2__")
+        TSimpleRegex("re:^data__custom$"),
+        TSimpleRegex("re:^custom_data__included_object__"),
+        TSimpleRegex("re:^metadata__elvl1__elvl2__"),
     ]
     schema.update_schema(bot_table)
     schema._compile_settings()

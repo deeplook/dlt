@@ -5,7 +5,10 @@ import pytest
 from dlt.common.configuration.inject import with_config
 
 from dlt.common import pendulum
-from dlt.common.configuration.specs import AzureCredentials, AzureCredentialsWithoutDefaults
+from dlt.common.configuration.specs import (
+    AzureCredentials,
+    AzureCredentialsWithoutDefaults,
+)
 from dlt.common.storages import filesystem_from_config, FilesystemConfiguration
 from dlt.common.storages.filesystem import MTIME_DISPATCH
 from dlt.common.utils import uniq_id
@@ -22,13 +25,16 @@ def test_filesystem_configuration() -> None:
     config = FilesystemConfiguration(bucket_url="az://root")
     assert config.protocol == "az"
     # print(config.resolve_credentials_type())
-    assert config.resolve_credentials_type() == Union[AzureCredentialsWithoutDefaults, AzureCredentials]
+    assert (
+        config.resolve_credentials_type()
+        == Union[AzureCredentialsWithoutDefaults, AzureCredentials]
+    )
     # make sure that only bucket_url and credentials are there
-    assert dict(config) == {'bucket_url': 'az://root', 'credentials': None}
+    assert dict(config) == {"bucket_url": "az://root", "credentials": None}
 
 
 def test_filesystem_instance(all_buckets_env: str) -> None:
-    bucket_url = os.environ['DESTINATION__FILESYSTEM__BUCKET_URL']
+    bucket_url = os.environ["DESTINATION__FILESYSTEM__BUCKET_URL"]
     config = get_config()
     assert bucket_url.startswith(config.protocol)
     filesystem, url = filesystem_from_config(config)

@@ -2,7 +2,10 @@ from contextlib import contextmanager
 from typing import Dict, Iterator, Type, TypeVar
 
 from dlt.common.configuration.specs.base_configuration import ContainerInjectableContext
-from dlt.common.configuration.exceptions import ContainerInjectableContextMangled, ContextDefaultCannotBeCreated
+from dlt.common.configuration.exceptions import (
+    ContainerInjectableContextMangled,
+    ContextDefaultCannotBeCreated,
+)
 
 TConfiguration = TypeVar("TConfiguration", bound=ContainerInjectableContext)
 
@@ -60,7 +63,6 @@ class Container:
     def __contains__(self, spec: Type[TConfiguration]) -> bool:
         return spec in self.contexts
 
-
     @contextmanager
     def injectable_context(self, config: TConfiguration) -> Iterator[TConfiguration]:
         """A context manager that will insert `config` into the container and restore the previous value when it gets out of scope."""
@@ -82,4 +84,6 @@ class Container:
                     self.contexts[spec] = previous_config
             else:
                 # value was modified in the meantime and not restored
-                raise ContainerInjectableContextMangled(spec, self.contexts[spec], config)
+                raise ContainerInjectableContextMangled(
+                    spec, self.contexts[spec], config
+                )

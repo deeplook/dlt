@@ -13,11 +13,15 @@ FUTURE_TIMESTAMP: float = 9999999999.0
 DAY_DURATION_SEC: float = 24 * 60 * 60.0
 
 
-def timestamp_within(timestamp: float, min_exclusive: Optional[float], max_inclusive: Optional[float]) -> bool:
+def timestamp_within(
+    timestamp: float, min_exclusive: Optional[float], max_inclusive: Optional[float]
+) -> bool:
     """
     check if timestamp within range uniformly treating none and range inclusiveness
     """
-    return timestamp > (min_exclusive or PAST_TIMESTAMP) and timestamp <= (max_inclusive or FUTURE_TIMESTAMP)
+    return timestamp > (min_exclusive or PAST_TIMESTAMP) and timestamp <= (
+        max_inclusive or FUTURE_TIMESTAMP
+    )
 
 
 def timestamp_before(timestamp: float, max_inclusive: Optional[float]) -> bool:
@@ -27,7 +31,9 @@ def timestamp_before(timestamp: float, max_inclusive: Optional[float]) -> bool:
     return timestamp <= (max_inclusive or FUTURE_TIMESTAMP)
 
 
-def parse_iso_like_datetime(value: Any) -> Union[pendulum.DateTime, pendulum.Date, pendulum.Time]:
+def parse_iso_like_datetime(
+    value: Any,
+) -> Union[pendulum.DateTime, pendulum.Date, pendulum.Time]:
     # we use internal pendulum parse function. the generic function, for example, parses string "now" as now()
     # it also tries to parse ISO intervals but the code is very low quality
 
@@ -122,7 +128,9 @@ def ensure_pendulum_time(value: Union[str, datetime.time]) -> pendulum.Time:
     raise TypeError(f"Cannot coerce {value} to a pendulum.Time object.")
 
 
-def _datetime_from_ts_or_iso(value: Union[int, float, str]) -> Union[pendulum.DateTime, pendulum.Date, pendulum.Time]:
+def _datetime_from_ts_or_iso(
+    value: Union[int, float, str]
+) -> Union[pendulum.DateTime, pendulum.Date, pendulum.Time]:
     if isinstance(value, (int, float)):
         return pendulum.from_timestamp(value)
     try:
@@ -150,5 +158,6 @@ def to_seconds(td: Optional[TimedeltaSeconds]) -> Optional[float]:
 
 T = TypeVar("T", bound=Union[pendulum.DateTime, pendulum.Time])
 
+
 def reduce_pendulum_datetime_precision(value: T, microsecond_precision: int) -> T:
-    return value.replace(microsecond=value.microsecond // 10**(6 - microsecond_precision) * 10**(6 - microsecond_precision))  # type: ignore
+    return value.replace(microsecond=value.microsecond // 10 ** (6 - microsecond_precision) * 10 ** (6 - microsecond_precision))  # type: ignore

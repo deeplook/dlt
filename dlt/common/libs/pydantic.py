@@ -3,15 +3,25 @@ from typing import Type, Union, get_type_hints, get_args, Any
 from dlt.common.exceptions import MissingDependencyException
 from dlt.common.schema.typing import TTableSchemaColumns
 from dlt.common.data_types import py_type_to_sc_type, TDataType
-from dlt.common.typing import is_optional_type, extract_inner_type, is_list_generic_type, is_dict_generic_type, is_union
+from dlt.common.typing import (
+    is_optional_type,
+    extract_inner_type,
+    is_list_generic_type,
+    is_dict_generic_type,
+    is_union,
+)
 
 try:
     from pydantic import BaseModel, Field, Json
 except ImportError:
-    raise MissingDependencyException("DLT pydantic Helpers", ["pydantic"], "DLT Helpers for for pydantic.")
+    raise MissingDependencyException(
+        "DLT pydantic Helpers", ["pydantic"], "DLT Helpers for for pydantic."
+    )
 
 
-def pydantic_to_table_schema_columns(model: Union[BaseModel, Type[BaseModel]], skip_complex_types: bool = False) -> TTableSchemaColumns:
+def pydantic_to_table_schema_columns(
+    model: Union[BaseModel, Type[BaseModel]], skip_complex_types: bool = False
+) -> TTableSchemaColumns:
     """Convert a pydantic model to a table schema columns dict
 
     Args:
@@ -26,7 +36,7 @@ def pydantic_to_table_schema_columns(model: Union[BaseModel, Type[BaseModel]], s
     fields = model.__fields__
     for field_name, field in fields.items():
         annotation = field.annotation
-        if inner_annotation := getattr(annotation, 'inner_type', None):
+        if inner_annotation := getattr(annotation, "inner_type", None):
             # This applies to pydantic.Json fields, the inner type is the type after json parsing
             # (In pydantic 2 the outer annotation is the final type)
             annotation = inner_annotation
@@ -50,7 +60,7 @@ def pydantic_to_table_schema_columns(model: Union[BaseModel, Type[BaseModel]], s
 
         name = field.alias or field_name
         data_type = py_type_to_sc_type(inner_type)
-        if data_type == 'complex' and skip_complex_types:
+        if data_type == "complex" and skip_complex_types:
             continue
 
         result[name] = {
