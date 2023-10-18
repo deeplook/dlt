@@ -13,7 +13,7 @@ def rasa(
     source_env: str = None,
     initial_timestamp: float = None,
     end_timestamp: float = None,
-    store_last_timestamp: bool = True
+    store_last_timestamp: bool = True,
 ) -> Any:
     """Transforms the base resource provided in `data_from` into a rasa tracker store raw dataset where each event type get it's own table.
     The resource is a stream resource and it generates tables dynamically from data. The source uses `rasa.schema.yaml` file to initialize the schema
@@ -34,7 +34,10 @@ def rasa(
     def events(source_events: TDataItems) -> Iterator[TDataItem]:
         # recover start_timestamp from state if given
         if store_last_timestamp:
-            start_timestamp = max(initial_timestamp or 0, dlt.current.source_state().get("start_timestamp", 0))
+            start_timestamp = max(
+                initial_timestamp or 0,
+                dlt.current.source_state().get("start_timestamp", 0),
+            )
         # we expect tracker store events here
         last_timestamp: int = None
 
@@ -44,14 +47,16 @@ def rasa(
             # must be a dict
             assert isinstance(source_event, dict)
             # filter out events
-            if timestamp_within(source_event["timestamp"], start_timestamp, end_timestamp):
+            if timestamp_within(
+                source_event["timestamp"], start_timestamp, end_timestamp
+            ):
                 # yield tracker table with all-event index
                 event_type = source_event["event"]
                 last_timestamp = source_event["timestamp"]
                 event = {
                     "sender_id": source_event["sender_id"],
                     "timestamp": last_timestamp,
-                    "event": event_type
+                    "event": event_type,
                 }
                 if source_env:
                     event["source"] = source_env

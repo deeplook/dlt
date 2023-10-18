@@ -27,6 +27,7 @@ class _TestPickler(NamedTuple):
 #         self.s1 = s1
 #         self.s2 = s2
 
+
 class _TestClassUnkField:
     pass
     # def __init__(self, s1: _TestPicklex, s2: str) -> None:
@@ -55,19 +56,25 @@ def test_pickle_encoder_none() -> None:
 
 def test_synth_pickler_unknown_types() -> None:
     # synth unknown tuple
-    obj = decode_obj("LfDoYo19lgUOtTn0Ib6JgASVQAAAAAAAAACMH3Rlc3RzLmNvbW1vbi5ydW5uZXJzLnRlc3RfcGlwZXOUjAxfVGVzdFBpY2tsZXiUk5SMA1hZWpRLe4aUgZQu")
+    obj = decode_obj(
+        "LfDoYo19lgUOtTn0Ib6JgASVQAAAAAAAAACMH3Rlc3RzLmNvbW1vbi5ydW5uZXJzLnRlc3RfcGlwZXOUjAxfVGVzdFBpY2tsZXiUk5SMA1hZWpRLe4aUgZQu"
+    )
     assert type(obj).__name__.endswith("_TestPicklex")
     # this is completely different type
     assert not isinstance(obj, tuple)
 
     # synth unknown class containing other unknown types
-    obj = decode_obj("Koyo502yl4IKMqIxUTJFgASVbQAAAAAAAACMH3Rlc3RzLmNvbW1vbi5ydW5uZXJzLnRlc3RfcGlwZXOUjApfVGVzdENsYXNzlJOUKYGUfZQojAJzMZRoAIwMX1Rlc3RQaWNrbGV4lJOUjAFZlEsXhpSBlIwCczKUjAFVlIwDX3MzlEsDdWIu")
+    obj = decode_obj(
+        "Koyo502yl4IKMqIxUTJFgASVbQAAAAAAAACMH3Rlc3RzLmNvbW1vbi5ydW5uZXJzLnRlc3RfcGlwZXOUjApfVGVzdENsYXNzlJOUKYGUfZQojAJzMZRoAIwMX1Rlc3RQaWNrbGV4lJOUjAFZlEsXhpSBlIwCczKUjAFVlIwDX3MzlEsDdWIu"
+    )
     assert type(obj).__name__.endswith("_TestClass")
     # tuple inside will be synthesized as well
     assert type(obj.s1).__name__.endswith("_TestPicklex")
 
     # known class containing unknown types
-    obj = decode_obj("PozhjHuf2oS7jPcRxKoagASVbQAAAAAAAACMH3Rlc3RzLmNvbW1vbi5ydW5uZXJzLnRlc3RfcGlwZXOUjBJfVGVzdENsYXNzVW5rRmllbGSUk5QpgZR9lCiMAnMxlGgAjAxfVGVzdFBpY2tsZXiUk5SMAVmUSxeGlIGUjAJzMpSMAVWUdWIu")
+    obj = decode_obj(
+        "PozhjHuf2oS7jPcRxKoagASVbQAAAAAAAACMH3Rlc3RzLmNvbW1vbi5ydW5uZXJzLnRlc3RfcGlwZXOUjBJfVGVzdENsYXNzVW5rRmllbGSUk5QpgZR9lCiMAnMxlGgAjAxfVGVzdFBpY2tsZXiUk5SMAVmUSxeGlIGUjAJzMpSMAVWUdWIu"
+    )
     assert isinstance(obj, _TestClassUnkField)
     assert type(obj.s1).__name__.endswith("_TestPicklex")  # type: ignore[attr-defined]
 
@@ -83,17 +90,27 @@ def test_synth_pickler_unknown_types() -> None:
 def test_iter_stdout() -> None:
     with Venv.create(tempfile.mkdtemp()) as venv:
         expected = ["0", "1", "2", "3", "4", "exit"]
-        for i, l in enumerate(iter_stdout(venv, "python", "tests/common/scripts/counter.py")):
+        for i, l in enumerate(
+            iter_stdout(venv, "python", "tests/common/scripts/counter.py")
+        ):
             assert expected[i] == l
         lines = list(iter_stdout(venv, "python", "tests/common/scripts/empty.py"))
         assert lines == []
         with pytest.raises(CalledProcessError) as cpe:
-            list(iter_stdout(venv, "python", "tests/common/scripts/no_stdout_no_stderr_with_fail.py"))
+            list(
+                iter_stdout(
+                    venv,
+                    "python",
+                    "tests/common/scripts/no_stdout_no_stderr_with_fail.py",
+                )
+            )
         # empty stdout
         assert cpe.value.output == ""
         assert cpe.value.stderr == ""
         # three lines with 1 MB size + newline
-        for _i, l in enumerate(iter_stdout(venv, "python", "tests/common/scripts/long_lines.py")):
+        for _i, l in enumerate(
+            iter_stdout(venv, "python", "tests/common/scripts/long_lines.py")
+        ):
             assert len(l) == 1024 * 1024
         assert _i == 2
 
@@ -102,7 +119,9 @@ def test_iter_stdout_raises() -> None:
     with Venv.create(tempfile.mkdtemp()) as venv:
         expected = ["0", "1", "2"]
         with pytest.raises(CalledProcessError) as cpe:
-            for i, line in enumerate(iter_stdout(venv, "python", "tests/common/scripts/raising_counter.py")):
+            for i, line in enumerate(
+                iter_stdout(venv, "python", "tests/common/scripts/raising_counter.py")
+            ):
                 assert expected[i] == line
         assert cpe.value.returncode == 1
         # the last output line is available
@@ -112,7 +131,11 @@ def test_iter_stdout_raises() -> None:
         # we actually consumed part of the iterator up until "2"
         assert i == 2
         with pytest.raises(CalledProcessError) as cpe:
-            list(iter_stdout(venv, "python", "tests/common/scripts/no_stdout_exception.py"))
+            list(
+                iter_stdout(
+                    venv, "python", "tests/common/scripts/no_stdout_exception.py"
+                )
+            )
         # empty stdout
         assert cpe.value.output == ""
         assert "no stdout" in cpe.value.stderr
@@ -120,7 +143,9 @@ def test_iter_stdout_raises() -> None:
         # three lines with 1 MB size + newline
         _i = -1
         with pytest.raises(CalledProcessError) as cpe:
-            for _i, line in enumerate(iter_stdout(venv, "python", "tests/common/scripts/long_lines_fails.py")):
+            for _i, line in enumerate(
+                iter_stdout(venv, "python", "tests/common/scripts/long_lines_fails.py")
+            ):
                 assert len(line) == 1024 * 1024
                 assert line == "a" * 1024 * 1024
         # there were 3 lines
@@ -136,33 +161,49 @@ def test_iter_stdout_raises() -> None:
 def test_stdout_encode_result() -> None:
     # use current venv to execute so we have dlt
     venv = Venv.restore_current()
-    lines = list(iter_stdout(venv, "python", "tests/common/scripts/stdout_encode_result.py"))
+    lines = list(
+        iter_stdout(venv, "python", "tests/common/scripts/stdout_encode_result.py")
+    )
     # last line contains results
     assert decode_obj(lines[-1]) == ("this is string", TRunMetrics(True, 300))
 
     # stderr will contain pickled exception somewhere
     with pytest.raises(CalledProcessError) as cpe:
-        list(iter_stdout(venv, "python", "tests/common/scripts/stdout_encode_exception.py"))
+        list(
+            iter_stdout(
+                venv, "python", "tests/common/scripts/stdout_encode_exception.py"
+            )
+        )
     assert isinstance(decode_last_obj(cpe.value.stderr.split("\n")), Exception)
 
     # this script returns something that it cannot pickle
-    lines = list(iter_stdout(venv, "python", "tests/common/scripts/stdout_encode_unpicklable.py"))
+    lines = list(
+        iter_stdout(venv, "python", "tests/common/scripts/stdout_encode_unpicklable.py")
+    )
     assert decode_last_obj(lines) is None
 
 
 def test_iter_stdout_with_result() -> None:
     venv = Venv.restore_current()
-    i = iter_stdout_with_result(venv, "python", "tests/common/scripts/stdout_encode_result.py")
+    i = iter_stdout_with_result(
+        venv, "python", "tests/common/scripts/stdout_encode_result.py"
+    )
     assert iter_until_returns(i) == ("this is string", TRunMetrics(True, 300))
-    i = iter_stdout_with_result(venv, "python", "tests/common/scripts/stdout_encode_unpicklable.py")
+    i = iter_stdout_with_result(
+        venv, "python", "tests/common/scripts/stdout_encode_unpicklable.py"
+    )
     assert iter_until_returns(i) is None
     # it just excepts without encoding exception
     with pytest.raises(CalledProcessError):
-        i = iter_stdout_with_result(venv, "python", "tests/common/scripts/no_stdout_no_stderr_with_fail.py")
+        i = iter_stdout_with_result(
+            venv, "python", "tests/common/scripts/no_stdout_no_stderr_with_fail.py"
+        )
         iter_until_returns(i)
     # this raises a decoded exception: UnsupportedProcessStartMethodException
     with pytest.raises(UnsupportedProcessStartMethodException):
-        i = iter_stdout_with_result(venv, "python", "tests/common/scripts/stdout_encode_exception.py")
+        i = iter_stdout_with_result(
+            venv, "python", "tests/common/scripts/stdout_encode_exception.py"
+        )
         iter_until_returns(i)
 
 

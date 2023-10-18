@@ -7,7 +7,9 @@ from dlt.common.utils import digest128
 from dlt.common.typing import TSecretValue
 from dlt.common.exceptions import SystemConfigurationException
 
-from dlt.common.destination.reference import DestinationClientDwhWithStagingConfiguration
+from dlt.common.destination.reference import (
+    DestinationClientDwhWithStagingConfiguration,
+)
 
 
 @configspec
@@ -24,7 +26,9 @@ class MsSqlCredentials(ConnectionStringCredentials):
     def parse_native_representation(self, native_value: Any) -> None:
         # TODO: Support ODBC connection string or sqlalchemy URL
         super().parse_native_representation(native_value)
-        self.connect_timeout = int(self.query.get("connect_timeout", self.connect_timeout))
+        self.connect_timeout = int(
+            self.query.get("connect_timeout", self.connect_timeout)
+        )
         if not self.is_partial():
             self.resolve()
 
@@ -45,8 +49,12 @@ class MsSqlCredentials(ConnectionStringCredentials):
         if self.odbc_driver:
             return self.odbc_driver
         # Pick a default driver if available
-        supported_drivers = ['ODBC Driver 18 for SQL Server', 'ODBC Driver 17 for SQL Server']
+        supported_drivers = [
+            "ODBC Driver 18 for SQL Server",
+            "ODBC Driver 17 for SQL Server",
+        ]
         import pyodbc
+
         available_drivers = pyodbc.drivers()
         for driver in supported_drivers:
             if driver in available_drivers:
@@ -69,7 +77,6 @@ class MsSqlCredentials(ConnectionStringCredentials):
         if self.query:
             params.update(self.query)
         return ";".join([f"{k}={v}" for k, v in params.items()])
-
 
 
 @configspec

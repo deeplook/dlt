@@ -2,37 +2,37 @@ import pytest
 from copy import copy, deepcopy
 
 from dlt.common.schema import Schema, utils
-from dlt.common.schema.exceptions import CannotCoerceColumnException, CannotCoerceNullException, TablePropertiesConflictException
+from dlt.common.schema.exceptions import (
+    CannotCoerceColumnException,
+    CannotCoerceNullException,
+    TablePropertiesConflictException,
+)
 from dlt.common.schema.typing import TStoredSchema, TTableSchema, TColumnSchema
 
 
 COL_1_HINTS: TColumnSchema = {  # type: ignore[typeddict-unknown-key]
-            "cluster": False,
-            "foreign_key": True,
-            "data_type": "text",
-            "name": "test",
-            "x-special": True,
-            "x-special-int": 100,
-            "nullable": False,
-            "x-special-bool": False,
-            "prop": None
-        }
+    "cluster": False,
+    "foreign_key": True,
+    "data_type": "text",
+    "name": "test",
+    "x-special": True,
+    "x-special-int": 100,
+    "nullable": False,
+    "x-special-bool": False,
+    "prop": None,
+}
 
 COL_1_HINTS_DEFAULTS: TColumnSchema = {  # type: ignore[typeddict-unknown-key]
-        'foreign_key': True,
-        'data_type': 'text',
-        'name': 'test',
-        'x-special': True,
-        'x-special-int': 100,
-        'nullable': False,
-        "x-special-bool": False,
-        }
-
-COL_2_HINTS: TColumnSchema = {
-    "nullable": True,
-    "name": "test_2",
-    "primary_key": False
+    "foreign_key": True,
+    "data_type": "text",
+    "name": "test",
+    "x-special": True,
+    "x-special-int": 100,
+    "nullable": False,
+    "x-special-bool": False,
 }
+
+COL_2_HINTS: TColumnSchema = {"nullable": True, "name": "test_2", "primary_key": False}
 
 
 def test_check_column_defaults() -> None:
@@ -77,21 +77,17 @@ def test_remove_defaults_stored_schema() -> None:
         "description": "description",
         "resource": "🦚Table",
         "x-special": 128,
-        "columns": {
-            "test": COL_1_HINTS,
-            "test_2": COL_2_HINTS
-        }
+        "columns": {"test": COL_1_HINTS, "test_2": COL_2_HINTS},
     }
     stored_schema: TStoredSchema = {  # type: ignore[typeddict-unknown-key]
         "name": "schema",
-        "tables": {
-            "table": deepcopy(table),
-            "table_copy": deepcopy(table)
-        },
-        "x-top-level": True
+        "tables": {"table": deepcopy(table), "table_copy": deepcopy(table)},
+        "x-top-level": True,
     }
     # mock the case in table_copy where resource == table_name
-    stored_schema["tables"]["table_copy"]["resource"] = stored_schema["tables"]["table_copy"]["name"] = "table_copy"
+    stored_schema["tables"]["table_copy"]["resource"] = stored_schema["tables"][
+        "table_copy"
+    ]["name"] = "table_copy"
 
     default_stored = utils.remove_defaults(stored_schema)
     # nullability always present
@@ -100,7 +96,9 @@ def test_remove_defaults_stored_schema() -> None:
     # not removed in complete column (as it was explicitly set to False)
     assert default_stored["tables"]["table"]["columns"]["test"]["cluster"] is False
     # not removed in incomplete one
-    assert default_stored["tables"]["table"]["columns"]["test_2"]["primary_key"] is False
+    assert (
+        default_stored["tables"]["table"]["columns"]["test_2"]["primary_key"] is False
+    )
     # resource present
     assert default_stored["tables"]["table"]["resource"] == "🦚Table"
     # resource removed because identical to table name
@@ -136,33 +134,37 @@ def test_new_incomplete_column() -> None:
 
 def test_merge_columns() -> None:
     # tab_b overrides non default
-    col_a = utils.merge_columns(copy(COL_1_HINTS), copy(COL_2_HINTS), merge_defaults=False)
+    col_a = utils.merge_columns(
+        copy(COL_1_HINTS), copy(COL_2_HINTS), merge_defaults=False
+    )
     # nullable is False - tab_b has it as default and those are not merged
     assert col_a == {
         "name": "test_2",
         "nullable": False,
-        'cluster': False,
-        'foreign_key': True,
-        'data_type': 'text',
-        'x-special': True,
-        'x-special-int': 100,
-        'x-special-bool': False,
-        'prop': None
+        "cluster": False,
+        "foreign_key": True,
+        "data_type": "text",
+        "x-special": True,
+        "x-special-int": 100,
+        "x-special-bool": False,
+        "prop": None,
     }
 
-    col_a = utils.merge_columns(copy(COL_1_HINTS), copy(COL_2_HINTS), merge_defaults=True)
+    col_a = utils.merge_columns(
+        copy(COL_1_HINTS), copy(COL_2_HINTS), merge_defaults=True
+    )
     # nullable is True and primary_key is present - default values are merged
     assert col_a == {
         "name": "test_2",
         "nullable": True,
-        'cluster': False,
-        'foreign_key': True,
-        'data_type': 'text',
-        'x-special': True,
-        'x-special-int': 100,
-        'x-special-bool': False,
-        'prop': None,
-        'primary_key': False
+        "cluster": False,
+        "foreign_key": True,
+        "data_type": "text",
+        "x-special": True,
+        "x-special-int": 100,
+        "x-special-bool": False,
+        "prop": None,
+        "primary_key": False,
     }
 
 
@@ -172,10 +174,7 @@ def test_diff_tables() -> None:
         "description": "description",
         "resource": "🦚Table",
         "x-special": 128,
-        "columns": {
-            "test": COL_1_HINTS,
-            "test_2": COL_2_HINTS
-        }
+        "columns": {"test": COL_1_HINTS, "test_2": COL_2_HINTS},
     }
     empty = utils.new_table("table")
     del empty["resource"]
@@ -196,7 +195,7 @@ def test_diff_tables() -> None:
     assert partial == {
         "name": "new name",
         "description": "new description",
-        "columns": {}
+        "columns": {},
     }
 
     # ignore identical table props
@@ -207,14 +206,14 @@ def test_diff_tables() -> None:
         "name": "new name",
         "description": "new description",
         "write_disposition": "append",
-        "columns": {}
+        "columns": {},
     }
     existing["write_disposition"] = "append"
     partial = utils.diff_tables(deepcopy(existing), changed)
     assert partial == {
         "name": "new name",
         "description": "new description",
-        "columns": {}
+        "columns": {},
     }
 
     # detect changed column
@@ -224,7 +223,11 @@ def test_diff_tables() -> None:
     partial = utils.diff_tables(existing, changed)
     assert "test" in partial["columns"]
     assert "test_2" not in partial["columns"]
-    assert existing["columns"]["test"] == table["columns"]["test"] != partial["columns"]["test"]
+    assert (
+        existing["columns"]["test"]
+        == table["columns"]["test"]
+        != partial["columns"]["test"]
+    )
 
     # defaults are not ignored
     existing = deepcopy(table)
@@ -249,10 +252,7 @@ def test_diff_tables_conflicts() -> None:
         "parent": "parent",
         "description": "description",
         "x-special": 128,
-        "columns": {
-            "test": COL_1_HINTS,
-            "test_2": COL_2_HINTS
-        }
+        "columns": {"test": COL_1_HINTS, "test_2": COL_2_HINTS},
     }
 
     other = utils.new_table("table_2")
@@ -274,10 +274,7 @@ def test_merge_tables() -> None:
         "description": "description",
         "resource": "🦚Table",
         "x-special": 128,
-        "columns": {
-            "test": COL_1_HINTS,
-            "test_2": COL_2_HINTS
-        }
+        "columns": {"test": COL_1_HINTS, "test_2": COL_2_HINTS},
     }
     changed = deepcopy(table)
     changed["x-special"] = 129  # type: ignore[typeddict-unknown-key]

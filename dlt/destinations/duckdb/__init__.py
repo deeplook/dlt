@@ -3,16 +3,30 @@ from typing import Type
 from dlt.common.schema.schema import Schema
 from dlt.common.configuration import with_config, known_sections
 from dlt.common.configuration.accessors import config
-from dlt.common.data_writers.escape import escape_postgres_identifier, escape_duckdb_literal
+from dlt.common.data_writers.escape import (
+    escape_postgres_identifier,
+    escape_duckdb_literal,
+)
 from dlt.common.destination import DestinationCapabilitiesContext
-from dlt.common.destination.reference import JobClientBase, DestinationClientConfiguration
+from dlt.common.destination.reference import (
+    JobClientBase,
+    DestinationClientConfiguration,
+)
 from dlt.common.arithmetics import DEFAULT_NUMERIC_PRECISION, DEFAULT_NUMERIC_SCALE
 
 from dlt.destinations.duckdb.configuration import DuckDbClientConfiguration
 
 
-@with_config(spec=DuckDbClientConfiguration, sections=(known_sections.DESTINATION, "duckdb",))
-def _configure(config: DuckDbClientConfiguration = config.value) -> DuckDbClientConfiguration:
+@with_config(
+    spec=DuckDbClientConfiguration,
+    sections=(
+        known_sections.DESTINATION,
+        "duckdb",
+    ),
+)
+def _configure(
+    config: DuckDbClientConfiguration = config.value,
+) -> DuckDbClientConfiguration:
     return config
 
 
@@ -39,7 +53,9 @@ def capabilities() -> DestinationCapabilitiesContext:
     return caps
 
 
-def client(schema: Schema, initial_config: DestinationClientConfiguration = config.value) -> JobClientBase:
+def client(
+    schema: Schema, initial_config: DestinationClientConfiguration = config.value
+) -> JobClientBase:
     # import client when creating instance so capabilities and config specs can be accessed without dependencies installed
     from dlt.destinations.duckdb.duck import DuckDbClient
 

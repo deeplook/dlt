@@ -65,13 +65,16 @@ class Model(BaseModel):
     json_any_field: Json[Any]
 
 
-
-@pytest.mark.parametrize('instance', [True, False])
+@pytest.mark.parametrize("instance", [True, False])
 def test_pydantic_model_to_columns(instance: bool) -> None:
     if instance:
         model = Model(
-            bigint_field=1, text_field="text", timestamp_field=datetime.now(),
-            date_field=date.today(), decimal_field=Decimal(1.1), double_field=1.1,
+            bigint_field=1,
+            text_field="text",
+            timestamp_field=datetime.now(),
+            date_field=date.today(),
+            decimal_field=Decimal(1.1),
+            double_field=1.1,
             time_field=time(1, 2, 3, 12345),
             nested_field=NestedModel(nested_field="nested"),
             list_field=["a", "b", "c"],
@@ -101,22 +104,22 @@ def test_pydantic_model_to_columns(instance: bool) -> None:
     assert result["double_field"]["data_type"] == "double"
     assert result["time_field"]["data_type"] == "time"
     assert result["nested_field"]["data_type"] == "complex"
-    assert result['list_field']['data_type'] == 'complex'
-    assert result['union_field']['data_type'] == 'bigint'
-    assert result['optional_field']['data_type'] == 'double'
-    assert result['optional_field']['nullable'] is True
-    assert result['blank_dict_field']['data_type'] == 'complex'
-    assert result['parametrized_dict_field']['data_type'] == 'complex'
-    assert result['str_enum_field']['data_type'] == 'text'
-    assert result['int_enum_field']['data_type'] == 'bigint'
-    assert result['mixed_enum_int_field']['data_type'] == 'text'
-    assert result['mixed_enum_str_field']['data_type'] == 'text'
-    assert result['json_field']['data_type'] == 'complex'
-    assert result['url_field']['data_type'] == 'text'
+    assert result["list_field"]["data_type"] == "complex"
+    assert result["union_field"]["data_type"] == "bigint"
+    assert result["optional_field"]["data_type"] == "double"
+    assert result["optional_field"]["nullable"] is True
+    assert result["blank_dict_field"]["data_type"] == "complex"
+    assert result["parametrized_dict_field"]["data_type"] == "complex"
+    assert result["str_enum_field"]["data_type"] == "text"
+    assert result["int_enum_field"]["data_type"] == "bigint"
+    assert result["mixed_enum_int_field"]["data_type"] == "text"
+    assert result["mixed_enum_str_field"]["data_type"] == "text"
+    assert result["json_field"]["data_type"] == "complex"
+    assert result["url_field"]["data_type"] == "text"
 
     # Any type fields are excluded from schema
-    assert 'any_field' not in result
-    assert 'json_any_field' not in result
+    assert "any_field" not in result
+    assert "json_any_field" not in result
 
 
 def test_pydantic_model_skip_complex_types() -> None:

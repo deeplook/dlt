@@ -6,21 +6,28 @@ class DltException(Exception):
         """Enables exceptions with parametrized constructor to be pickled"""
         return type(self).__new__, (type(self), *self.args), self.__dict__
 
+
 class UnsupportedProcessStartMethodException(DltException):
     def __init__(self, method: str) -> None:
         self.method = method
-        super().__init__(f"Process pool supports only fork start method, {method} not supported. Switch the pool type to threading")
+        super().__init__(
+            f"Process pool supports only fork start method, {method} not supported. Switch the pool type to threading"
+        )
 
 
 class CannotInstallDependencies(DltException):
-    def __init__(self, dependencies: Sequence[str], interpreter: str, output: AnyStr) -> None:
+    def __init__(
+        self, dependencies: Sequence[str], interpreter: str, output: AnyStr
+    ) -> None:
         self.dependencies = dependencies
         self.interpreter = interpreter
         if isinstance(output, bytes):
             str_output = output.decode("utf-8")
         else:
             str_output = output
-        super().__init__(f"Cannot install dependencies {', '.join(dependencies)} with {interpreter} and pip:\n{str_output}\n")
+        super().__init__(
+            f"Cannot install dependencies {', '.join(dependencies)} with {interpreter} and pip:\n{str_output}\n"
+        )
 
 
 class VenvNotFound(DltException):
@@ -49,13 +56,16 @@ class TerminalValueError(ValueError, TerminalException):
 
 class SignalReceivedException(KeyboardInterrupt, TerminalException):
     """Raises when signal comes. Derives from `BaseException` to not be caught in regular exception handlers."""
+
     def __init__(self, signal_code: int) -> None:
         self.signal_code = signal_code
         super().__init__(f"Signal {signal_code} received")
 
 
 class DictValidationException(DltException):
-    def __init__(self, msg: str, path: str, field: str = None, value: Any = None) -> None:
+    def __init__(
+        self, msg: str, path: str, field: str = None, value: Any = None
+    ) -> None:
         self.path = path
         self.field = field
         self.value = value
@@ -71,7 +81,9 @@ class ArgumentsOverloadException(DltException):
 
 
 class MissingDependencyException(DltException):
-    def __init__(self, caller: str, dependencies: Sequence[str], appendix: str = "") -> None:
+    def __init__(
+        self, caller: str, dependencies: Sequence[str], appendix: str = ""
+    ) -> None:
         self.caller = caller
         self.dependencies = dependencies
         super().__init__(self._get_msg(appendix))
@@ -87,7 +99,7 @@ You must install additional dependencies to run {self.caller}. If you use pip yo
         return msg
 
     def _to_pip_install(self) -> str:
-        return "\n".join([f"pip install \"{d}\"" for d in self.dependencies])
+        return "\n".join([f'pip install "{d}"' for d in self.dependencies])
 
 
 class SystemConfigurationException(DltException):
@@ -130,12 +142,18 @@ class DestinationTransientException(DestinationException, TransientException):
 class DestinationLoadingViaStagingNotSupported(DestinationTerminalException):
     def __init__(self, destination: str) -> None:
         self.destination = destination
-        super().__init__(f"Destination {destination} does not support loading via staging.")
+        super().__init__(
+            f"Destination {destination} does not support loading via staging."
+        )
+
 
 class DestinationLoadingWithoutStagingNotSupported(DestinationTerminalException):
     def __init__(self, destination: str) -> None:
         self.destination = destination
-        super().__init__(f"Destination {destination} does not support loading without staging.")
+        super().__init__(
+            f"Destination {destination} does not support loading without staging."
+        )
+
 
 class DestinationNoStagingMode(DestinationTerminalException):
     def __init__(self, destination: str) -> None:
@@ -144,7 +162,13 @@ class DestinationNoStagingMode(DestinationTerminalException):
 
 
 class DestinationIncompatibleLoaderFileFormatException(DestinationTerminalException):
-    def __init__(self, destination: str, staging: str, file_format: str, supported_formats: Iterable[str]) -> None:
+    def __init__(
+        self,
+        destination: str,
+        staging: str,
+        file_format: str,
+        supported_formats: Iterable[str],
+    ) -> None:
         self.destination = destination
         self.staging = staging
         self.file_format = file_format
@@ -161,20 +185,32 @@ class DestinationIncompatibleLoaderFileFormatException(DestinationTerminalExcept
 
 
 class IdentifierTooLongException(DestinationTerminalException):
-    def __init__(self, destination_name: str, identifier_type: str, identifier_name: str, max_identifier_length: int) -> None:
+    def __init__(
+        self,
+        destination_name: str,
+        identifier_type: str,
+        identifier_name: str,
+        max_identifier_length: int,
+    ) -> None:
         self.destination_name = destination_name
         self.identifier_type = identifier_type
         self.identifier_name = identifier_name
         self.max_identifier_length = max_identifier_length
-        super().__init__(f"The length of {identifier_type} {identifier_name} exceeds {max_identifier_length} allowed for {destination_name}")
+        super().__init__(
+            f"The length of {identifier_type} {identifier_name} exceeds {max_identifier_length} allowed for {destination_name}"
+        )
 
 
 class DestinationHasFailedJobs(DestinationTerminalException):
-    def __init__(self, destination_name: str, load_id: str, failed_jobs: List[Any]) -> None:
+    def __init__(
+        self, destination_name: str, load_id: str, failed_jobs: List[Any]
+    ) -> None:
         self.destination_name = destination_name
         self.load_id = load_id
         self.failed_jobs = failed_jobs
-        super().__init__(f"Destination {destination_name} has failed jobs in load package {load_id}")
+        super().__init__(
+            f"Destination {destination_name} has failed jobs in load package {load_id}"
+        )
 
 
 class PipelineException(DltException):
@@ -197,8 +233,10 @@ class PipelineStateNotAvailable(PipelineException):
 
 class ResourceNameNotAvailable(PipelineException):
     def __init__(self) -> None:
-        super().__init__(None,
-            "A resource state was requested but no active extract pipe context was found. Resource state may be only requested from @dlt.resource decorated function or with explicit resource name.")
+        super().__init__(
+            None,
+            "A resource state was requested but no active extract pipe context was found. Resource state may be only requested from @dlt.resource decorated function or with explicit resource name.",
+        )
 
 
 class SourceSectionNotAvailable(PipelineException):

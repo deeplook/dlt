@@ -2,14 +2,19 @@ import pytest
 import semver
 
 from dlt.common.storages.file_storage import FileStorage
-from dlt.common.storages.exceptions import NoMigrationPathException, WrongStorageVersionException
+from dlt.common.storages.exceptions import (
+    NoMigrationPathException,
+    WrongStorageVersionException,
+)
 from dlt.common.storages.versioned_storage import VersionedStorage
 
 from tests.utils import write_version, test_storage
 
 
 class MigratedStorage(VersionedStorage):
-    def migrate_storage(self, from_version: semver.VersionInfo, to_version: semver.VersionInfo) -> None:
+    def migrate_storage(
+        self, from_version: semver.VersionInfo, to_version: semver.VersionInfo
+    ) -> None:
         # migration example:
         if from_version == "1.0.0" and from_version < to_version:
             from_version = semver.VersionInfo.parse("1.1.0")

@@ -7,11 +7,13 @@ from airflow.configuration import conf
 from airflow.models.variable import Variable
 
 from dlt.common.configuration.container import Container
-from dlt.common.configuration.specs.config_providers_context import ConfigProvidersContext
+from dlt.common.configuration.specs.config_providers_context import (
+    ConfigProvidersContext,
+)
 from dlt.common.configuration.providers.toml import SECRETS_TOML_KEY
 
 
-@pytest.fixture(scope='function', autouse=True)
+@pytest.fixture(scope="function", autouse=True)
 def initialize_airflow_db():
     setup_airflow()
     # backup context providers
@@ -30,14 +32,14 @@ def initialize_airflow_db():
 def setup_airflow() -> None:
     # Disable loading examples
     try:
-        conf.add_section('core')
+        conf.add_section("core")
     except DuplicateSectionError:
         pass
-    conf.set('core', 'load_examples', 'False')
+    conf.set("core", "load_examples", "False")
     # Prepare the arguments for the initdb function
     args = argparse.Namespace()
     # becomes database/sql_alchemy_conn in apache 2.7.0
-    args.backend = conf.get(section='core', key='sql_alchemy_conn')
+    args.backend = conf.get(section="core", key="sql_alchemy_conn")
 
     # Run Airflow resetdb before running any tests
     args.yes = True

@@ -1,7 +1,11 @@
 from typing import Optional, Protocol, TypeVar, Generic, Type, Union, Any, List
 
 try:
-    from pydantic import BaseModel as PydanticBaseModel, ValidationError as PydanticValidationError, create_model
+    from pydantic import (
+        BaseModel as PydanticBaseModel,
+        ValidationError as PydanticValidationError,
+        create_model,
+    )
 except ModuleNotFoundError:
     PydanticBaseModel = None  # type: ignore[misc]
 
@@ -16,16 +20,19 @@ _TPydanticModel = TypeVar("_TPydanticModel", bound=PydanticBaseModel)
 
 class PydanticValidator(ValidateItem, Generic[_TPydanticModel]):
     model: Type[_TPydanticModel]
+
     def __init__(self, model: Type[_TPydanticModel]) -> None:
         self.model = model
 
         # Create a model for validating list of items in batch
         self.list_model = create_model(
             "List" + model.__name__,
-            items=(List[model], ...)  # type: ignore[valid-type]
+            items=(List[model], ...),  # type: ignore[valid-type]
         )
 
-    def __call__(self, item: TDataItems, meta: Any = None) -> Union[_TPydanticModel, List[_TPydanticModel]]:
+    def __call__(
+        self, item: TDataItems, meta: Any = None
+    ) -> Union[_TPydanticModel, List[_TPydanticModel]]:
         """Validate a data item against the pydantic model"""
         if item is None:
             return None
@@ -40,7 +47,13 @@ class PydanticValidator(ValidateItem, Generic[_TPydanticModel]):
         return f"PydanticValidator(model={self.model.__qualname__})"
 
 
-def get_column_validator(columns: TTableHintTemplate[TAnySchemaColumns]) -> Optional[ValidateItem]:
-    if PydanticBaseModel is not None and isinstance(columns, type) and issubclass(columns, PydanticBaseModel):
+def get_column_validator(
+    columns: TTableHintTemplate[TAnySchemaColumns],
+) -> Optional[ValidateItem]:
+    if (
+        PydanticBaseModel is not None
+        and isinstance(columns, type)
+        and issubclass(columns, PydanticBaseModel)
+    ):
         return PydanticValidator(columns)
     return None

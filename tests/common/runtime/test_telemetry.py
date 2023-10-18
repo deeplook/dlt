@@ -13,7 +13,13 @@ from dlt.version import DLT_PKG_NAME, __version__
 
 from tests.common.runtime.utils import mock_image_env, mock_github_env, mock_pod_env
 from tests.common.configuration.utils import environment
-from tests.utils import preserve_environ, skipifspawn, skipifwindows, init_test_logging, start_test_telemetry
+from tests.utils import (
+    preserve_environ,
+    skipifspawn,
+    skipifwindows,
+    init_test_logging,
+    start_test_telemetry,
+)
 
 
 @configspec
@@ -28,6 +34,7 @@ class SentryLoggerCriticalConfiguration(SentryLoggerConfiguration):
     log_level: str = "CRITICAL"
 
     if TYPE_CHECKING:
+
         def __init__(
             self,
             pipeline_name: str = "logger",
@@ -37,8 +44,10 @@ class SentryLoggerCriticalConfiguration(SentryLoggerConfiguration):
         ) -> None:
             ...
 
+
 def test_sentry_log_level() -> None:
     from dlt.common.runtime.sentry import _get_sentry_log_level
+
     sll = _get_sentry_log_level(SentryLoggerCriticalConfiguration(log_level="CRITICAL"))
     assert sll._handler.level == logging._nameToLevel["CRITICAL"]
     sll = _get_sentry_log_level(SentryLoggerCriticalConfiguration(log_level="ERROR"))
@@ -97,6 +106,8 @@ def test_cleanup(environment: DictStrStr) -> None:
 
 
 SENT_ITEMS = []
+
+
 def _mock_before_send(event: DictStrAny, _unused_hint: Any = None) -> DictStrAny:
     # print(event)
     SENT_ITEMS.append(event)

@@ -6,7 +6,12 @@ from dlt.common import json, logger
 from dlt.common.json import custom_pua_decode
 from dlt.common.runtime import signals
 from dlt.common.schema.typing import TTableSchemaColumns
-from dlt.common.storages import NormalizeStorage, LoadStorage, NormalizeStorageConfiguration, FileStorage
+from dlt.common.storages import (
+    NormalizeStorage,
+    LoadStorage,
+    NormalizeStorageConfiguration,
+    FileStorage,
+)
 from dlt.common.typing import TDataItem
 from dlt.common.schema import TSchemaUpdate, Schema
 from dlt.common.utils import TRowCount, merge_row_count, increase_row_count
@@ -122,13 +127,18 @@ class ParquetItemsNormalizer(ItemsNormalizer):
         root_table_name: str,
     ) -> Tuple[List[TSchemaUpdate], int, TRowCount]:
         from dlt.common.libs import pyarrow
+
         with normalize_storage.storage.open_file(extracted_items_file, "rb") as f:
             items_count = pyarrow.get_row_count(f)
-        target_folder = load_storage.storage.make_full_path(os.path.join(load_id, LoadStorage.NEW_JOBS_FOLDER))
+        target_folder = load_storage.storage.make_full_path(
+            os.path.join(load_id, LoadStorage.NEW_JOBS_FOLDER)
+        )
         parts = NormalizeStorage.parse_normalize_file_name(extracted_items_file)
-        new_file_name = load_storage.build_job_file_name(parts.table_name, parts.file_id, with_extension=True)
+        new_file_name = load_storage.build_job_file_name(
+            parts.table_name, parts.file_id, with_extension=True
+        )
         FileStorage.link_hard_with_fallback(
             normalize_storage.storage.make_full_path(extracted_items_file),
-            os.path.join(target_folder, new_file_name)
+            os.path.join(target_folder, new_file_name),
         )
         return [], items_count, {root_table_name: items_count}

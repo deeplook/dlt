@@ -42,11 +42,7 @@ def yml_case_path(name: str) -> str:
 
 
 def row_to_column_schemas(row: StrAny) -> TTableSchemaColumns:
-    return {k: {
-                "name": k,
-                "data_type": "text",
-                "nullable": False
-            } for k in row.keys()}
+    return {k: {"name": k, "data_type": "text", "nullable": False} for k in row.keys()}
 
 
 @pytest.fixture(autouse=True)
@@ -56,13 +52,17 @@ def restore_secret_storage_path() -> None:
 
 def load_secret(name: str) -> str:
     environ_provider.SECRET_STORAGE_PATH = "./tests/common/cases/secrets/%s"
-    secret, _ = environ_provider.EnvironProvider().get_value(name, environ_provider.TSecretValue, None)
+    secret, _ = environ_provider.EnvironProvider().get_value(
+        name, environ_provider.TSecretValue, None
+    )
     if not secret:
         raise FileNotFoundError(environ_provider.SECRET_STORAGE_PATH % name)
     return secret
 
 
-def modify_and_commit_file(repo_path: str, file_name: str, content: str = "NEW README CONTENT") -> Tuple[str, Commit]:
+def modify_and_commit_file(
+    repo_path: str, file_name: str, content: str = "NEW README CONTENT"
+) -> Tuple[str, Commit]:
     file_path = os.path.join(repo_path, file_name)
 
     with open(file_path, "w", encoding="utf-8") as f:
@@ -72,7 +72,9 @@ def modify_and_commit_file(repo_path: str, file_name: str, content: str = "NEW R
         # one file modified
         index = repo.index.entries
         assert len(index) > 0
-        assert any(e for e in index.keys() if os.path.join(*Path(e[0]).parts) == file_name)
+        assert any(
+            e for e in index.keys() if os.path.join(*Path(e[0]).parts) == file_name
+        )
         repo.index.add(file_name)
         commit = repo.index.commit(f"mod {file_name}")
 

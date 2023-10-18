@@ -5,12 +5,24 @@ from collections.abc import Mapping as C_Mapping
 
 from dlt.common.exceptions import MissingDependencyException
 from dlt.common.pipeline import reset_resource_state
-from dlt.common.schema.typing import TColumnNames, TAnySchemaColumns, TTableSchemaColumns
+from dlt.common.schema.typing import (
+    TColumnNames,
+    TAnySchemaColumns,
+    TTableSchemaColumns,
+)
 from dlt.common.typing import AnyFun, DictStrAny, TDataItem, TDataItems
 from dlt.common.utils import get_callable_name
-from dlt.extract.exceptions import InvalidResourceDataTypeFunctionNotAGenerator, InvalidStepFunctionArguments
+from dlt.extract.exceptions import (
+    InvalidResourceDataTypeFunctionNotAGenerator,
+    InvalidStepFunctionArguments,
+)
 
-from dlt.extract.typing import TTableHintTemplate, TDataItem, TFunHintTemplate, SupportsPipe
+from dlt.extract.typing import (
+    TTableHintTemplate,
+    TDataItem,
+    TFunHintTemplate,
+    SupportsPipe,
+)
 
 try:
     from dlt.common.libs import pydantic
@@ -18,7 +30,9 @@ except MissingDependencyException:
     pydantic = None
 
 
-def resolve_column_value(column_hint: TTableHintTemplate[TColumnNames], item: TDataItem) -> Union[Any, List[Any]]:
+def resolve_column_value(
+    column_hint: TTableHintTemplate[TColumnNames], item: TDataItem
+) -> Union[Any, List[Any]]:
     """Extract values from the data item given a column hint.
     Returns either a single value or list of values when hint is a composite.
     """
@@ -42,38 +56,49 @@ def ensure_table_schema_columns(columns: TAnySchemaColumns) -> TTableSchemaColum
         return columns
     elif isinstance(columns, Sequence):
         # Assume list of columns
-        return {col['name']: col for col in columns}
+        return {col["name"]: col for col in columns}
     elif pydantic is not None and (
-        isinstance(columns, pydantic.BaseModel) or issubclass(columns, pydantic.BaseModel)
+        isinstance(columns, pydantic.BaseModel)
+        or issubclass(columns, pydantic.BaseModel)
     ):
         return pydantic.pydantic_to_table_schema_columns(columns)
 
     raise ValueError(f"Unsupported columns type: {type(columns)}")
 
 
-def ensure_table_schema_columns_hint(columns: TTableHintTemplate[TAnySchemaColumns]) -> TTableHintTemplate[TTableSchemaColumns]:
+def ensure_table_schema_columns_hint(
+    columns: TTableHintTemplate[TAnySchemaColumns],
+) -> TTableHintTemplate[TTableSchemaColumns]:
     """Convert column schema hint to a hint returning `TTableSchemaColumns`.
     A callable hint is wrapped in another function which converts the original result.
     """
     if callable(columns) and not isinstance(columns, type):
+
         def wrapper(item: TDataItem) -> TTableSchemaColumns:
-            return ensure_table_schema_columns(cast(TFunHintTemplate[TAnySchemaColumns], columns)(item))
+            return ensure_table_schema_columns(
+                cast(TFunHintTemplate[TAnySchemaColumns], columns)(item)
+            )
+
         return wrapper
 
     return ensure_table_schema_columns(columns)
 
 
-def reset_pipe_state(pipe: SupportsPipe, source_state_: Optional[DictStrAny] = None) -> None:
+def reset_pipe_state(
+    pipe: SupportsPipe, source_state_: Optional[DictStrAny] = None
+) -> None:
     """Resets the resource state for a `pipe` and all its parent pipes"""
     if pipe.has_parent:
         reset_pipe_state(pipe.parent, source_state_)
     reset_resource_state(pipe.name, source_state_)
 
 
-def simulate_func_call(f: Union[Any, AnyFun], args_to_skip: int, *args: Any, **kwargs: Any) -> Tuple[inspect.Signature, inspect.Signature, inspect.BoundArguments]:
+def simulate_func_call(
+    f: Union[Any, AnyFun], args_to_skip: int, *args: Any, **kwargs: Any
+) -> Tuple[inspect.Signature, inspect.Signature, inspect.BoundArguments]:
     """Simulates a call to a resource or transformer function before it will be wrapped for later execution in the pipe
 
-       Returns a tuple with a `f` signature, modified signature in case of transformers and bound arguments
+    Returns a tuple with a `f` signature, modified signature in case of transformers and bound arguments
     """
     if not callable(f):
         # just provoke a call to raise default exception
@@ -90,21 +115,29 @@ def simulate_func_call(f: Union[Any, AnyFun], args_to_skip: int, *args: Any, **k
     return sig, no_item_sig, bound_args
 
 
-def check_compat_transformer(name: str, f: AnyFun, sig: inspect.Signature) -> inspect.Parameter:
+def check_compat_transformer(
+    name: str, f: AnyFun, sig: inspect.Signature
+) -> inspect.Parameter:
     sig_arg_count = len(sig.parameters)
     callable_name = get_callable_name(f)
     if sig_arg_count == 0:
-        raise InvalidStepFunctionArguments(name, callable_name, sig, "Function takes no arguments")
+        raise InvalidStepFunctionArguments(
+            name, callable_name, sig, "Function takes no arguments"
+        )
 
     # see if meta is present in kwargs
     meta_arg = next((p for p in sig.parameters.values() if p.name == "meta"), None)
     if meta_arg is not None:
         if meta_arg.kind not in (meta_arg.KEYWORD_ONLY, meta_arg.POSITIONAL_OR_KEYWORD):
-            raise InvalidStepFunctionArguments(name, callable_name, sig, "'meta' cannot be pos only argument '")
+            raise InvalidStepFunctionArguments(
+                name, callable_name, sig, "'meta' cannot be pos only argument '"
+            )
     return meta_arg
 
 
-def wrap_compat_transformer(name: str, f: AnyFun, sig: inspect.Signature, *args: Any, **kwargs: Any) -> AnyFun:
+def wrap_compat_transformer(
+    name: str, f: AnyFun, sig: inspect.Signature, *args: Any, **kwargs: Any
+) -> AnyFun:
     """Creates a compatible wrapper over transformer function. A pure transformer function expects data item in first argument and one keyword argument called `meta`"""
     check_compat_transformer(name, f, sig)
     if len(sig.parameters) == 2 and "meta" in sig.parameters:
@@ -121,7 +154,9 @@ def wrap_compat_transformer(name: str, f: AnyFun, sig: inspect.Signature, *args:
     return makefun.wraps(f, new_sig=inspect.signature(_tx_partial))(_tx_partial)  # type: ignore
 
 
-def wrap_resource_gen(name: str, f: AnyFun, sig: inspect.Signature, *args: Any, **kwargs: Any) -> AnyFun:
+def wrap_resource_gen(
+    name: str, f: AnyFun, sig: inspect.Signature, *args: Any, **kwargs: Any
+) -> AnyFun:
     """Wraps a generator or generator function so it is evaluated on extraction"""
     if inspect.isgeneratorfunction(inspect.unwrap(f)) or inspect.isgenerator(f):
         # if no arguments then no wrap

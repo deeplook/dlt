@@ -6,7 +6,9 @@ from dlt.common.configuration.specs import ConnectionStringCredentials
 from dlt.common.utils import digest128
 from dlt.common.typing import TSecretValue
 
-from dlt.common.destination.reference import DestinationClientDwhWithStagingConfiguration
+from dlt.common.destination.reference import (
+    DestinationClientDwhWithStagingConfiguration,
+)
 
 
 @configspec
@@ -21,7 +23,9 @@ class PostgresCredentials(ConnectionStringCredentials):
 
     def parse_native_representation(self, native_value: Any) -> None:
         super().parse_native_representation(native_value)
-        self.connect_timeout = int(self.query.get("connect_timeout", self.connect_timeout))
+        self.connect_timeout = int(
+            self.query.get("connect_timeout", self.connect_timeout)
+        )
         if not self.is_partial():
             self.resolve()
 
@@ -48,12 +52,13 @@ class PostgresClientConfiguration(DestinationClientDwhWithStagingConfiguration):
         return ""
 
     if TYPE_CHECKING:
+
         def __init__(
             self,
             destination_name: str = None,
             credentials: PostgresCredentials = None,
             dataset_name: str = None,
             default_schema_name: str = None,
-            create_indexes: bool = True
+            create_indexes: bool = True,
         ) -> None:
             ...

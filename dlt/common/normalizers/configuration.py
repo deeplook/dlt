@@ -15,7 +15,9 @@ class NormalizersConfiguration(BaseConfiguration):
 
     naming: Optional[str] = None
     json_normalizer: Optional[StrAny] = None
-    destination_capabilities: Optional[DestinationCapabilitiesContext] = None  # injectable
+    destination_capabilities: Optional[
+        DestinationCapabilitiesContext
+    ] = None  # injectable
 
     def on_resolved(self) -> None:
         # get naming from capabilities if not present
@@ -24,5 +26,8 @@ class NormalizersConfiguration(BaseConfiguration):
                 self.naming = self.destination_capabilities.naming_convention
 
     if TYPE_CHECKING:
-        def __init__(self, naming: str = None, json_normalizer: TJSONNormalizer = None) -> None:
+
+        def __init__(
+            self, naming: str = None, json_normalizer: TJSONNormalizer = None
+        ) -> None:
             ...

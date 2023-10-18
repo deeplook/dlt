@@ -3,17 +3,31 @@ from typing import Type
 from dlt.common.schema.schema import Schema
 from dlt.common.configuration import with_config, known_sections
 from dlt.common.configuration.accessors import config
-from dlt.common.data_writers.escape import escape_postgres_identifier, escape_mssql_literal
+from dlt.common.data_writers.escape import (
+    escape_postgres_identifier,
+    escape_mssql_literal,
+)
 from dlt.common.destination import DestinationCapabilitiesContext
-from dlt.common.destination.reference import JobClientBase, DestinationClientConfiguration
+from dlt.common.destination.reference import (
+    JobClientBase,
+    DestinationClientConfiguration,
+)
 from dlt.common.arithmetics import DEFAULT_NUMERIC_PRECISION, DEFAULT_NUMERIC_SCALE
 from dlt.common.wei import EVM_DECIMAL_PRECISION
 
 from dlt.destinations.mssql.configuration import MsSqlClientConfiguration
 
 
-@with_config(spec=MsSqlClientConfiguration, sections=(known_sections.DESTINATION, "mssql",))
-def _configure(config: MsSqlClientConfiguration = config.value) -> MsSqlClientConfiguration:
+@with_config(
+    spec=MsSqlClientConfiguration,
+    sections=(
+        known_sections.DESTINATION,
+        "mssql",
+    ),
+)
+def _configure(
+    config: MsSqlClientConfiguration = config.value,
+) -> MsSqlClientConfiguration:
     return config
 
 
@@ -32,7 +46,7 @@ def capabilities() -> DestinationCapabilitiesContext:
     caps.max_column_identifier_length = 128
     caps.max_query_length = 4 * 1024 * 64 * 1024
     caps.is_max_query_length_in_bytes = True
-    caps.max_text_data_type_length = 2 ** 30 - 1
+    caps.max_text_data_type_length = 2**30 - 1
     caps.is_max_text_data_type_length_in_bytes = False
     caps.supports_ddl_transactions = True
     caps.max_rows_per_insert = 1000
@@ -41,7 +55,9 @@ def capabilities() -> DestinationCapabilitiesContext:
     return caps
 
 
-def client(schema: Schema, initial_config: DestinationClientConfiguration = config.value) -> JobClientBase:
+def client(
+    schema: Schema, initial_config: DestinationClientConfiguration = config.value
+) -> JobClientBase:
     # import client when creating instance so capabilities and config specs can be accessed without dependencies installed
     from dlt.destinations.mssql.mssql import MsSqlClient
 

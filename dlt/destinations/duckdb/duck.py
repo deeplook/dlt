@@ -18,9 +18,7 @@ from dlt.destinations.duckdb.configuration import DuckDbClientConfiguration
 from dlt.destinations.type_mapping import TypeMapper
 
 
-HINT_TO_POSTGRES_ATTR: Dict[TColumnHint, str] = {
-    "unique": "UNIQUE"
-}
+HINT_TO_POSTGRES_ATTR: Dict[TColumnHint, str] = {"unique": "UNIQUE"}
 
 # duckdb cannot load PARQUET to the same table in parallel. so serialize it per table
 PARQUET_TABLE_LOCK = threading.Lock()
@@ -38,7 +36,7 @@ class DuckDbTypeMapper(TypeMapper):
         "timestamp": "TIMESTAMP WITH TIME ZONE",
         "bigint": "BIGINT",
         "binary": "BLOB",
-        "time": "TIME"
+        "time": "TIME",
     }
 
     sct_to_dbt = {
@@ -69,7 +67,9 @@ class DuckDbTypeMapper(TypeMapper):
         "TIMESTAMP_NS": "timestamp",
     }
 
-    def to_db_integer_type(self, precision: Optional[int], table_format: TTableFormat = None) -> str:
+    def to_db_integer_type(
+        self, precision: Optional[int], table_format: TTableFormat = None
+    ) -> str:
         if precision is None:
             return "BIGINT"
         # Precision is number of bits
@@ -83,7 +83,9 @@ class DuckDbTypeMapper(TypeMapper):
             return "BIGINT"
         return "HUGEINT"
 
-    def to_db_datetime_type(self, precision: Optional[int], table_format: TTableFormat = None) -> str:
+    def to_db_datetime_type(
+        self, precision: Optional[int], table_format: TTableFormat = None
+    ) -> str:
         if precision is None or precision == 6:
             return super().to_db_datetime_type(precision, table_format)
         if precision == 0:
@@ -92,9 +94,13 @@ class DuckDbTypeMapper(TypeMapper):
             return "TIMESTAMP_MS"
         if precision == 9:
             return "TIMESTAMP_NS"
-        raise TerminalValueError(f"timestamp {precision} cannot be mapped into duckdb TIMESTAMP typ")
+        raise TerminalValueError(
+            f"timestamp {precision} cannot be mapped into duckdb TIMESTAMP typ"
+        )
 
-    def from_db_type(self, db_type: str, precision: Optional[int], scale: Optional[int]) -> TColumnType:
+    def from_db_type(
+        self, db_type: str, precision: Optional[int], scale: Optional[int]
+    ) -> TColumnType:
         # duckdb provides the types with scale and precision
         db_type = db_type.split("(")[0].upper()
         if db_type == "DECIMAL":
@@ -104,7 +110,9 @@ class DuckDbTypeMapper(TypeMapper):
 
 
 class DuckDbCopyJob(LoadJob, FollowupJob):
-    def __init__(self, table_name: str, file_path: str, sql_client: DuckDbSqlClient) -> None:
+    def __init__(
+        self, table_name: str, file_path: str, sql_client: DuckDbSqlClient
+    ) -> None:
         super().__init__(FileStorage.get_file_name_from_file_path(file_path))
 
         qualified_table_name = sql_client.make_qualified_table_name(table_name)
@@ -114,7 +122,9 @@ class DuckDbCopyJob(LoadJob, FollowupJob):
             # lock when creating a new lock
             with PARQUET_TABLE_LOCK:
                 # create or get lock per table name
-                lock: threading.Lock = TABLES_LOCKS.setdefault(qualified_table_name, threading.Lock())
+                lock: threading.Lock = TABLES_LOCKS.setdefault(
+                    qualified_table_name, threading.Lock()
+                )
         elif file_path.endswith("jsonl"):
             # NOTE: loading JSON does not work in practice on duckdb: the missing keys fail the load instead of being interpreted as NULL
             source_format = "JSON"  # newline delimited, compression auto
@@ -125,8 +135,9 @@ class DuckDbCopyJob(LoadJob, FollowupJob):
 
         with maybe_context(lock):
             with sql_client.begin_transaction():
-                sql_client.execute_sql(f"COPY {qualified_table_name} FROM '{file_path}' ( FORMAT {source_format} {options});")
-
+                sql_client.execute_sql(
+                    f"COPY {qualified_table_name} FROM '{file_path}' ( FORMAT {source_format} {options});"
+                )
 
     def state(self) -> TLoadJobState:
         return "completed"
@@ -134,14 +145,13 @@ class DuckDbCopyJob(LoadJob, FollowupJob):
     def exception(self) -> str:
         raise NotImplementedError()
 
-class DuckDbClient(InsertValuesJobClient):
 
+class DuckDbClient(InsertValuesJobClient):
     capabilities: ClassVar[DestinationCapabilitiesContext] = capabilities()
 
     def __init__(self, schema: Schema, config: DuckDbClientConfiguration) -> None:
         sql_client = DuckDbSqlClient(
-            config.normalize_dataset_name(schema),
-            config.credentials
+            config.normalize_dataset_name(schema), config.credentials
         )
         super().__init__(schema, config, sql_client)
         self.config: DuckDbClientConfiguration = config
@@ -149,16 +159,26 @@ class DuckDbClient(InsertValuesJobClient):
         self.active_hints = HINT_TO_POSTGRES_ATTR if self.config.create_indexes else {}
         self.type_mapper = DuckDbTypeMapper(self.capabilities)
 
-    def start_file_load(self, table: TTableSchema, file_path: str, load_id: str) -> LoadJob:
+    def start_file_load(
+        self, table: TTableSchema, file_path: str, load_id: str
+    ) -> LoadJob:
         job = super().start_file_load(table, file_path, load_id)
         if not job:
             job = DuckDbCopyJob(table["name"], file_path, self.sql_client)
         return job
 
-    def _get_column_def_sql(self, c: TColumnSchema, table_format: TTableFormat = None) -> str:
-        hints_str = " ".join(self.active_hints.get(h, "") for h in self.active_hints.keys() if c.get(h, False) is True)
+    def _get_column_def_sql(
+        self, c: TColumnSchema, table_format: TTableFormat = None
+    ) -> str:
+        hints_str = " ".join(
+            self.active_hints.get(h, "")
+            for h in self.active_hints.keys()
+            if c.get(h, False) is True
+        )
         column_name = self.capabilities.escape_identifier(c["name"])
         return f"{column_name} {self.type_mapper.to_db_type(c)} {hints_str} {self._gen_not_null(c.get('nullable', True))}"
 
-    def _from_db_type(self, pq_t: str, precision: Optional[int], scale: Optional[int]) -> TColumnType:
+    def _from_db_type(
+        self, pq_t: str, precision: Optional[int], scale: Optional[int]
+    ) -> TColumnType:
         return self.type_mapper.from_db_type(pq_t, precision, scale)

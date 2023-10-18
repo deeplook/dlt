@@ -10,6 +10,7 @@ from dlt.common.storages.versioned_storage import VersionedStorage
 from dlt.common.destination import TLoaderFileFormat, ALL_SUPPORTED_FILE_FORMATS
 from dlt.common.exceptions import TerminalValueError
 
+
 class TParsedNormalizeFileName(NamedTuple):
     schema_name: str
     table_name: str
@@ -18,13 +19,22 @@ class TParsedNormalizeFileName(NamedTuple):
 
 
 class NormalizeStorage(VersionedStorage):
-
     STORAGE_VERSION: ClassVar[str] = "1.0.0"
-    EXTRACTED_FOLDER: ClassVar[str] = "extracted"  # folder within the volume where extracted files to be normalized are stored
+    EXTRACTED_FOLDER: ClassVar[
+        str
+    ] = "extracted"  # folder within the volume where extracted files to be normalized are stored
 
-    @with_config(spec=NormalizeStorageConfiguration, sections=(known_sections.NORMALIZE,))
-    def __init__(self, is_owner: bool, config: NormalizeStorageConfiguration = config.value) -> None:
-        super().__init__(NormalizeStorage.STORAGE_VERSION, is_owner, FileStorage(config.normalize_volume_path, "t", makedirs=is_owner))
+    @with_config(
+        spec=NormalizeStorageConfiguration, sections=(known_sections.NORMALIZE,)
+    )
+    def __init__(
+        self, is_owner: bool, config: NormalizeStorageConfiguration = config.value
+    ) -> None:
+        super().__init__(
+            NormalizeStorage.STORAGE_VERSION,
+            is_owner,
+            FileStorage(config.normalize_volume_path, "t", makedirs=is_owner),
+        )
         self.config = config
         if is_owner:
             self.initialize_storage()
@@ -43,7 +53,9 @@ class NormalizeStorage(VersionedStorage):
         return NormalizeStorage.parse_normalize_file_name(file_name).schema_name
 
     @staticmethod
-    def build_extracted_file_stem(schema_name: str, table_name: str, file_id: str) -> str:
+    def build_extracted_file_stem(
+        schema_name: str, table_name: str, file_id: str
+    ) -> str:
         # builds file name with the extracted data to be passed to normalize
         return f"{schema_name}.{table_name}.{file_id}"
 
@@ -54,7 +66,9 @@ class NormalizeStorage(VersionedStorage):
         parts = file_name_p.name.split(".")
         ext = parts[-1]
         if ext not in ALL_SUPPORTED_FILE_FORMATS:
-            raise TerminalValueError(f"File format {ext} not supported. Filename: {file_name}")
+            raise TerminalValueError(
+                f"File format {ext} not supported. Filename: {file_name}"
+            )
         return TParsedNormalizeFileName(*parts)  # type: ignore[arg-type]
 
     def delete_extracted_files(self, files: Sequence[str]) -> None:

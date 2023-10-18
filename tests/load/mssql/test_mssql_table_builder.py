@@ -5,12 +5,18 @@ import sqlfluff
 from dlt.common.utils import uniq_id
 from dlt.common.schema import Schema
 
-pytest.importorskip("dlt.destinations.mssql.mssql", reason="MSSQL ODBC driver not installed")
+pytest.importorskip(
+    "dlt.destinations.mssql.mssql", reason="MSSQL ODBC driver not installed"
+)
 
 from dlt.destinations.mssql.mssql import MsSqlClient
-from dlt.destinations.mssql.configuration import MsSqlClientConfiguration, MsSqlCredentials
+from dlt.destinations.mssql.configuration import (
+    MsSqlClientConfiguration,
+    MsSqlCredentials,
+)
 
 from tests.load.utils import TABLE_UPDATE
+
 
 @pytest.fixture
 def schema() -> Schema:
@@ -20,7 +26,12 @@ def schema() -> Schema:
 @pytest.fixture
 def client(schema: Schema) -> MsSqlClient:
     # return client without opening connection
-    return MsSqlClient(schema, MsSqlClientConfiguration(dataset_name="test_" + uniq_id(), credentials=MsSqlCredentials()))
+    return MsSqlClient(
+        schema,
+        MsSqlClientConfiguration(
+            dataset_name="test_" + uniq_id(), credentials=MsSqlCredentials()
+        ),
+    )
 
 
 def test_create_table(client: MsSqlClient) -> None:

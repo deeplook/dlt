@@ -47,7 +47,9 @@ class DBTCloudClientV2:
         results = response.json()
         return results
 
-    def post_endpoint(self, endpoint: str, json_body: Optional[Dict[Any, Any]] = None) -> Any:
+    def post_endpoint(
+        self, endpoint: str, json_body: Optional[Dict[Any, Any]] = None
+    ) -> Any:
         response = requests.post(
             f"{self.base_api_url}/{endpoint}",
             headers=self._headers,

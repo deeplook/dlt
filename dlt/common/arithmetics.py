@@ -1,7 +1,18 @@
-import decimal # noqa: I251
+import decimal  # noqa: I251
 from contextlib import contextmanager
 from typing import Iterator
-from decimal import ROUND_HALF_UP, Decimal, Inexact, DivisionByZero, DefaultContext, InvalidOperation, localcontext, Context, Subnormal, ConversionSyntax  # noqa: I251
+from decimal import (
+    ROUND_HALF_UP,
+    Decimal,
+    Inexact,
+    DivisionByZero,
+    DefaultContext,
+    InvalidOperation,
+    localcontext,
+    Context,
+    Subnormal,
+    ConversionSyntax,
+)  # noqa: I251
 
 
 DEFAULT_NUMERIC_PRECISION = 38
@@ -25,7 +36,9 @@ def default_context(c: Context, precision: int) -> Context:
 
 
 @contextmanager
-def numeric_default_context(precision: int = DEFAULT_NUMERIC_PRECISION) -> Iterator[Context]:
+def numeric_default_context(
+    precision: int = DEFAULT_NUMERIC_PRECISION,
+) -> Iterator[Context]:
     with localcontext() as c:
         yield default_context(c, precision)
 

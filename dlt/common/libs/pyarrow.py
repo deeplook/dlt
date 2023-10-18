@@ -12,13 +12,19 @@ try:
     import pyarrow
     import pyarrow.parquet
 except ModuleNotFoundError:
-    raise MissingDependencyException("DLT parquet Helpers", [f"{version.DLT_PKG_NAME}[parquet]"], "DLT Helpers for for parquet.")
+    raise MissingDependencyException(
+        "DLT parquet Helpers",
+        [f"{version.DLT_PKG_NAME}[parquet]"],
+        "DLT Helpers for for parquet.",
+    )
 
 
 TAnyArrowItem = Union[pyarrow.Table, pyarrow.RecordBatch]
 
 
-def get_py_arrow_datatype(column: TColumnType, caps: DestinationCapabilitiesContext, tz: str) -> Any:
+def get_py_arrow_datatype(
+    column: TColumnType, caps: DestinationCapabilitiesContext, tz: str
+) -> Any:
     column_type = column["data_type"]
     if column_type == "text":
         return pyarrow.string()
@@ -27,7 +33,9 @@ def get_py_arrow_datatype(column: TColumnType, caps: DestinationCapabilitiesCont
     elif column_type == "bool":
         return pyarrow.bool_()
     elif column_type == "timestamp":
-        return get_py_arrow_timestamp(column.get("precision") or caps.timestamp_precision, tz)
+        return get_py_arrow_timestamp(
+            column.get("precision") or caps.timestamp_precision, tz
+        )
     elif column_type == "bigint":
         return get_pyarrow_int(column.get("precision"))
     elif column_type == "binary":
@@ -37,7 +45,11 @@ def get_py_arrow_datatype(column: TColumnType, caps: DestinationCapabilitiesCont
         return pyarrow.string()
     elif column_type == "decimal":
         precision, scale = column.get("precision"), column.get("scale")
-        precision_tuple = (precision, scale) if precision is not None and scale is not None else caps.decimal_precision
+        precision_tuple = (
+            (precision, scale)
+            if precision is not None and scale is not None
+            else caps.decimal_precision
+        )
         return get_py_arrow_numeric(precision_tuple)
     elif column_type == "wei":
         return get_py_arrow_numeric(caps.wei_precision)
@@ -91,8 +103,7 @@ def get_pyarrow_int(precision: Optional[int]) -> Any:
 
 
 def _get_column_type_from_py_arrow(dtype: pyarrow.DataType) -> TColumnType:
-    """Returns (data_type, precision, scale) tuple from pyarrow.DataType
-    """
+    """Returns (data_type, precision, scale) tuple from pyarrow.DataType"""
     if pyarrow.types.is_string(dtype) or pyarrow.types.is_large_string(dtype):
         return dict(data_type="text")
     elif pyarrow.types.is_floating(dtype):
@@ -124,7 +135,7 @@ def _get_column_type_from_py_arrow(dtype: pyarrow.DataType) -> TColumnType:
         return dict(data_type="time", precision=precision)
     elif pyarrow.types.is_integer(dtype):
         result: TColumnType = dict(data_type="bigint")
-        if dtype.bit_width != 64: # 64bit is a default bigint
+        if dtype.bit_width != 64:  # 64bit is a default bigint
             result["precision"] = dtype.bit_width
         return result
     elif pyarrow.types.is_fixed_size_binary(dtype):

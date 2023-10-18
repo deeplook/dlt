@@ -1,15 +1,17 @@
-
 import dlt
 
 
 def test_schema_updates() -> None:
-    p = dlt.pipeline(pipeline_name="test_schema_updates", full_refresh=True, destination="dummy")
+    p = dlt.pipeline(
+        pipeline_name="test_schema_updates", full_refresh=True, destination="dummy"
+    )
 
     @dlt.source()
     def source():
         @dlt.resource()
         def resource():
-            yield [1,2,3]
+            yield [1, 2, 3]
+
         return resource
 
     # test without normalizer attributes
@@ -21,11 +23,7 @@ def test_schema_updates() -> None:
     s = source()
     p.run(s, table_name="items", write_disposition="merge")
     assert p.default_schema._normalizers_config["json"]["config"] == {
-        "propagation": {
-            "tables": {
-                "items": {'_dlt_id': '_dlt_root_id'}
-            }
-        }
+        "propagation": {"tables": {"items": {"_dlt_id": "_dlt_root_id"}}}
     }
 
     # set root key
@@ -34,10 +32,8 @@ def test_schema_updates() -> None:
     p.run(s, table_name="items", write_disposition="merge")
     assert p.default_schema._normalizers_config["json"]["config"] == {
         "propagation": {
-            "tables": {
-                "items": {'_dlt_id': '_dlt_root_id'}
-            },
-            "root": {'_dlt_id': '_dlt_root_id'}
+            "tables": {"items": {"_dlt_id": "_dlt_root_id"}},
+            "root": {"_dlt_id": "_dlt_root_id"},
         }
     }
 
@@ -47,10 +43,8 @@ def test_schema_updates() -> None:
     p.run(s, table_name="items", write_disposition="merge")
     assert p.default_schema._normalizers_config["json"]["config"] == {
         "propagation": {
-            "tables": {
-                "items": {'_dlt_id': '_dlt_root_id'}
-            },
-            "root": {'_dlt_id': '_dlt_root_id'}
+            "tables": {"items": {"_dlt_id": "_dlt_root_id"}},
+            "root": {"_dlt_id": "_dlt_root_id"},
         }
     }
 
@@ -60,12 +54,10 @@ def test_schema_updates() -> None:
     p.run(s, table_name="items", write_disposition="merge")
     assert p.default_schema._normalizers_config["json"]["config"] == {
         "propagation": {
-            "tables": {
-                "items": {'_dlt_id': '_dlt_root_id'}
-            },
-            "root": {'_dlt_id': '_dlt_root_id'}
+            "tables": {"items": {"_dlt_id": "_dlt_root_id"}},
+            "root": {"_dlt_id": "_dlt_root_id"},
         },
-        "max_nesting": 5
+        "max_nesting": 5,
     }
 
     # update max nesting and new table
@@ -75,10 +67,10 @@ def test_schema_updates() -> None:
     assert p.default_schema._normalizers_config["json"]["config"] == {
         "propagation": {
             "tables": {
-                "items": {'_dlt_id': '_dlt_root_id'},
-                "items2": {'_dlt_id': '_dlt_root_id'},
+                "items": {"_dlt_id": "_dlt_root_id"},
+                "items2": {"_dlt_id": "_dlt_root_id"},
             },
-            "root": {'_dlt_id': '_dlt_root_id'}
+            "root": {"_dlt_id": "_dlt_root_id"},
         },
-        "max_nesting": 50
+        "max_nesting": 50,
     }

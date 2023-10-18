@@ -10,7 +10,9 @@ from dlt.common.runners import TRunMetrics, Runnable, workermethod
 from dlt.common.utils import uniq_id
 
 # remove fork-server because it hangs the tests no CI
-ALL_METHODS = set(multiprocessing.get_all_start_methods()).intersection(['fork', 'spawn'])
+ALL_METHODS = set(multiprocessing.get_all_start_methods()).intersection(
+    ["fork", "spawn"]
+)
 
 
 @pytest.fixture(autouse=True)
@@ -38,7 +40,9 @@ class _TestRunnableWorkerMethod(Runnable[Pool]):
     def _run(self, pool: Pool) -> List[Tuple[int, str, int]]:
         rid = id(self)
         assert rid in _TestRunnableWorkerMethod.RUNNING
-        self.rv = rv = pool.starmap(_TestRunnableWorkerMethod.worker, [(rid, i) for i in range(self.tasks)])
+        self.rv = rv = pool.starmap(
+            _TestRunnableWorkerMethod.worker, [(rid, i) for i in range(self.tasks)]
+        )
         assert rid in _TestRunnableWorkerMethod.RUNNING
         return rv
 
@@ -62,7 +66,9 @@ class _TestRunnableWorker(Runnable[Pool]):
         return (v, os.getpid())
 
     def _run(self, pool: Pool) -> List[Tuple[int, int]]:
-        self.rv = rv = pool.starmap(_TestRunnableWorker.worker, [(i, ) for i in range(self.tasks)])
+        self.rv = rv = pool.starmap(
+            _TestRunnableWorker.worker, [(i,) for i in range(self.tasks)]
+        )
         return rv
 
     def run(self, pool: Pool) -> TRunMetrics:

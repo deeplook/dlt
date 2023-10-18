@@ -5,7 +5,10 @@ import pytest
 from dlt.common.configuration.inject import with_config
 
 from dlt.common import pendulum
-from dlt.common.configuration.specs import AzureCredentials, AzureCredentialsWithoutDefaults
+from dlt.common.configuration.specs import (
+    AzureCredentials,
+    AzureCredentialsWithoutDefaults,
+)
 from dlt.common.storages import fsspec_from_config, FilesystemConfiguration
 from dlt.common.storages.fsspec_filesystem import MTIME_DISPATCH, glob_files
 from dlt.common.utils import uniq_id
@@ -23,13 +26,16 @@ def test_filesystem_configuration() -> None:
     config = FilesystemConfiguration(bucket_url="az://root")
     assert config.protocol == "az"
     # print(config.resolve_credentials_type())
-    assert config.resolve_credentials_type() == Union[AzureCredentialsWithoutDefaults, AzureCredentials]
+    assert (
+        config.resolve_credentials_type()
+        == Union[AzureCredentialsWithoutDefaults, AzureCredentials]
+    )
     # make sure that only bucket_url and credentials are there
-    assert dict(config) == {'bucket_url': 'az://root', 'credentials': None}
+    assert dict(config) == {"bucket_url": "az://root", "credentials": None}
 
 
 def test_filesystem_instance(all_buckets_env: str) -> None:
-    bucket_url = os.environ['DESTINATION__FILESYSTEM__BUCKET_URL']
+    bucket_url = os.environ["DESTINATION__FILESYSTEM__BUCKET_URL"]
     config = get_config()
     assert bucket_url.startswith(config.protocol)
     filesystem, url = fsspec_from_config(config)
@@ -52,7 +58,7 @@ def test_filesystem_instance(all_buckets_env: str) -> None:
 
 @pytest.mark.parametrize("load_content", (True, False))
 def test_filesystem_dict(all_buckets_env: str, load_content: bool) -> None:
-    bucket_url = os.environ['DESTINATION__FILESYSTEM__BUCKET_URL']
+    bucket_url = os.environ["DESTINATION__FILESYSTEM__BUCKET_URL"]
     config = get_config()
     if config.protocol in ["memory", "file"]:
         pytest.skip(f"{config.protocol} not supported in this test")
@@ -60,7 +66,9 @@ def test_filesystem_dict(all_buckets_env: str, load_content: bool) -> None:
     filesystem, _ = fsspec_from_config(config)
     # use glob to get data
     try:
-        all_file_items = list(glob_files(filesystem, posixpath.join(bucket_url, glob_folder, "samples")))
+        all_file_items = list(
+            glob_files(filesystem, posixpath.join(bucket_url, glob_folder, "samples"))
+        )
         assert_sample_files(all_file_items, filesystem, config, load_content)
     except NotImplementedError as ex:
         pytest.skip("Skipping due to " + str(ex))
