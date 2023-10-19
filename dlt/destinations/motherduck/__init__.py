@@ -51,9 +51,7 @@ def capabilities() -> DestinationCapabilitiesContext:
     return caps
 
 
-def client(
-    schema: Schema, initial_config: DestinationClientConfiguration = config.value
-) -> JobClientBase:
+def client(schema: Schema, initial_config: DestinationClientConfiguration = config.value) -> JobClientBase:
     # import client when creating instance so capabilities and config specs can be accessed without dependencies installed
     from dlt.destinations.motherduck.motherduck import MotherDuckClient
 

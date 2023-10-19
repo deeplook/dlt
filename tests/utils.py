@@ -46,15 +46,11 @@ NON_SQL_DESTINATIONS = {"filesystem", "weaviate", "dummy", "motherduck"}
 SQL_DESTINATIONS = IMPLEMENTED_DESTINATIONS - NON_SQL_DESTINATIONS
 
 # exclude destination configs (for now used for athena and athena iceberg separation)
-EXCLUDED_DESTINATION_CONFIGURATIONS = set(
-    dlt.config.get("EXCLUDED_DESTINATION_CONFIGURATIONS", list) or set()
-)
+EXCLUDED_DESTINATION_CONFIGURATIONS = set(dlt.config.get("EXCLUDED_DESTINATION_CONFIGURATIONS", list) or set())
 
 
 # filter out active destinations for current tests
-ACTIVE_DESTINATIONS = set(
-    dlt.config.get("ACTIVE_DESTINATIONS", list) or IMPLEMENTED_DESTINATIONS
-)
+ACTIVE_DESTINATIONS = set(dlt.config.get("ACTIVE_DESTINATIONS", list) or IMPLEMENTED_DESTINATIONS)
 
 ACTIVE_SQL_DESTINATIONS = SQL_DESTINATIONS.intersection(ACTIVE_DESTINATIONS)
 ACTIVE_NON_SQL_DESTINATIONS = NON_SQL_DESTINATIONS.intersection(ACTIVE_DESTINATIONS)
@@ -63,19 +59,13 @@ ACTIVE_NON_SQL_DESTINATIONS = NON_SQL_DESTINATIONS.intersection(ACTIVE_DESTINATI
 assert len(ACTIVE_DESTINATIONS) >= 0, "No active destinations selected"
 
 for destination in NON_SQL_DESTINATIONS:
-    assert (
-        destination in IMPLEMENTED_DESTINATIONS
-    ), f"Unknown non sql destination {destination}"
+    assert destination in IMPLEMENTED_DESTINATIONS, f"Unknown non sql destination {destination}"
 
 for destination in SQL_DESTINATIONS:
-    assert (
-        destination in IMPLEMENTED_DESTINATIONS
-    ), f"Unknown sql destination {destination}"
+    assert destination in IMPLEMENTED_DESTINATIONS, f"Unknown sql destination {destination}"
 
 for destination in ACTIVE_DESTINATIONS:
-    assert (
-        destination in IMPLEMENTED_DESTINATIONS
-    ), f"Unknown active destination {destination}"
+    assert destination in IMPLEMENTED_DESTINATIONS, f"Unknown active destination {destination}"
 
 
 def TEST_DICT_CONFIG_PROVIDER():
@@ -185,9 +175,7 @@ def start_test_telemetry(c: RunConfiguration = None):
     start_telemetry(c)
 
 
-def clean_test_storage(
-    init_normalize: bool = False, init_loader: bool = False, mode: str = "t"
-) -> FileStorage:
+def clean_test_storage(init_normalize: bool = False, init_loader: bool = False, mode: str = "t") -> FileStorage:
     storage = FileStorage(TEST_STORAGE_ROOT, mode, makedirs=True)
     storage.delete_folder("", recursively=True, delete_ro=True)
     storage.create_folder(".")
@@ -212,41 +200,25 @@ def assert_no_dict_key_starts_with(d: StrAny, key_prefix: str) -> None:
 
 
 def skip_if_not_active(destination: str) -> None:
-    assert (
-        destination in IMPLEMENTED_DESTINATIONS
-    ), f"Unknown skipped destination {destination}"
+    assert destination in IMPLEMENTED_DESTINATIONS, f"Unknown skipped destination {destination}"
     if destination not in ACTIVE_DESTINATIONS:
-        pytest.skip(
-            f"{destination} not in ACTIVE_DESTINATIONS", allow_module_level=True
-        )
+        pytest.skip(f"{destination} not in ACTIVE_DESTINATIONS", allow_module_level=True)
 
 
 def is_running_in_github_fork() -> bool:
     is_github_actions = os.environ.get("GITHUB_ACTIONS") == "true"
     head_ref = os.environ.get("GITHUB_HEAD_REF", "")
     repo = os.environ.get("GITHUB_REPOSITORY", "")
-    return (
-        is_github_actions
-        and ":" in head_ref
-        and not head_ref.startswith(repo.split("/")[0])
-    )
+    return is_github_actions and ":" in head_ref and not head_ref.startswith(repo.split("/")[0])
 
 
-skipifspawn = pytest.mark.skipif(
-    multiprocessing.get_start_method() != "fork", reason="process fork not supported"
-)
+skipifspawn = pytest.mark.skipif(multiprocessing.get_start_method() != "fork", reason="process fork not supported")
 
-skipifpypy = pytest.mark.skipif(
-    platform.python_implementation() == "PyPy", reason="won't run in PyPy interpreter"
-)
+skipifpypy = pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="won't run in PyPy interpreter")
 
-skipifnotwindows = pytest.mark.skipif(
-    platform.system() != "Windows", reason="runs only on windows"
-)
+skipifnotwindows = pytest.mark.skipif(platform.system() != "Windows", reason="runs only on windows")
 
-skipifwindows = pytest.mark.skipif(
-    platform.system() == "Windows", reason="does not runs on windows"
-)
+skipifwindows = pytest.mark.skipif(platform.system() == "Windows", reason="does not runs on windows")
 
 skipifgithubfork = pytest.mark.skipif(
     is_running_in_github_fork(),

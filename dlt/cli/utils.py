@@ -25,9 +25,7 @@ LOCAL_COMMAND_REPO_FOLDER = "repos"
 MODULE_INIT = "__init__.py"
 
 
-def parse_init_script(
-    command: str, script_source: str, init_script_name: str
-) -> PipelineScriptVisitor:
+def parse_init_script(command: str, script_source: str, init_script_name: str) -> PipelineScriptVisitor:
     # parse the script first
     tree = ast.parse(source=script_source)
     set_ast_parents(tree)
@@ -50,15 +48,12 @@ def ensure_git_command(command: str) -> None:
             raise
         raise CliCommandException(
             command,
-            "'git' command is not available. Install and setup git with the following the guide %s"
-            % "https://docs.github.com/en/get-started/quickstart/set-up-git",
+            "'git' command is not available. Install and setup git with the following the guide %s" % "https://docs.github.com/en/get-started/quickstart/set-up-git",
             imp_ex,
         ) from imp_ex
 
 
-def track_command(
-    command: str, track_before: bool, *args: str
-) -> Callable[[TFun], TFun]:
+def track_command(command: str, track_before: bool, *args: str) -> Callable[[TFun], TFun]:
     return with_telemetry("command", command, track_before, *args)
 
 

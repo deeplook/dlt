@@ -24,9 +24,7 @@ def parallel_config_snippet() -> None:
 
     # this prevents process pool to run the initialization code again
     if __name__ == "__main__" or "PYTEST_CURRENT_TEST" in os.environ:
-        pipeline = dlt.pipeline(
-            "parallel_load", destination="duckdb", full_refresh=True
-        )
+        pipeline = dlt.pipeline("parallel_load", destination="duckdb", full_refresh=True)
         pipeline.extract(read_table(1000000))
 
         # we should have 11 files (10 pieces for `table` and 1 for state)

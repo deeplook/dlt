@@ -81,9 +81,7 @@ class Collector(ABC):
         self._start(self.step)
         return self
 
-    def __exit__(
-        self, exc_type: Type[BaseException], exc_val: BaseException, exc_tb: Any
-    ) -> None:
+    def __exit__(self, exc_type: Type[BaseException], exc_val: BaseException, exc_tb: Any) -> None:
         self._stop()
 
 
@@ -202,10 +200,7 @@ class LogCollector(Collector):
 
     def maybe_log(self) -> None:
         current_time = time.time()
-        if (
-            self.last_log_time is None
-            or current_time - self.last_log_time >= self.log_period
-        ):
+        if self.last_log_time is None or current_time - self.last_log_time >= self.log_period:
             self.dump_counters()
             self.last_log_time = current_time
 
@@ -222,14 +217,10 @@ class LogCollector(Collector):
             items_per_second = (count / elapsed_time) if elapsed_time > 0 else 0
 
             progress = f"{count}/{info.total}" if info.total is not None else f"{count}"
-            percentage = (
-                f"({count / info.total * 100:.1f}%)" if info.total is not None else ""
-            )
+            percentage = f"({count / info.total * 100:.1f}%)" if info.total is not None else ""
             elapsed_time_str = f"{elapsed_time:.2f}s"
             items_per_second_str = f"{items_per_second:.2f}/s"
-            message = (
-                f"[{self.messages[name]}]" if self.messages[name] is not None else ""
-            )
+            message = f"[{self.messages[name]}]" if self.messages[name] is not None else ""
 
             counter_line = f"{info.description}: {progress} {percentage} | Time: {elapsed_time_str} | Rate: {items_per_second_str} {message}"
             log_lines.append(counter_line.strip())
@@ -242,9 +233,7 @@ class LogCollector(Collector):
             current_mem = mem_info.rss / (1024**2)  # Convert to MB
             mem_percent = psutil.virtual_memory().percent
             cpu_percent = process.cpu_percent()
-            log_lines.append(
-                f"Memory usage: {current_mem:.2f} MB ({mem_percent:.2f}%) | CPU usage: {cpu_percent:.2f}%"
-            )
+            log_lines.append(f"Memory usage: {current_mem:.2f} MB ({mem_percent:.2f}%) | CPU usage: {cpu_percent:.2f}%")
 
         log_lines.append("")
         log_message = "\n".join(log_lines)
@@ -282,9 +271,7 @@ class TqdmCollector(Collector):
             global tqdm
             from tqdm import tqdm
         except ModuleNotFoundError:
-            raise MissingDependencyException(
-                "TqdmCollector", ["tqdm"], "We need tqdm to display progress bars."
-            )
+            raise MissingDependencyException("TqdmCollector", ["tqdm"], "We need tqdm to display progress bars.")
         self.single_bar = single_bar
         self._bars: Dict[str, tqdm[None]] = {}
         self.tqdm_kwargs = tqdm_kwargs or {}
@@ -427,9 +414,7 @@ class EnlightenCollector(Collector):
             if len(self._bars) > 0 and self.single_bar:
                 # do not add any more counters
                 return
-            bar = self._manager.counter(
-                desc=name, total=total, leave=True, force=True, **self.enlighten_kwargs
-            )
+            bar = self._manager.counter(desc=name, total=total, leave=True, force=True, **self.enlighten_kwargs)
             bar.refresh()
             self._bars[key] = bar
         bar.update(inc)
@@ -437,9 +422,7 @@ class EnlightenCollector(Collector):
     def _start(self, step: str) -> None:
         self._bars = {}
         self._manager = enlighten.get_manager(enabled=True)
-        self._status = self._manager.status_bar(
-            leave=True, justify=enlighten.Justify.CENTER, fill="="
-        )
+        self._status = self._manager.status_bar(leave=True, justify=enlighten.Justify.CENTER, fill="=")
         self._status.update(step)
 
     def _stop(self) -> None:

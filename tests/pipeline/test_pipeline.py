@@ -62,9 +62,7 @@ def test_default_pipeline() -> None:
     possible_names = ["dlt_pytest", "dlt_pipeline"]
     possible_dataset_names = ["dlt_pytest_dataset", "dlt_pipeline_dataset"]
     assert p.pipeline_name in possible_names
-    assert p.pipelines_dir == os.path.abspath(
-        os.path.join(TEST_STORAGE_ROOT, ".dlt", "pipelines")
-    )
+    assert p.pipelines_dir == os.path.abspath(os.path.join(TEST_STORAGE_ROOT, ".dlt", "pipelines"))
     assert p.runtime_config.pipeline_name == p.pipeline_name
     # dataset that will be used to load data is the pipeline name
     assert p.dataset_name in possible_dataset_names
@@ -226,18 +224,12 @@ def test_create_pipeline_all_destinations(
     caps = p._container[DestinationCapabilitiesContext]
     print(caps.naming_convention)
     # are right naming conventions created
-    assert p._default_naming.max_length == min(
-        caps.max_column_identifier_length, caps.max_identifier_length
-    )
+    assert p._default_naming.max_length == min(caps.max_column_identifier_length, caps.max_identifier_length)
     p.extract([1, "2", 3], table_name="data")
     # is default schema with right naming convention
-    assert p.default_schema.naming.max_length == min(
-        caps.max_column_identifier_length, caps.max_identifier_length
-    )
+    assert p.default_schema.naming.max_length == min(caps.max_column_identifier_length, caps.max_identifier_length)
     p.normalize()
-    assert p.default_schema.naming.max_length == min(
-        caps.max_column_identifier_length, caps.max_identifier_length
-    )
+    assert p.default_schema.naming.max_length == min(caps.max_column_identifier_length, caps.max_identifier_length)
 
 
 def test_destination_explicit_credentials(environment: Any) -> None:
@@ -286,9 +278,7 @@ def test_destination_explicit_credentials(environment: Any) -> None:
     assert config.credentials.is_resolved()
 
 
-@pytest.mark.skip(
-    reason="does not work on CI. probably takes right credentials from somewhere...."
-)
+@pytest.mark.skip(reason="does not work on CI. probably takes right credentials from somewhere....")
 def test_destination_explicit_invalid_credentials_filesystem(environment: Any) -> None:
     # if string cannot be parsed
     p = dlt.pipeline(
@@ -320,9 +310,7 @@ def test_disable_enable_state_sync(environment: Any) -> None:
     def some_data():
         yield [1, 2, 3]
 
-    s = DltSource(
-        "default", "module", dlt.Schema("default"), [dlt.resource(some_data())]
-    )
+    s = DltSource("default", "module", dlt.Schema("default"), [dlt.resource(some_data())])
     dlt.pipeline().extract(s)
     storage = ExtractorStorage(p._normalize_storage_config)
     assert len(storage.list_files_to_normalize_sorted()) == 1
@@ -332,9 +320,7 @@ def test_disable_enable_state_sync(environment: Any) -> None:
 
     p.config.restore_from_destination = True
     # extract to different schema, state must go to default schema
-    s = DltSource(
-        "default_2", "module", dlt.Schema("default_2"), [dlt.resource(some_data())]
-    )
+    s = DltSource("default_2", "module", dlt.Schema("default_2"), [dlt.resource(some_data())])
     dlt.pipeline().extract(s)
     expect_extracted_file(storage, "default", s.schema.state_table_name, "***")
 
@@ -808,9 +794,7 @@ def _get_shuffled_events():
         yield issues
 
 
-@pytest.mark.parametrize(
-    "github_resource", (github_repo_events_table_meta, github_repo_events)
-)
+@pytest.mark.parametrize("github_resource", (github_repo_events_table_meta, github_repo_events))
 def test_dispatch_rows_to_tables(github_resource: DltResource):
     os.environ["COMPLETED_PROB"] = "1.0"
     pipeline_name = "pipe_" + uniq_id()
@@ -821,17 +805,10 @@ def test_dispatch_rows_to_tables(github_resource: DltResource):
 
     # get all expected tables
     events = list(_get_shuffled_events)
-    expected_tables = set(
-        map(lambda e: p.default_schema.naming.normalize_identifier(e["type"]), events)
-    )
+    expected_tables = set(map(lambda e: p.default_schema.naming.normalize_identifier(e["type"]), events))
 
     # all the tables present
-    assert (
-        expected_tables.intersection(
-            [t["name"] for t in p.default_schema.data_tables()]
-        )
-        == expected_tables
-    )
+    assert expected_tables.intersection([t["name"] for t in p.default_schema.data_tables()]) == expected_tables
 
     # all the columns have primary keys and merge disposition derived from resource
     for table in p.default_schema.data_tables():
@@ -1052,10 +1029,7 @@ def test_extract_add_tables() -> None:
     assert s.resources["🦚Peacock"].compute_table_schema()["resource"] == "🦚Peacock"
     # only name will be normalized
     assert s.resources["🦚Peacock"].compute_table_schema()["name"] == "🦚Peacock"
-    assert (
-        s.resources["💰Budget"].compute_table_schema()["columns"]["🔑book_id"]["name"]
-        == "🔑book_id"
-    )
+    assert s.resources["💰Budget"].compute_table_schema()["columns"]["🔑book_id"]["name"] == "🔑book_id"
     pipeline = dlt.pipeline(pipeline_name="emojis", destination="dummy")
     info = pipeline.extract(s)
     assert info.extract_data_info[0]["name"] == "airtable_emojis"
@@ -1317,9 +1291,7 @@ def test_resource_rename_same_table():
 
 @pytest.mark.parametrize("file_format", ("parquet", "insert_values", "jsonl"))
 def test_columns_hint_with_file_formats(file_format: TLoaderFileFormat) -> None:
-    @dlt.resource(
-        write_disposition="replace", columns=[{"name": "text", "data_type": "text"}]
-    )
+    @dlt.resource(write_disposition="replace", columns=[{"name": "text", "data_type": "text"}])
     def generic(start=8):
         yield [{"id": idx, "text": "A" * idx} for idx in range(start, start + 10)]
 

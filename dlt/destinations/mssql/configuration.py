@@ -26,9 +26,7 @@ class MsSqlCredentials(ConnectionStringCredentials):
     def parse_native_representation(self, native_value: Any) -> None:
         # TODO: Support ODBC connection string or sqlalchemy URL
         super().parse_native_representation(native_value)
-        self.connect_timeout = int(
-            self.query.get("connect_timeout", self.connect_timeout)
-        )
+        self.connect_timeout = int(self.query.get("connect_timeout", self.connect_timeout))
         if not self.is_partial():
             self.resolve()
 
@@ -60,10 +58,7 @@ class MsSqlCredentials(ConnectionStringCredentials):
             if driver in available_drivers:
                 return driver
         docs_url = "https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver16"
-        raise SystemConfigurationException(
-            f"No supported ODBC driver found for MS SQL Server.  "
-            f"See {docs_url} for information on how to install the '{supported_drivers[0]}' on your platform."
-        )
+        raise SystemConfigurationException(f"No supported ODBC driver found for MS SQL Server.  " f"See {docs_url} for information on how to install the '{supported_drivers[0]}' on your platform.")
 
     def to_odbc_dsn(self) -> str:
         params = {

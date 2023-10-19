@@ -18,20 +18,14 @@ from tests.helpers.dbt_tests.local.utils import (
 )
 
 DESTINATION_DATASET_NAME = "test_" + uniq_id()
-ALL_DBT_DESTINATIONS = [
-    DBTDestinationInfo("bigquery", "CREATE TABLE", "MERGE")
-]  # DBTDestinationInfo("redshift", "SELECT", "INSERT")
+ALL_DBT_DESTINATIONS = [DBTDestinationInfo("bigquery", "CREATE TABLE", "MERGE")]  # DBTDestinationInfo("redshift", "SELECT", "INSERT")
 ALL_DBT_DESTINATIONS_NAMES = ["bigquery"]  # "redshift",
 
 
-@pytest.fixture(
-    scope="module", params=ALL_DBT_DESTINATIONS, ids=ALL_DBT_DESTINATIONS_NAMES
-)
+@pytest.fixture(scope="module", params=ALL_DBT_DESTINATIONS, ids=ALL_DBT_DESTINATIONS_NAMES)
 def destination_info(request: Any) -> Iterator[DBTDestinationInfo]:
     # this resolves credentials and sets up env for dbt then deletes temp datasets
-    with setup_rasa_runner_client(
-        request.param.destination_name, DESTINATION_DATASET_NAME
-    ):
+    with setup_rasa_runner_client(request.param.destination_name, DESTINATION_DATASET_NAME):
         # yield DBTDestinationInfo
         yield request.param
 
@@ -77,24 +71,17 @@ def test_reinitialize_package() -> None:
     runner = setup_rasa_runner("redshift")
     runner.ensure_newest_package()
     # mod the package
-    readme_path, _ = modify_and_commit_file(
-        runner.package_path, "README.md", content=runner.config.package_profiles_dir
-    )
+    readme_path, _ = modify_and_commit_file(runner.package_path, "README.md", content=runner.config.package_profiles_dir)
     assert os.path.isfile(readme_path)
     # this will wipe out old package and clone again
     runner.ensure_newest_package()
     # we have old file back
-    assert (
-        runner.repo_storage.load(f"{runner.cloned_package_name}/README.md")
-        != runner.config.package_profiles_dir
-    )
+    assert runner.repo_storage.load(f"{runner.cloned_package_name}/README.md") != runner.config.package_profiles_dir
 
 
 def test_dbt_test_no_raw_schema(destination_info: DBTDestinationInfo) -> None:
     # force non existing dataset
-    runner = setup_rasa_runner(
-        destination_info.destination_name, "jm_dev_2" + uniq_id()
-    )
+    runner = setup_rasa_runner(destination_info.destination_name, "jm_dev_2" + uniq_id())
     # source test should not pass
     with pytest.raises(PrerequisitesException) as prq_ex:
         runner.run_all(
@@ -115,23 +102,11 @@ def test_dbt_run_full_refresh(destination_info: DBTDestinationInfo) -> None:
         additional_vars={"user_id": "metadata__user_id"},
         source_tests_selector="tag:prerequisites",
     )
-    assert (
-        all(
-            r.message.startswith(destination_info.replace_strategy) for r in run_results
-        )
-        is True
-    )
+    assert all(r.message.startswith(destination_info.replace_strategy) for r in run_results) is True
     assert find_run_result(run_results, "_loads") is not None
     # all models must be SELECT as we do full refresh
-    assert find_run_result(run_results, "_loads").message.startswith(
-        destination_info.replace_strategy
-    )
-    assert (
-        all(
-            m.message.startswith(destination_info.replace_strategy) for m in run_results
-        )
-        is True
-    )
+    assert find_run_result(run_results, "_loads").message.startswith(destination_info.replace_strategy)
+    assert all(m.message.startswith(destination_info.replace_strategy) for m in run_results) is True
 
     # all tests should pass
     runner.test(
@@ -186,9 +161,7 @@ def test_dbt_incremental_schema_out_of_sync_error(
     )
     # metrics: StrStr = get_metrics_from_prometheus([runner.model_exec_info])["dbtrunner_model_status_info"]
     # full refresh on interactions
-    assert find_run_result(results, "interactions").message.startswith(
-        destination_info.replace_strategy
-    )
+    assert find_run_result(results, "interactions").message.startswith(destination_info.replace_strategy)
 
     # now incremental load should happen
     results = runner.run(

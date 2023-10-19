@@ -30,9 +30,7 @@ def test_pipeline_command_operations(repo_dir: str, project_files: FileStorage) 
         print(e)
 
     # now run the pipeline
-    os.environ.pop(
-        "DESTINATION__DUCKDB__CREDENTIALS", None
-    )  # settings from local project (secrets.toml etc.)
+    os.environ.pop("DESTINATION__DUCKDB__CREDENTIALS", None)  # settings from local project (secrets.toml etc.)
     venv = Venv.restore_current()
     try:
         print(venv.run_script("chess_pipeline.py"))
@@ -122,9 +120,7 @@ def test_pipeline_command_operations(repo_dir: str, project_files: FileStorage) 
 
     with io.StringIO() as buf, contextlib.redirect_stdout(buf):
         with echo.always_choose(False, True):
-            pipeline_command.pipeline_command(
-                "drop", "chess_pipeline", None, 0, resources=["players_games"]
-            )
+            pipeline_command.pipeline_command("drop", "chess_pipeline", None, 0, resources=["players_games"])
 
         _out = buf.getvalue()
         assert "Selected resource(s): ['players_games']" in _out
@@ -156,9 +152,7 @@ def test_pipeline_command_operations(repo_dir: str, project_files: FileStorage) 
         assert "players_profiles" not in pipeline.default_schema.tables
 
 
-def test_pipeline_command_failed_jobs(
-    repo_dir: str, project_files: FileStorage
-) -> None:
+def test_pipeline_command_failed_jobs(repo_dir: str, project_files: FileStorage) -> None:
     init_command.init_command("chess", "dummy", False, repo_dir)
 
     try:

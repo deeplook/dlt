@@ -125,19 +125,11 @@ class LoadInfo(NamedTuple):
 
         msg += f"The {self.destination_name} destination used {self.destination_displayable_credentials} location to store data"
         for load_package in self.load_packages:
-            cstr = (
-                load_package.state.upper()
-                if load_package.completed_at
-                else "NOT COMPLETED"
-            )
+            cstr = load_package.state.upper() if load_package.completed_at else "NOT COMPLETED"
             # now enumerate all complete loads if we have any failed packages
             # complete but failed job will not raise any exceptions
             failed_jobs = load_package.jobs["failed_jobs"]
-            jobs_str = (
-                "no failed jobs"
-                if not failed_jobs
-                else f"{len(failed_jobs)} FAILED job(s)!"
-            )
+            jobs_str = "no failed jobs" if not failed_jobs else f"{len(failed_jobs)} FAILED job(s)!"
             msg += f"\nLoad package {load_package.load_id} is {cstr} and contains {jobs_str}"
             if verbosity > 0:
                 for failed_job in failed_jobs:
@@ -160,9 +152,7 @@ class LoadInfo(NamedTuple):
         for load_package in self.load_packages:
             failed_jobs = load_package.jobs["failed_jobs"]
             if len(failed_jobs):
-                raise DestinationHasFailedJobs(
-                    self.destination_name, load_package.load_id, failed_jobs
-                )
+                raise DestinationHasFailedJobs(self.destination_name, load_package.load_id, failed_jobs)
 
     def __str__(self) -> str:
         return self.asstr(verbosity=1)
@@ -316,9 +306,7 @@ class StateInjectableContext(ContainerInjectableContext):
             ...
 
 
-def pipeline_state(
-    container: Container, initial_default: TPipelineState = None
-) -> Tuple[TPipelineState, bool]:
+def pipeline_state(container: Container, initial_default: TPipelineState = None) -> Tuple[TPipelineState, bool]:
     """Gets value of the state from context or active pipeline, if none found returns `initial_default`
 
     Injected state is called "writable": it is injected by the `Pipeline` class and all the changes will be persisted.
@@ -396,9 +384,7 @@ def source_state() -> DictStrAny:
 _last_full_state: TPipelineState = None
 
 
-def _delete_source_state_keys(
-    key: TAnyJsonPath, source_state_: Optional[DictStrAny] = None, /
-) -> None:
+def _delete_source_state_keys(key: TAnyJsonPath, source_state_: Optional[DictStrAny] = None, /) -> None:
     """Remove one or more key from the source state.
     The `key` can be any number of keys and/or json paths to be removed.
     """
@@ -406,9 +392,7 @@ def _delete_source_state_keys(
     delete_matches(key, state_)
 
 
-def resource_state(
-    resource_name: str = None, source_state_: Optional[DictStrAny] = None, /
-) -> DictStrAny:
+def resource_state(resource_name: str = None, source_state_: Optional[DictStrAny] = None, /) -> DictStrAny:
     """Returns a dictionary with the resource-scoped state. Resource-scoped state is visible only to resource requesting the access. Dlt state is preserved across pipeline runs and may be used to implement incremental loads.
 
     Note that this function accepts the resource name as optional argument. There are rare cases when `dlt` is not able to resolve resource name due to requesting function
@@ -461,9 +445,7 @@ def resource_state(
     return state_.setdefault("resources", {}).setdefault(resource_name, {})  # type: ignore
 
 
-def reset_resource_state(
-    resource_name: str, source_state_: Optional[DictStrAny] = None, /
-) -> None:
+def reset_resource_state(resource_name: str, source_state_: Optional[DictStrAny] = None, /) -> None:
     """Resets the resource state with name `resource_name` by removing it from `source_state`
 
     Args:
@@ -475,9 +457,7 @@ def reset_resource_state(
         state_["resources"].pop(resource_name)
 
 
-def _get_matching_resources(
-    pattern: REPattern, source_state_: Optional[DictStrAny] = None, /
-) -> List[str]:
+def _get_matching_resources(pattern: REPattern, source_state_: Optional[DictStrAny] = None, /) -> List[str]:
     """Get all resource names in state matching the regex pattern"""
     state_ = source_state() if source_state_ is None else source_state_
     if "resources" not in state_:

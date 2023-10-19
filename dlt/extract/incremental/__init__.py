@@ -169,9 +169,7 @@ class Incremental(ItemTransform[TDataItem], BaseConfiguration, Generic[TCursorVa
             )
 
     @classmethod
-    def from_existing_state(
-        cls, resource_name: str, cursor_path: str
-    ) -> "Incremental[TCursorValue]":
+    def from_existing_state(cls, resource_name: str, cursor_path: str) -> "Incremental[TCursorValue]":
         """Create Incremental instance from existing state."""
         state = Incremental._get_state(resource_name, cursor_path)
         i = cls(cursor_path, state["initial_value"])
@@ -180,9 +178,7 @@ class Incremental(ItemTransform[TDataItem], BaseConfiguration, Generic[TCursorVa
 
     def copy(self) -> "Incremental[TCursorValue]":
         # preserve Generic param information
-        constructor = (
-            self.__orig_class__ if hasattr(self, "__orig_class__") else self.__class__
-        )
+        constructor = self.__orig_class__ if hasattr(self, "__orig_class__") else self.__class__
         return constructor(  # type: ignore
             self.cursor_path,
             initial_value=self.initial_value,
@@ -202,38 +198,24 @@ class Incremental(ItemTransform[TDataItem], BaseConfiguration, Generic[TCursorVa
         >>>
         >>> my_resource(updated=incremental(initial_value='2023-01-01', end_value='2023-02-01'))
         """
-        kwargs = dict(
-            self, last_value_func=self.last_value_func, primary_key=self.primary_key
-        )
-        for key, value in dict(
-            other, last_value_func=other.last_value_func, primary_key=other.primary_key
-        ).items():
+        kwargs = dict(self, last_value_func=self.last_value_func, primary_key=self.primary_key)
+        for key, value in dict(other, last_value_func=other.last_value_func, primary_key=other.primary_key).items():
             if value is not None:
                 kwargs[key] = value
         # preserve Generic param information
         if hasattr(self, "__orig_class__"):
             constructor = self.__orig_class__
         else:
-            constructor = (
-                other.__orig_class__
-                if hasattr(other, "__orig_class__")
-                else other.__class__
-            )
+            constructor = other.__orig_class__ if hasattr(other, "__orig_class__") else other.__class__
         constructor = extract_inner_type(constructor)
         return constructor(**kwargs)  # type: ignore
 
     def on_resolved(self) -> None:
         self.cursor_path_p = compile_path(self.cursor_path)
         if self.end_value is not None and self.initial_value is None:
-            raise ConfigurationValueError(
-                "Incremental 'end_value' was specified without 'initial_value'. 'initial_value' is required when using 'end_value'."
-            )
+            raise ConfigurationValueError("Incremental 'end_value' was specified without 'initial_value'. 'initial_value' is required when using 'end_value'.")
         # Ensure end value is "higher" than initial value
-        if (
-            self.end_value is not None
-            and self.last_value_func([self.end_value, self.initial_value])
-            != self.end_value
-        ):
+        if self.end_value is not None and self.last_value_func([self.end_value, self.initial_value]) != self.end_value:
             if self.last_value_func in (min, max):
                 adject = "higher" if self.last_value_func is max else "lower"
                 msg = f"Incremental 'initial_value' ({self.initial_value}) is {adject} than 'end_value` ({self.end_value}). 'end_value' must be {adject} than 'initial_value'"
@@ -271,9 +253,7 @@ class Incremental(ItemTransform[TDataItem], BaseConfiguration, Generic[TCursorVa
                 "unique_hashes": [],
             }
 
-        self._cached_state = Incremental._get_state(
-            self.resource_name, self.cursor_path
-        )
+        self._cached_state = Incremental._get_state(self.resource_name, self.cursor_path)
         if len(self._cached_state) == 0:
             # set the default like this, setdefault evaluates the default no matter if it is needed or not. and our default is heavy
             self._cached_state.update(
@@ -287,11 +267,7 @@ class Incremental(ItemTransform[TDataItem], BaseConfiguration, Generic[TCursorVa
 
     @staticmethod
     def _get_state(resource_name: str, cursor_path: str) -> IncrementalColumnState:
-        state: IncrementalColumnState = (
-            resource_state(resource_name)
-            .setdefault("incremental", {})
-            .setdefault(cursor_path, {})
-        )
+        state: IncrementalColumnState = resource_state(resource_name).setdefault("incremental", {}).setdefault(cursor_path, {})
         # if state params is empty
         return state
 
@@ -300,9 +276,7 @@ class Incremental(ItemTransform[TDataItem], BaseConfiguration, Generic[TCursorVa
         s = self.get_state()
         return s["last_value"]  # type: ignore
 
-    def _transform_item(
-        self, transformer: IncrementalTransformer, row: TDataItem
-    ) -> Optional[TDataItem]:
+    def _transform_item(self, transformer: IncrementalTransformer, row: TDataItem) -> Optional[TDataItem]:
         row, start_out_of_range, end_out_of_range = transformer(row)
         self.start_out_of_range = start_out_of_range
         self.end_out_of_range = end_out_of_range
@@ -324,9 +298,7 @@ class Incremental(ItemTransform[TDataItem], BaseConfiguration, Generic[TCursorVa
             if param_type is not Any:
                 data_type = py_type_to_sc_type(param_type)
         except Exception as ex:
-            logger.warning(
-                f"Specified Incremental last value type {param_type} is not supported. Please use DateTime, Date, float, int or str to join external schedulers.({ex})"
-            )
+            logger.warning(f"Specified Incremental last value type {param_type} is not supported. Please use DateTime, Date, float, int or str to join external schedulers.({ex})")
 
         if param_type is Any:
             logger.warning(
@@ -335,9 +307,7 @@ class Incremental(ItemTransform[TDataItem], BaseConfiguration, Generic[TCursorVa
             )
             return
 
-        def _ensure_airflow_end_date(
-            start_date: pendulum.DateTime, end_date: pendulum.DateTime
-        ) -> Optional[pendulum.DateTime]:
+        def _ensure_airflow_end_date(start_date: pendulum.DateTime, end_date: pendulum.DateTime) -> Optional[pendulum.DateTime]:
             """if end_date is in the future or same as start date (manual run), set it to None so dlt state is used for incremental loading"""
             now = pendulum.now()
             if end_date is None or end_date > now or start_date == end_date:
@@ -350,9 +320,7 @@ class Incremental(ItemTransform[TDataItem], BaseConfiguration, Generic[TCursorVa
 
             context = get_current_context()
             start_date = context["data_interval_start"]
-            end_date = _ensure_airflow_end_date(
-                start_date, context["data_interval_end"]
-            )
+            end_date = _ensure_airflow_end_date(start_date, context["data_interval_end"])
             self.initial_value = coerce_from_date_types(data_type, start_date)
             if end_date is not None:
                 self.end_value = coerce_from_date_types(data_type, end_date)
@@ -363,9 +331,7 @@ class Incremental(ItemTransform[TDataItem], BaseConfiguration, Generic[TCursorVa
             )
             return
         except TypeError as te:
-            logger.warning(
-                f"Could not coerce Airflow execution dates into the last value type {param_type}. ({te})"
-            )
+            logger.warning(f"Could not coerce Airflow execution dates into the last value type {param_type}. ({te})")
         except Exception:
             pass
 
@@ -388,9 +354,7 @@ class Incremental(ItemTransform[TDataItem], BaseConfiguration, Generic[TCursorVa
             self._join_external_scheduler()
         # set initial value from last value, in case of a new state those are equal
         self.start_value = self.last_value
-        logger.info(
-            f"Bind incremental on {self.resource_name} with initial_value: {self.initial_value}, start_value: {self.start_value}, end_value: {self.end_value}"
-        )
+        logger.info(f"Bind incremental on {self.resource_name} with initial_value: {self.initial_value}, start_value: {self.start_value}, end_value: {self.end_value}")
         # cache state
         self._cached_state = self.get_state()
         self._make_transformers()
@@ -417,11 +381,7 @@ class Incremental(ItemTransform[TDataItem], BaseConfiguration, Generic[TCursorVa
         transformer.primary_key = self.primary_key
 
         if isinstance(rows, list):
-            return [
-                item
-                for item in (self._transform_item(transformer, row) for row in rows)
-                if item is not None
-            ]
+            return [item for item in (self._transform_item(transformer, row) for row in rows) if item is not None]
         return self._transform_item(transformer, rows)
 
 
@@ -430,9 +390,7 @@ class IncrementalResourceWrapper(ItemTransform[TDataItem]):
     """Keeps the injectable incremental"""
     _resource_name: str = None
 
-    def __init__(
-        self, primary_key: Optional[TTableHintTemplate[TColumnNames]] = None
-    ) -> None:
+    def __init__(self, primary_key: Optional[TTableHintTemplate[TColumnNames]] = None) -> None:
         """Creates a wrapper over a resource function that accepts Incremental instance in its argument to perform incremental loading.
 
         The wrapper delays instantiation of the Incremental to the moment of actual execution and is currently used by `dlt.resource` decorator.
@@ -456,9 +414,7 @@ class IncrementalResourceWrapper(ItemTransform[TDataItem]):
         for p in sig.parameters.values():
             annotation = extract_inner_type(p.annotation)
             annotation = get_origin(annotation) or annotation
-            if (
-                inspect.isclass(annotation) and issubclass(annotation, Incremental)
-            ) or isinstance(p.default, Incremental):
+            if (inspect.isclass(annotation) and issubclass(annotation, Incremental)) or isinstance(p.default, Incremental):
                 incremental_param = p
                 break
         return incremental_param
@@ -466,9 +422,7 @@ class IncrementalResourceWrapper(ItemTransform[TDataItem]):
     def wrap(self, sig: inspect.Signature, func: TFun) -> TFun:
         """Wrap the callable to inject an `Incremental` object configured for the resource."""
         incremental_param = self.get_incremental_arg(sig)
-        assert (
-            incremental_param
-        ), "Please use `should_wrap` to decide if to call this function"
+        assert incremental_param, "Please use `should_wrap` to decide if to call this function"
 
         @wraps(func)
         def _wrap(*args: Any, **kwargs: Any) -> Any:
@@ -499,11 +453,7 @@ class IncrementalResourceWrapper(ItemTransform[TDataItem]):
                     return func(*bound_args.args, **bound_args.kwargs)
                 raise ValueError(f"{p.name} Incremental has no default")
             # pass Generic information from annotation to new_incremental
-            if (
-                not hasattr(new_incremental, "__orig_class__")
-                and p.annotation
-                and get_args(p.annotation)
-            ):
+            if not hasattr(new_incremental, "__orig_class__") and p.annotation and get_args(p.annotation):
                 new_incremental.__orig_class__ = p.annotation  # type: ignore
 
             # set the incremental only if not yet set or if it was passed explicitly
@@ -536,9 +486,7 @@ class IncrementalResourceWrapper(ItemTransform[TDataItem]):
         self._resource_name = pipe.name
         if self._incremental:
             if self._allow_external_schedulers is not None:
-                self._incremental.allow_external_schedulers = (
-                    self._allow_external_schedulers
-                )
+                self._incremental.allow_external_schedulers = self._allow_external_schedulers
             self._incremental.bind(pipe)
         return self
 

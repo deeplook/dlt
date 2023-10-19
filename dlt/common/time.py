@@ -13,15 +13,11 @@ FUTURE_TIMESTAMP: float = 9999999999.0
 DAY_DURATION_SEC: float = 24 * 60 * 60.0
 
 
-def timestamp_within(
-    timestamp: float, min_exclusive: Optional[float], max_inclusive: Optional[float]
-) -> bool:
+def timestamp_within(timestamp: float, min_exclusive: Optional[float], max_inclusive: Optional[float]) -> bool:
     """
     check if timestamp within range uniformly treating none and range inclusiveness
     """
-    return timestamp > (min_exclusive or PAST_TIMESTAMP) and timestamp <= (
-        max_inclusive or FUTURE_TIMESTAMP
-    )
+    return timestamp > (min_exclusive or PAST_TIMESTAMP) and timestamp <= (max_inclusive or FUTURE_TIMESTAMP)
 
 
 def timestamp_before(timestamp: float, max_inclusive: Optional[float]) -> bool:
@@ -128,9 +124,7 @@ def ensure_pendulum_time(value: Union[str, datetime.time]) -> pendulum.Time:
     raise TypeError(f"Cannot coerce {value} to a pendulum.Time object.")
 
 
-def _datetime_from_ts_or_iso(
-    value: Union[int, float, str]
-) -> Union[pendulum.DateTime, pendulum.Date, pendulum.Time]:
+def _datetime_from_ts_or_iso(value: Union[int, float, str]) -> Union[pendulum.DateTime, pendulum.Date, pendulum.Time]:
     if isinstance(value, (int, float)):
         return pendulum.from_timestamp(value)
     try:

@@ -21,9 +21,7 @@ def setup_loader(dataset_name: str) -> Load:
 
 
 @contextmanager
-def perform_load(
-    dataset_name: str, cases: Sequence[str], write_disposition: str = "append"
-) -> Iterator[Tuple[FilesystemClient, List[LoadJob], str, str]]:
+def perform_load(dataset_name: str, cases: Sequence[str], write_disposition: str = "append") -> Iterator[Tuple[FilesystemClient, List[LoadJob], str, str]]:
     load = setup_loader(dataset_name)
     load_id, schema = prepare_load_package(load.load_storage, cases, write_disposition)
     client: FilesystemClient = load.get_destination_client(schema)  # type: ignore[assignment]

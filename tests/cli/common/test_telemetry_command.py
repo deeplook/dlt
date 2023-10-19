@@ -35,9 +35,7 @@ def test_main_telemetry_command(test_storage: FileStorage) -> None:
     glob_ctx = ConfigProvidersContext()
     glob_ctx.providers = _initial_providers()
 
-    with set_working_dir(
-        test_storage.make_full_path("project")
-    ), Container().injectable_context(glob_ctx), patch(
+    with set_working_dir(test_storage.make_full_path("project")), Container().injectable_context(glob_ctx), patch(
         "dlt.common.configuration.specs.config_providers_context.ConfigProvidersContext.initial_providers",
         _initial_providers,
     ):
@@ -180,10 +178,7 @@ def test_instrumentation_wrappers() -> None:
         )
         msg = SENT_ITEMS[0]
         assert msg["event"] == "command_deploy"
-        assert (
-            msg["properties"]["deployment_method"]
-            == DeploymentMethods.github_actions.value
-        )
+        assert msg["properties"]["deployment_method"] == DeploymentMethods.github_actions.value
         assert msg["properties"]["success"] is False
 
 

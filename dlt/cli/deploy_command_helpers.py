@@ -78,18 +78,11 @@ class BaseDeployment(abc.ABC):
         # make sure the repo has origin
         self.origin = self._get_origin()
         # convert to path relative to repo
-        self.repo_pipeline_script_path = self.repo_storage.from_wd_to_relative_path(
-            self.pipeline_script_path
-        )
+        self.repo_pipeline_script_path = self.repo_storage.from_wd_to_relative_path(self.pipeline_script_path)
         # load a pipeline script and extract full_refresh and pipelines_dir args
         self.pipeline_script = self.repo_storage.load(self.repo_pipeline_script_path)
-        fmt.echo(
-            "Looking up the deployment template scripts in %s...\n"
-            % fmt.bold(self.repo_location)
-        )
-        self.template_storage = git.get_fresh_repo_files(
-            self.repo_location, get_dlt_repos_dir(), branch=self.branch
-        )
+        fmt.echo("Looking up the deployment template scripts in %s...\n" % fmt.bold(self.repo_location))
+        self.template_storage = git.get_fresh_repo_files(self.repo_location, get_dlt_repos_dir(), branch=self.branch)
         self.working_directory = os.path.split(self.pipeline_script_path)[0]
 
     def _get_origin(self) -> str:
@@ -124,17 +117,12 @@ class BaseDeployment(abc.ABC):
             elif len(uniq_possible_pipelines) > 1:
                 choices = list(uniq_possible_pipelines.keys())
                 choices_str = "".join([str(i + 1) for i in range(len(choices))])
-                choices_selection = [
-                    f"{idx+1}-{name}" for idx, name in enumerate(choices)
-                ]
+                choices_selection = [f"{idx+1}-{name}" for idx, name in enumerate(choices)]
                 sel = fmt.prompt(
-                    "Several pipelines found in script, please select one: "
-                    + ", ".join(choices_selection),
+                    "Several pipelines found in script, please select one: " + ", ".join(choices_selection),
                     choices=choices_str,
                 )
-                pipeline_name, pipelines_dir = uniq_possible_pipelines[
-                    choices[int(sel) - 1]
-                ]
+                pipeline_name, pipelines_dir = uniq_possible_pipelines[choices[int(sel) - 1]]
 
             if pipelines_dir:
                 self.pipelines_dir = os.path.abspath(pipelines_dir)
@@ -147,18 +135,12 @@ class BaseDeployment(abc.ABC):
                 if not self.pipeline_name:
                     self.pipeline_name = dlt.config.get("pipeline_name")
                     if not self.pipeline_name:
-                        self.pipeline_name = get_default_pipeline_name(
-                            self.pipeline_script_path
-                        )
-                        fmt.warning(
-                            f"Using default pipeline name {self.pipeline_name}. The pipeline name is not passed as argument to dlt.pipeline nor configured via config provides ie. config.toml"
-                        )
+                        self.pipeline_name = get_default_pipeline_name(self.pipeline_script_path)
+                        fmt.warning(f"Using default pipeline name {self.pipeline_name}. The pipeline name is not passed as argument to dlt.pipeline nor configured via config provides ie. config.toml")
                 # fmt.echo("Generating deployment for pipeline %s" % fmt.bold(self.pipeline_name))
 
                 # attach to pipeline name, get state and trace
-                pipeline = dlt.attach(
-                    pipeline_name=self.pipeline_name, pipelines_dir=self.pipelines_dir
-                )
+                pipeline = dlt.attach(pipeline_name=self.pipeline_name, pipelines_dir=self.pipelines_dir)
                 self.state, trace = get_state_and_trace(pipeline)
                 self._update_envs(trace)
 
@@ -231,25 +213,17 @@ def get_state_and_trace(pipeline: Pipeline) -> Tuple[TPipelineState, PipelineTra
     # trace must exist and end with a successful loading step
     trace = pipeline.last_trace
     if trace is None or len(trace.steps) == 0:
-        raise PipelineWasNotRun(
-            "Pipeline run trace could not be found. Please run the pipeline at least once locally."
-        )
+        raise PipelineWasNotRun("Pipeline run trace could not be found. Please run the pipeline at least once locally.")
     last_step = trace.steps[-1]
     if last_step.step_exception is not None:
-        raise PipelineWasNotRun(
-            f"The last pipeline run ended with error. Please make sure that pipeline runs correctly before deployment.\n{last_step.step_exception}"
-        )
+        raise PipelineWasNotRun(f"The last pipeline run ended with error. Please make sure that pipeline runs correctly before deployment.\n{last_step.step_exception}")
     if not isinstance(last_step.step_info, LoadInfo):
-        raise PipelineWasNotRun(
-            "The last pipeline run did not reach the load step. Please run the pipeline locally until it loads data into destination."
-        )
+        raise PipelineWasNotRun("The last pipeline run did not reach the load step. Please run the pipeline locally until it loads data into destination.")
 
     return pipeline.state, trace
 
 
-def get_visitors(
-    pipeline_script: str, pipeline_script_path: str
-) -> PipelineScriptVisitor:
+def get_visitors(pipeline_script: str, pipeline_script_path: str) -> PipelineScriptVisitor:
     visitor = utils.parse_init_script("deploy", pipeline_script, pipeline_script_path)
     if n.RUN not in visitor.known_calls:
         raise CliCommandException(
@@ -270,17 +244,13 @@ def parse_pipeline_info(
             if f_r_node:
                 f_r_value = evaluate_node_literal(f_r_node)
                 if f_r_value is None:
-                    fmt.warning(
-                        f"The value of `full_refresh` in call to `dlt.pipeline` cannot be determined from {unparse(f_r_node).strip()}. We assume that you know what you are doing :)"
-                    )
+                    fmt.warning(f"The value of `full_refresh` in call to `dlt.pipeline` cannot be determined from {unparse(f_r_node).strip()}. We assume that you know what you are doing :)")
                 if f_r_value is True:
                     if fmt.confirm(
                         "The value of 'full_refresh' is set to True. Do you want to abort to set it to False?",
                         default=True,
                     ):
-                        raise CliCommandException(
-                            "deploy", "Please set the full_refresh to False"
-                        )
+                        raise CliCommandException("deploy", "Please set the full_refresh to False")
 
             p_d_node = call_args.arguments.get("pipelines_dir")
             if p_d_node:
@@ -307,9 +277,7 @@ def parse_pipeline_info(
 def str_representer(dumper: yaml.Dumper, data: str) -> yaml.ScalarNode:
     # format multiline strings as blocks with the exception of placeholders
     # that will be expanded as yaml
-    if (
-        len(data.splitlines()) > 1 and "{{ toYaml" not in data
-    ):  # check for multiline string
+    if len(data.splitlines()) > 1 and "{{ toYaml" not in data:  # check for multiline string
         return dumper.represent_scalar("tag:yaml.org,2002:str", data, style="|")
     return dumper.represent_scalar("tag:yaml.org,2002:str", data)
 
@@ -323,13 +291,9 @@ def serialize_templated_yaml(tree: StrAny) -> str:
     try:
         yaml.add_representer(str, str_representer)
         # pretty serialize yaml
-        serialized: str = yaml.dump(
-            tree, allow_unicode=True, default_flow_style=False, sort_keys=False
-        )
+        serialized: str = yaml.dump(tree, allow_unicode=True, default_flow_style=False, sort_keys=False)
         # removes apostrophes around the template
-        serialized = re.sub(
-            r"'([\s\n]*?\${{.+?}})'", r"\1", serialized, flags=re.DOTALL
-        )
+        serialized = re.sub(r"'([\s\n]*?\${{.+?}})'", r"\1", serialized, flags=re.DOTALL)
         # print(serialized)
         # fix the new lines in templates ending }}
         serialized = re.sub(r"(\${{.+)\n.+(}})", r"\1 \2", serialized)
@@ -338,9 +302,7 @@ def serialize_templated_yaml(tree: StrAny) -> str:
         yaml.add_representer(str, old_representer)
 
 
-def generate_pip_freeze(
-    requirements_blacklist: List[str], requirements_file_name: str
-) -> str:
+def generate_pip_freeze(requirements_blacklist: List[str], requirements_file_name: str) -> str:
     pkgs = pipdeptree.get_installed_distributions(local_only=True, user_only=False)
 
     # construct graph with all packages
@@ -350,12 +312,8 @@ def generate_pip_freeze(
     nodes = [p for p in tree.keys() if p.key not in branch_keys]
 
     # compute excludes to compute includes as set difference
-    excludes = set(
-        req.strip() for req in requirements_blacklist if not req.strip().startswith("#")
-    )
-    includes = set(
-        node.project_name for node in nodes if node.project_name not in excludes
-    )
+    excludes = set(req.strip() for req in requirements_blacklist if not req.strip().startswith("#"))
+    includes = set(node.project_name for node in nodes if node.project_name not in excludes)
 
     # prepare new filtered DAG
     tree = tree.sort()
@@ -367,9 +325,7 @@ def generate_pip_freeze(
     conflicts = pipdeptree.conflicting_deps(tree)
     cycles = pipdeptree.cyclic_deps(tree)
     if conflicts:
-        fmt.warning(
-            f"Unable to create dependencies for the github action. Please edit {requirements_file_name} yourself"
-        )
+        fmt.warning(f"Unable to create dependencies for the github action. Please edit {requirements_file_name} yourself")
         pipdeptree.render_conflicts_text(conflicts)
         pipdeptree.render_cycles_text(cycles)
         fmt.echo()

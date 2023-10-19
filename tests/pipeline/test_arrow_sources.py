@@ -38,11 +38,7 @@ def test_extract_and_normalize(item_type: TArrowFormat, is_list: bool):
 
     pipeline.extract(some_data())
     norm_storage = pipeline._get_normalize_storage()
-    extract_files = [
-        fn
-        for fn in norm_storage.list_files_to_normalize_sorted()
-        if fn.endswith(".parquet")
-    ]
+    extract_files = [fn for fn in norm_storage.list_files_to_normalize_sorted() if fn.endswith(".parquet")]
 
     assert len(extract_files) == 1
 
@@ -100,9 +96,7 @@ def test_normalize_unsupported_loader_format(item_type: TArrowFormat):
     with pytest.raises(PipelineStepFailed) as py_ex:
         pipeline.normalize()
 
-    assert "The destination doesn't support direct loading of arrow tables" in str(
-        py_ex.value
-    )
+    assert "The destination doesn't support direct loading of arrow tables" in str(py_ex.value)
 
 
 @pytest.mark.parametrize("item_type", ["table", "record_batch"])

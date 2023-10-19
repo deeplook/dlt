@@ -191,11 +191,7 @@ def test_complete_load(client: SqlJobClientBase) -> None:
     assert load_rows[0][4] == client.schema.version_hash
     # make sure that hash in loads exists in schema versions table
     versions_table = client.sql_client.make_qualified_table_name(VERSION_TABLE_NAME)
-    version_rows = list(
-        client.sql_client.execute_sql(
-            f"SELECT * FROM {versions_table} WHERE version_hash = %s", load_rows[0][4]
-        )
-    )
+    version_rows = list(client.sql_client.execute_sql(f"SELECT * FROM {versions_table} WHERE version_hash = %s", load_rows[0][4]))
     assert len(version_rows) == 1
     client.complete_load("load2")
     load_rows = list(client.sql_client.execute_sql(f"SELECT * FROM {load_table}"))
@@ -204,9 +200,7 @@ def test_complete_load(client: SqlJobClientBase) -> None:
 
 @pytest.mark.parametrize(
     "client",
-    destinations_configs(
-        default_sql_configs=True, subset=["redshift", "postgres", "duckdb"]
-    ),
+    destinations_configs(default_sql_configs=True, subset=["redshift", "postgres", "duckdb"]),
     indirect=True,
     ids=lambda x: x.name,
 )
@@ -223,9 +217,7 @@ def test_schema_update_create_table_redshift(client: SqlJobClientBase) -> None:
     # this will be not null
     record_hash = schema._infer_column("_dlt_id", "m,i0392903jdlkasjdlk")
     assert record_hash["unique"] is True
-    schema.update_table(
-        new_table(table_name, columns=[timestamp, sender_id, record_hash])
-    )
+    schema.update_table(new_table(table_name, columns=[timestamp, sender_id, record_hash]))
     schema.bump_version()
     schema_update = client.update_stored_schema()
     # check hints in schema update
@@ -252,9 +244,7 @@ def test_schema_update_create_table_bigquery(client: SqlJobClientBase) -> None:
     sender_id = schema._infer_column("sender_id", "982398490809324")
     # this will be not null
     record_hash = schema._infer_column("_dlt_id", "m,i0392903jdlkasjdlk")
-    schema.update_table(
-        new_table("event_test_table", columns=[timestamp, sender_id, record_hash])
-    )
+    schema.update_table(new_table("event_test_table", columns=[timestamp, sender_id, record_hash]))
     schema.bump_version()
     schema_update = client.update_stored_schema()
     # check hints in schema update
@@ -323,9 +313,7 @@ def test_schema_update_alter_table(client: SqlJobClientBase) -> None:
 def test_drop_tables(client: SqlJobClientBase) -> None:
     schema = client.schema
     # Add columns in all tables
-    schema.tables["event_user"]["columns"] = dict(
-        schema.tables["event_slot"]["columns"]
-    )
+    schema.tables["event_user"]["columns"] = dict(schema.tables["event_slot"]["columns"])
     schema.tables["event_bot"]["columns"] = dict(schema.tables["event_slot"]["columns"])
     schema.bump_version()
     client.update_stored_schema()
@@ -371,16 +359,12 @@ def test_drop_tables(client: SqlJobClientBase) -> None:
 
     # Verify _dlt_version schema is updated and old versions deleted
     table_name = client.sql_client.make_qualified_table_name(VERSION_TABLE_NAME)
-    rows = client.sql_client.execute_sql(
-        f"SELECT version_hash FROM {table_name} WHERE schema_name = %s", schema.name
-    )
+    rows = client.sql_client.execute_sql(f"SELECT version_hash FROM {table_name} WHERE schema_name = %s", schema.name)
     assert len(rows) == 1
     assert rows[0][0] == schema.version_hash
 
     # Other schema is not replaced
-    rows = client.sql_client.execute_sql(
-        f"SELECT version_hash FROM {table_name} WHERE schema_name = %s", schema_2.name
-    )
+    rows = client.sql_client.execute_sql(f"SELECT version_hash FROM {table_name} WHERE schema_name = %s", schema_2.name)
     assert len(rows) == 2
 
 
@@ -455,13 +439,9 @@ def test_preserve_column_order(client: SqlJobClientBase) -> None:
             idx = sql_.find(col_name, idx)
             assert idx > 0, f"column {col_name} not found in script"
 
-    sql = ";".join(
-        client._get_table_update_sql(table_name, columns, generate_alter=False)
-    )
+    sql = ";".join(client._get_table_update_sql(table_name, columns, generate_alter=False))
     _assert_columns_order(sql)
-    sql = ";".join(
-        client._get_table_update_sql(table_name, columns, generate_alter=True)
-    )
+    sql = ";".join(client._get_table_update_sql(table_name, columns, generate_alter=True))
     _assert_columns_order(sql)
 
 
@@ -473,16 +453,12 @@ def test_preserve_column_order(client: SqlJobClientBase) -> None:
 )
 def test_data_writer_load(client: SqlJobClientBase, file_storage: FileStorage) -> None:
     if not client.capabilities.preferred_loader_file_format:
-        pytest.skip(
-            "preferred loader file format not set, destination will only work with staging"
-        )
+        pytest.skip("preferred loader file format not set, destination will only work with staging")
     rows, table_name = prepare_schema(client, "simple_row")
     canonical_name = client.sql_client.make_qualified_table_name(table_name)
     # write only first row
     with io.BytesIO() as f:
-        write_dataset(
-            client, f, [rows[0]], client.schema.get_table(table_name)["columns"]
-        )
+        write_dataset(client, f, [rows[0]], client.schema.get_table(table_name)["columns"])
         query = f.getvalue().decode()
     expect_load_file(client, file_storage, query, table_name)
     db_row = client.sql_client.execute_sql(f"SELECT * FROM {canonical_name}")[0]
@@ -490,14 +466,10 @@ def test_data_writer_load(client: SqlJobClientBase, file_storage: FileStorage) -
     assert list(db_row) == list(rows[0].values())
     # write second row that contains two nulls
     with io.BytesIO() as f:
-        write_dataset(
-            client, f, [rows[1]], client.schema.get_table(table_name)["columns"]
-        )
+        write_dataset(client, f, [rows[1]], client.schema.get_table(table_name)["columns"])
         query = f.getvalue().decode()
     expect_load_file(client, file_storage, query, table_name)
-    db_row = client.sql_client.execute_sql(
-        f"SELECT * FROM {canonical_name} WHERE f_int = {rows[1]['f_int']}"
-    )[0]
+    db_row = client.sql_client.execute_sql(f"SELECT * FROM {canonical_name} WHERE f_int = {rows[1]['f_int']}")[0]
     assert db_row[3] is None
     assert db_row[5] is None
 
@@ -508,13 +480,9 @@ def test_data_writer_load(client: SqlJobClientBase, file_storage: FileStorage) -
     indirect=True,
     ids=lambda x: x.name,
 )
-def test_data_writer_string_escape(
-    client: SqlJobClientBase, file_storage: FileStorage
-) -> None:
+def test_data_writer_string_escape(client: SqlJobClientBase, file_storage: FileStorage) -> None:
     if not client.capabilities.preferred_loader_file_format:
-        pytest.skip(
-            "preferred loader file format not set, destination will only work with staging"
-        )
+        pytest.skip("preferred loader file format not set, destination will only work with staging")
     rows, table_name = prepare_schema(client, "simple_row")
     canonical_name = client.sql_client.make_qualified_table_name(table_name)
     row = rows[0]
@@ -522,9 +490,7 @@ def test_data_writer_string_escape(
     inj_str = f", NULL'); DROP TABLE {canonical_name} --"
     row["f_str"] = inj_str
     with io.BytesIO() as f:
-        write_dataset(
-            client, f, [rows[0]], client.schema.get_table(table_name)["columns"]
-        )
+        write_dataset(client, f, [rows[0]], client.schema.get_table(table_name)["columns"])
         query = f.getvalue().decode()
     expect_load_file(client, file_storage, query, table_name)
     db_row = client.sql_client.execute_sql(f"SELECT * FROM {canonical_name}")[0]
@@ -537,13 +503,9 @@ def test_data_writer_string_escape(
     indirect=True,
     ids=lambda x: x.name,
 )
-def test_data_writer_string_escape_edge(
-    client: SqlJobClientBase, file_storage: FileStorage
-) -> None:
+def test_data_writer_string_escape_edge(client: SqlJobClientBase, file_storage: FileStorage) -> None:
     if not client.capabilities.preferred_loader_file_format:
-        pytest.skip(
-            "preferred loader file format not set, destination will only work with staging"
-        )
+        pytest.skip("preferred loader file format not set, destination will only work with staging")
     rows, table_name = prepare_schema(client, "weird_rows")
     canonical_name = client.sql_client.make_qualified_table_name(table_name)
     with io.BytesIO() as f:
@@ -551,9 +513,7 @@ def test_data_writer_string_escape_edge(
         query = f.getvalue().decode()
     expect_load_file(client, file_storage, query, table_name)
     for i in range(1, len(rows) + 1):
-        db_row = client.sql_client.execute_sql(
-            f"SELECT str FROM {canonical_name} WHERE idx = {i}"
-        )
+        db_row = client.sql_client.execute_sql(f"SELECT str FROM {canonical_name} WHERE idx = {i}")
         row_value, expected = db_row[0][0], rows[i - 1]["str"]
         assert row_value == expected
 
@@ -571,14 +531,10 @@ def test_load_with_all_types(
     file_storage: FileStorage,
 ) -> None:
     if not client.capabilities.preferred_loader_file_format:
-        pytest.skip(
-            "preferred loader file format not set, destination will only work with staging"
-        )
+        pytest.skip("preferred loader file format not set, destination will only work with staging")
     table_name = "event_test_table" + uniq_id()
     # we should have identical content with all disposition types
-    client.schema.update_table(
-        new_table(table_name, write_disposition=write_disposition, columns=TABLE_UPDATE)
-    )
+    client.schema.update_table(new_table(table_name, write_disposition=write_disposition, columns=TABLE_UPDATE))
     client.schema.bump_version()
     client.update_stored_schema()
 
@@ -588,15 +544,11 @@ def test_load_with_all_types(
             client.initialize_storage()
             client.update_stored_schema()
 
-    with client.sql_client.with_staging_dataset(
-        client.should_load_data_to_staging_dataset(client.schema.tables[table_name])  # type: ignore[attr-defined]
-    ):
+    with client.sql_client.with_staging_dataset(client.should_load_data_to_staging_dataset(client.schema.tables[table_name])):  # type: ignore[attr-defined]
         canonical_name = client.sql_client.make_qualified_table_name(table_name)
     # write row
     with io.BytesIO() as f:
-        write_dataset(
-            client, f, [TABLE_ROW_ALL_DATA_TYPES], TABLE_UPDATE_COLUMNS_SCHEMA
-        )
+        write_dataset(client, f, [TABLE_ROW_ALL_DATA_TYPES], TABLE_UPDATE_COLUMNS_SCHEMA)
         query = f.getvalue().decode()
     expect_load_file(client, file_storage, query, table_name)
     db_row = list(client.sql_client.execute_sql(f"SELECT * FROM {canonical_name}")[0])
@@ -627,20 +579,14 @@ def test_write_dispositions(
     file_storage: FileStorage,
 ) -> None:
     if not client.capabilities.preferred_loader_file_format:
-        pytest.skip(
-            "preferred loader file format not set, destination will only work with staging"
-        )
+        pytest.skip("preferred loader file format not set, destination will only work with staging")
     os.environ["DESTINATION__REPLACE_STRATEGY"] = replace_strategy
 
     table_name = "event_test_table" + uniq_id()
-    client.schema.update_table(
-        new_table(table_name, write_disposition=write_disposition, columns=TABLE_UPDATE)
-    )
+    client.schema.update_table(new_table(table_name, write_disposition=write_disposition, columns=TABLE_UPDATE))
     child_table = client.schema.naming.make_path(table_name, "child")
     # add child table without write disposition so it will be inferred from the parent
-    client.schema.update_table(
-        new_table(child_table, columns=TABLE_UPDATE, parent_table_name=table_name)
-    )
+    client.schema.update_table(new_table(child_table, columns=TABLE_UPDATE, parent_table_name=table_name))
     client.schema.bump_version()
     client.update_stored_schema()
 
@@ -672,11 +618,7 @@ def test_write_dispositions(
             else:
                 # load directly on other
                 expect_load_file(client, file_storage, query, t)
-            db_rows = list(
-                client.sql_client.execute_sql(
-                    f"SELECT * FROM {client.sql_client.make_qualified_table_name(t)} ORDER BY col1 ASC"
-                )
-            )
+            db_rows = list(client.sql_client.execute_sql(f"SELECT * FROM {client.sql_client.make_qualified_table_name(t)} ORDER BY col1 ASC"))
             # in case of merge
             if write_disposition == "append":
                 # we append 1 row to tables in each iteration
@@ -689,11 +631,7 @@ def test_write_dispositions(
                 assert len(db_rows) == 0
                 # check staging
                 with client.sql_client.with_staging_dataset(staging=True):
-                    db_rows = list(
-                        client.sql_client.execute_sql(
-                            f"SELECT * FROM {client.sql_client.make_qualified_table_name(t)} ORDER BY col1 ASC"
-                        )
-                    )
+                    db_rows = list(client.sql_client.execute_sql(f"SELECT * FROM {client.sql_client.make_qualified_table_name(t)} ORDER BY col1 ASC"))
                     assert len(db_rows) == idx + 1
             # last row must have our last idx - make sure we append and overwrite
             assert db_rows[-1][0] == idx
@@ -707,9 +645,7 @@ def test_write_dispositions(
 )
 def test_retrieve_job(client: SqlJobClientBase, file_storage: FileStorage) -> None:
     if not client.capabilities.preferred_loader_file_format:
-        pytest.skip(
-            "preferred loader file format not set, destination will only work with staging"
-        )
+        pytest.skip("preferred loader file format not set, destination will only work with staging")
     user_table_name = prepare_table(client)
     load_json = {
         "_dlt_id": uniq_id(),
@@ -718,9 +654,7 @@ def test_retrieve_job(client: SqlJobClientBase, file_storage: FileStorage) -> No
         "timestamp": str(pendulum.now()),
     }
     with io.BytesIO() as f:
-        write_dataset(
-            client, f, [load_json], client.schema.get_table(user_table_name)["columns"]
-        )
+        write_dataset(client, f, [load_json], client.schema.get_table(user_table_name)["columns"])
         dataset = f.getvalue().decode()
     job = expect_load_file(client, file_storage, dataset, user_table_name)
     # now try to retrieve the job
@@ -742,27 +676,21 @@ def test_default_schema_name_init_storage(
 ) -> None:
     with cm_yield_client_with_storage(
         destination_config.destination,
-        default_config_values={
-            "default_schema_name": "event"  # pass the schema that is a default schema. that should create dataset with the name `dataset_name`
-        },
+        default_config_values={"default_schema_name": "event"},  # pass the schema that is a default schema. that should create dataset with the name `dataset_name`
     ) as client:
         assert client.sql_client.dataset_name == client.config.dataset_name
         assert client.sql_client.has_dataset()
 
     with cm_yield_client_with_storage(
         destination_config.destination,
-        default_config_values={
-            "default_schema_name": None  # no default_schema. that should create dataset with the name `dataset_name`
-        },
+        default_config_values={"default_schema_name": None},  # no default_schema. that should create dataset with the name `dataset_name`
     ) as client:
         assert client.sql_client.dataset_name == client.config.dataset_name
         assert client.sql_client.has_dataset()
 
     with cm_yield_client_with_storage(
         destination_config.destination,
-        default_config_values={
-            "default_schema_name": "event_2"  # the default schema is not event schema . that should create dataset with the name `dataset_name` with schema suffix
-        },
+        default_config_values={"default_schema_name": "event_2"},  # the default schema is not event schema . that should create dataset with the name `dataset_name` with schema suffix
     ) as client:
         assert client.sql_client.dataset_name == client.config.dataset_name + "_event"
         assert client.sql_client.has_dataset()
@@ -773,9 +701,7 @@ def test_default_schema_name_init_storage(
     destinations_configs(default_sql_configs=True),
     ids=lambda x: x.name,
 )
-def test_many_schemas_single_dataset(
-    destination_config: DestinationTestConfiguration, file_storage: FileStorage
-) -> None:
+def test_many_schemas_single_dataset(destination_config: DestinationTestConfiguration, file_storage: FileStorage) -> None:
     def _load_something(_client: SqlJobClientBase, expected_rows: int) -> None:
         # load something to event:user_table
         user_row = {
@@ -787,15 +713,11 @@ def test_many_schemas_single_dataset(
             "timestamp": str(pendulum.now()),
         }
         with io.BytesIO() as f:
-            write_dataset(
-                _client, f, [user_row], _client.schema.tables["event_user"]["columns"]
-            )
+            write_dataset(_client, f, [user_row], _client.schema.tables["event_user"]["columns"])
             query = f.getvalue().decode()
         expect_load_file(_client, file_storage, query, "event_user")
         qual_table_name = _client.sql_client.make_qualified_table_name("event_user")
-        db_rows = list(
-            _client.sql_client.execute_sql(f"SELECT * FROM {qual_table_name}")
-        )
+        db_rows = list(_client.sql_client.execute_sql(f"SELECT * FROM {qual_table_name}"))
         assert len(db_rows) == expected_rows
 
     with cm_yield_client_with_storage(
@@ -804,14 +726,10 @@ def test_many_schemas_single_dataset(
     ) as client:
         # event schema with event table
         if not client.capabilities.preferred_loader_file_format:
-            pytest.skip(
-                "preferred loader file format not set, destination will only work with staging"
-            )
+            pytest.skip("preferred loader file format not set, destination will only work with staging")
 
         user_table = load_table("event_user")["event_user"]
-        client.schema.update_table(
-            new_table("event_user", columns=list(user_table.values()))
-        )
+        client.schema.update_table(new_table("event_user", columns=list(user_table.values())))
         client.schema.bump_version()
         schema_update = client.update_stored_schema()
         assert len(schema_update) > 0
@@ -841,9 +759,7 @@ def test_many_schemas_single_dataset(
         # use third schema where one of the fields is non null, but the field exists so it is ignored
         schema_dict["name"] = "event_3"
         event_3_schema = Schema.from_stored_schema(schema_dict)
-        event_3_schema.tables["event_user"]["columns"]["input_channel"][
-            "nullable"
-        ] = False
+        event_3_schema.tables["event_user"]["columns"]["input_channel"]["nullable"] = False
         # swap schemas in client instance
         client.schema = event_3_schema
         client.schema.bump_version()
@@ -854,28 +770,18 @@ def test_many_schemas_single_dataset(
         _load_something(client, 3)
 
         # adding new non null column will generate sync error
-        event_3_schema.tables["event_user"]["columns"]["mandatory_column"] = new_column(
-            "mandatory_column", "text", nullable=False
-        )
+        event_3_schema.tables["event_user"]["columns"]["mandatory_column"] = new_column("mandatory_column", "text", nullable=False)
         client.schema.bump_version()
         with pytest.raises(DatabaseException) as py_ex:
             client.update_stored_schema()
-        assert (
-            "mandatory_column" in str(py_ex.value).lower()
-            or "NOT NULL" in str(py_ex.value)
-            or "Adding columns with constraints not yet supported" in str(py_ex.value)
-        )
+        assert "mandatory_column" in str(py_ex.value).lower() or "NOT NULL" in str(py_ex.value) or "Adding columns with constraints not yet supported" in str(py_ex.value)
 
 
-def prepare_schema(
-    client: SqlJobClientBase, case: str
-) -> Tuple[List[Dict[str, Any]], str]:
+def prepare_schema(client: SqlJobClientBase, case: str) -> Tuple[List[Dict[str, Any]], str]:
     client.update_stored_schema()
     rows = load_json_case(case)
     # use first row to infer table
-    table: TTableSchemaColumns = {
-        k: client.schema._infer_column(k, v) for k, v in rows[0].items()
-    }
+    table: TTableSchemaColumns = {k: client.schema._infer_column(k, v) for k, v in rows[0].items()}
     table_name = f"event_{case}_{uniq_id()}"
     client.schema.update_table(new_table(table_name, columns=list(table.values())))
     client.schema.bump_version()

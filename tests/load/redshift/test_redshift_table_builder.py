@@ -25,9 +25,7 @@ def client(schema: Schema) -> RedshiftClient:
     # return client without opening connection
     return RedshiftClient(
         schema,
-        RedshiftClientConfiguration(
-            dataset_name="test_" + uniq_id(), credentials=RedshiftCredentials()
-        ),
+        RedshiftClientConfiguration(dataset_name="test_" + uniq_id(), credentials=RedshiftCredentials()),
     )
 
 
@@ -39,9 +37,7 @@ def test_redshift_configuration() -> None:
             "DESTINATION__REDSHIFT__CREDENTIALS__PASSWORD": " pass\n",
         }
     ):
-        C = resolve_configuration(
-            RedshiftCredentials(), sections=("destination", "redshift")
-        )
+        C = resolve_configuration(RedshiftCredentials(), sections=("destination", "redshift"))
         assert C.database == "upper_case_database"
         assert C.password == "pass"
 
@@ -52,16 +48,12 @@ def test_redshift_configuration() -> None:
         RedshiftCredentials(),
         explicit_value="postgres://user1:pass@host1/db1?warehouse=warehouse1&role=role1",
     )
-    assert RedshiftClientConfiguration(credentials=c).fingerprint() == digest128(
-        "host1"
-    )
+    assert RedshiftClientConfiguration(credentials=c).fingerprint() == digest128("host1")
 
 
 def test_create_table(client: RedshiftClient) -> None:
     # non existing table
-    sql = ";".join(
-        client._get_table_update_sql("event_test_table", TABLE_UPDATE, False)
-    )
+    sql = ";".join(client._get_table_update_sql("event_test_table", TABLE_UPDATE, False))
     sqlfluff.parse(sql, dialect="redshift")
     assert "event_test_table" in sql
     assert '"col1" bigint  NOT NULL' in sql

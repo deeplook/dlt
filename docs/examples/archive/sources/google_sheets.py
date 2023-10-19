@@ -19,9 +19,7 @@ except ModuleNotFoundError:
 # TODO: consider using https://github.com/burnash/gspread for spreadsheet discovery
 
 
-def _initialize_sheets(
-    credentials: Union[GcpOAuthCredentials, GcpServiceAccountCredentials]
-) -> Any:
+def _initialize_sheets(credentials: Union[GcpOAuthCredentials, GcpServiceAccountCredentials]) -> Any:
     # Build the service object.
     service = build("sheets", "v4", credentials=credentials.to_native_credentials())
     return service
@@ -31,9 +29,7 @@ def _initialize_sheets(
 def google_spreadsheet(
     spreadsheet_id: str,
     sheet_names: Sequence[str],
-    credentials: Union[
-        GcpServiceAccountCredentials, GcpOAuthCredentials, str, StrAny
-    ] = dlt.secrets.value,
+    credentials: Union[GcpServiceAccountCredentials, GcpOAuthCredentials, str, StrAny] = dlt.secrets.value,
 ) -> Any:
     sheets = _initialize_sheets(cast(GcpServiceAccountCredentials, credentials))
 
@@ -64,7 +60,4 @@ def google_spreadsheet(
             yield {h: v for h, v in zip(values[0], v)}
 
     # create resources from supplied sheet names
-    return [
-        dlt.resource(get_sheet(name), name=name, write_disposition="replace")
-        for name in sheet_names
-    ]
+    return [dlt.resource(get_sheet(name), name=name, write_disposition="replace") for name in sheet_names]

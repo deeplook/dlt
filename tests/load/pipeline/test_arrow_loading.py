@@ -33,9 +33,7 @@ def test_load_item(
         "athena",
         "redshift",
     )  # athena/redshift can't load TIME columns from parquet
-    item, records = arrow_table_all_data_types(
-        item_type, include_json=False, include_time=include_time
-    )
+    item, records = arrow_table_all_data_types(item_type, include_json=False, include_time=include_time)
 
     pipeline = destination_config.setup_pipeline("arrow_" + uniq_id())
 
@@ -56,9 +54,7 @@ def test_load_item(
     if include_time:
         assert some_table_columns["time"]["data_type"] == "time"
 
-    rows = [
-        list(row) for row in select_data(pipeline, "SELECT * FROM some_data ORDER BY 1")
-    ]
+    rows = [list(row) for row in select_data(pipeline, "SELECT * FROM some_data ORDER BY 1")]
 
     if destination_config.destination == "redshift":
         # Binary columns are hex formatted in results

@@ -11,9 +11,7 @@ def small():
     return dlt.resource([1, 2, 3], name="table")
 
 
-@pytest.mark.parametrize(
-    "n", [NamingConvention(), CINamingConvention()], ids=["naming", "ci_naming"]
-)
+@pytest.mark.parametrize("n", [NamingConvention(), CINamingConvention()], ids=["naming", "ci_naming"])
 def test_table_name_normalization(n: NamingConvention) -> None:
     assert n.normalize_table_identifier("FlatSpace") == "FlatSpace"
     assert n.normalize_table_identifier("a_snake_case_name") == "ASnakeCaseName"

@@ -58,11 +58,7 @@ def uniq_id_base64(len_: int = 16) -> str:
 
 def digest128(v: str, len_: int = 15) -> str:
     """Returns a base64 encoded shake128 hash of str `v` with digest of length `len_` (default: 15 bytes = 20 characters length)"""
-    return (
-        base64.b64encode(hashlib.shake_128(v.encode("utf-8")).digest(len_))
-        .decode("ascii")
-        .rstrip("=")
-    )
+    return base64.b64encode(hashlib.shake_128(v.encode("utf-8")).digest(len_)).decode("ascii").rstrip("=")
 
 
 def digest128b(v: bytes, len_: int = 15) -> str:
@@ -155,9 +151,7 @@ def flatten_list_of_str_or_dicts(seq: Sequence[Union[StrAny, str]]) -> DictStrAn
 #     return dicts
 
 
-def flatten_list_or_items(
-    _iter: Union[Iterator[TAny], Iterator[List[TAny]]]
-) -> Iterator[TAny]:
+def flatten_list_or_items(_iter: Union[Iterator[TAny], Iterator[List[TAny]]]) -> Iterator[TAny]:
     for items in _iter:
         if isinstance(items, List):
             yield from items
@@ -165,9 +159,7 @@ def flatten_list_or_items(
             yield items
 
 
-def concat_strings_with_limit(
-    strings: List[str], separator: str, limit: int
-) -> Iterator[str]:
+def concat_strings_with_limit(strings: List[str], separator: str, limit: int) -> Iterator[str]:
     """
     Generator function to concatenate strings.
 
@@ -192,23 +184,17 @@ def concat_strings_with_limit(
     sep_len = len(separator)
 
     for i in range(1, len(strings)):
-        if (
-            current_length + len(strings[i]) + sep_len > limit
-        ):  # accounts for the length of separator
+        if current_length + len(strings[i]) + sep_len > limit:  # accounts for the length of separator
             yield separator.join(strings[start:i])
             start = i
             current_length = len(strings[i])
         else:
-            current_length += (
-                len(strings[i]) + sep_len
-            )  # accounts for the length of separator
+            current_length += len(strings[i]) + sep_len  # accounts for the length of separator
 
     yield separator.join(strings[start:])
 
 
-def graph_edges_to_nodes(
-    edges: Sequence[Tuple[TAny, TAny]], directed: bool = True
-) -> Dict[TAny, Set[TAny]]:
+def graph_edges_to_nodes(edges: Sequence[Tuple[TAny, TAny]], directed: bool = True) -> Dict[TAny, Set[TAny]]:
     """Converts a directed graph represented as a sequence of edges to a graph represented as a mapping from nodes a set of connected nodes.
 
     Isolated nodes are represented as edges to itself. If `directed` is `False`, each edge is duplicated but going in opposite direction.
@@ -424,11 +410,7 @@ def is_inner_callable(f: AnyFun) -> bool:
 
 
 def obfuscate_pseudo_secret(pseudo_secret: str, pseudo_key: bytes) -> str:
-    return base64.b64encode(
-        bytes(
-            [_a ^ _b for _a, _b in zip(pseudo_secret.encode("utf-8"), pseudo_key * 250)]
-        )
-    ).decode()
+    return base64.b64encode(bytes([_a ^ _b for _a, _b in zip(pseudo_secret.encode("utf-8"), pseudo_key * 250)])).decode()
 
 
 def reveal_pseudo_secret(obfuscated_secret: str, pseudo_key: bytes) -> str:
@@ -484,9 +466,7 @@ def merge_row_count(row_counts_1: TRowCount, row_counts_2: TRowCount) -> None:
         row_counts_1[key] = row_counts_1.get(key, 0) + row_counts_2.get(key, 0)
 
 
-def extend_list_deduplicated(
-    original_list: List[Any], extending_list: Iterable[Any]
-) -> List[Any]:
+def extend_list_deduplicated(original_list: List[Any], extending_list: Iterable[Any]) -> List[Any]:
     """extends the first list by the second, but does not add duplicates"""
     list_keys = set(original_list)
     for item in extending_list:

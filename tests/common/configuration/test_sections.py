@@ -54,9 +54,7 @@ class EmbeddedWithIgnoredEmbeddedConfiguration(BaseConfiguration):
     ignored_embedded: EmbeddedIgnoredWithSectionedConfiguration
 
 
-def test_sectioned_configuration(
-    environment: Any, env_provider: ConfigProvider
-) -> None:
+def test_sectioned_configuration(environment: Any, env_provider: ConfigProvider) -> None:
     with pytest.raises(ConfigFieldMissingException) as exc_val:
         resolve.resolve_configuration(SectionedConfiguration())
 
@@ -66,16 +64,12 @@ def test_sectioned_configuration(
     traces = exc_val.value.traces["password"]
     # only one provider and section was tried
     assert len(traces) == 1
-    assert traces[0] == LookupTrace(
-        "Environment Variables", ["DLT_TEST"], "DLT_TEST__PASSWORD", None
-    )
+    assert traces[0] == LookupTrace("Environment Variables", ["DLT_TEST"], "DLT_TEST__PASSWORD", None)
     # assert traces[1] == LookupTrace("secrets.toml", ["DLT_TEST"], "DLT_TEST.password", None)
     # assert traces[2] == LookupTrace("config.toml", ["DLT_TEST"], "DLT_TEST.password", None)
 
     # init vars work without section
-    C = resolve.resolve_configuration(
-        SectionedConfiguration(), explicit_value={"password": "PASS"}
-    )
+    C = resolve.resolve_configuration(SectionedConfiguration(), explicit_value={"password": "PASS"})
     assert C.password == "PASS"
 
     # env var must be prefixed
@@ -227,9 +221,7 @@ def test_injected_sections(mock_provider: MockProvider) -> None:
         assert mock_provider.last_sections == [("inj-ns1", "sv_config"), ("sv_config",)]
 
     # multiple injected sections
-    with container.injectable_context(
-        ConfigSectionContext(sections=("inj-ns1", "inj-ns2"))
-    ):
+    with container.injectable_context(ConfigSectionContext(sections=("inj-ns1", "inj-ns2"))):
         mock_provider.reset_stats()
         resolve.resolve_configuration(SingleValConfiguration())
         assert mock_provider.last_sections == [("inj-ns1", "inj-ns2"), ("inj-ns1",), ()]
@@ -246,10 +238,7 @@ def test_section_context() -> None:
     with pytest.raises(ValueError):
         ConfigSectionContext(sections=("sources", "modules")).source_name()
 
-    assert (
-        ConfigSectionContext(sections=("sources", "modules", "func")).source_name()
-        == "func"
-    )
+    assert ConfigSectionContext(sections=("sources", "modules", "func")).source_name() == "func"
 
     # TODO: test merge functions
 
@@ -294,9 +283,7 @@ def test_section_with_pipeline_name(mock_provider: MockProvider) -> None:
         ]
 
     # with pipeline and injected sections
-    with container.injectable_context(
-        ConfigSectionContext(pipeline_name="PIPE", sections=("inj-ns1",))
-    ):
+    with container.injectable_context(ConfigSectionContext(pipeline_name="PIPE", sections=("inj-ns1",))):
         mock_provider.return_value_on = ()
         mock_provider.reset_stats()
         resolve.resolve_configuration(SingleValConfiguration())
@@ -328,9 +315,7 @@ def test_section_with_pipeline_name(mock_provider: MockProvider) -> None:
 def test_inject_section(mock_provider: MockProvider) -> None:
     mock_provider.value = "value"
 
-    with inject_section(
-        ConfigSectionContext(pipeline_name="PIPE", sections=("inj-ns1",))
-    ):
+    with inject_section(ConfigSectionContext(pipeline_name="PIPE", sections=("inj-ns1",))):
         resolve.resolve_configuration(SingleValConfiguration())
         assert mock_provider.last_sections == [
             ("PIPE", "inj-ns1"),

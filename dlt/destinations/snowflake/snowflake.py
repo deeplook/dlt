@@ -67,9 +67,7 @@ class SnowflakeTypeMapper(TypeMapper):
         "TIME": "time",
     }
 
-    def from_db_type(
-        self, db_type: str, precision: Optional[int] = None, scale: Optional[int] = None
-    ) -> TColumnType:
+    def from_db_type(self, db_type: str, precision: Optional[int] = None, scale: Optional[int] = None) -> TColumnType:
         if db_type == "NUMBER":
             if precision == self.BIGINT_PRECISION and scale == 0:
                 return dict(data_type="bigint")
@@ -96,16 +94,8 @@ class SnowflakeLoadJob(LoadJob, FollowupJob):
         qualified_table_name = client.make_qualified_table_name(table_name)
 
         # extract and prepare some vars
-        bucket_path = (
-            NewReferenceJob.resolve_reference(file_path)
-            if NewReferenceJob.is_reference_job(file_path)
-            else ""
-        )
-        file_name = (
-            FileStorage.get_file_name_from_file_path(bucket_path)
-            if bucket_path
-            else file_name
-        )
+        bucket_path = NewReferenceJob.resolve_reference(file_path) if NewReferenceJob.is_reference_job(file_path) else ""
+        file_name = FileStorage.get_file_name_from_file_path(bucket_path) if bucket_path else file_name
         from_clause = ""
         credentials_clause = ""
         files_clause = ""
@@ -119,18 +109,10 @@ class SnowflakeLoadJob(LoadJob, FollowupJob):
                 from_clause = f"FROM '@{stage_name}'"
                 files_clause = f"FILES = ('{bucket_url.path.lstrip('/')}')"
             # referencing an staged files via a bucket URL requires explicit AWS credentials
-            elif (
-                bucket_scheme == "s3"
-                and staging_credentials
-                and isinstance(staging_credentials, AwsCredentialsWithoutDefaults)
-            ):
+            elif bucket_scheme == "s3" and staging_credentials and isinstance(staging_credentials, AwsCredentialsWithoutDefaults):
                 credentials_clause = f"""CREDENTIALS=(AWS_KEY_ID='{staging_credentials.aws_access_key_id}' AWS_SECRET_KEY='{staging_credentials.aws_secret_access_key}')"""
                 from_clause = f"FROM '{bucket_path}'"
-            elif (
-                bucket_scheme in ["az", "abfs"]
-                and staging_credentials
-                and isinstance(staging_credentials, AzureCredentialsWithoutDefaults)
-            ):
+            elif bucket_scheme in ["az", "abfs"] and staging_credentials and isinstance(staging_credentials, AzureCredentialsWithoutDefaults):
                 # Explicit azure credentials are needed to load from bucket without a named stage
                 credentials_clause = f"CREDENTIALS=(AZURE_SAS_TOKEN='?{staging_credentials.azure_storage_sas_token}')"
                 # Converts an az://<container_name>/<path> to azure://<storage_account_name>.blob.core.windows.net/<container_name>/<path>
@@ -171,9 +153,7 @@ class SnowflakeLoadJob(LoadJob, FollowupJob):
         with client.begin_transaction():
             # PUT and COPY in one tx if local file, otherwise only copy
             if not bucket_path:
-                client.execute_sql(
-                    f'PUT file://{file_path} @{stage_name}/"{load_id}" OVERWRITE = TRUE, AUTO_COMPRESS = FALSE'
-                )
+                client.execute_sql(f'PUT file://{file_path} @{stage_name}/"{load_id}" OVERWRITE = TRUE, AUTO_COMPRESS = FALSE')
             client.execute_sql(
                 f"""COPY INTO {qualified_table_name}
                 {from_clause}
@@ -216,17 +196,13 @@ class SnowflakeClient(SqlJobClientWithStaging, SupportsStagingDestination):
     capabilities: ClassVar[DestinationCapabilitiesContext] = capabilities()
 
     def __init__(self, schema: Schema, config: SnowflakeClientConfiguration) -> None:
-        sql_client = SnowflakeSqlClient(
-            config.normalize_dataset_name(schema), config.credentials
-        )
+        sql_client = SnowflakeSqlClient(config.normalize_dataset_name(schema), config.credentials)
         super().__init__(schema, config, sql_client)
         self.config: SnowflakeClientConfiguration = config
         self.sql_client: SnowflakeSqlClient = sql_client  # type: ignore
         self.type_mapper = SnowflakeTypeMapper(self.capabilities)
 
-    def start_file_load(
-        self, table: TTableSchema, file_path: str, load_id: str
-    ) -> LoadJob:
+    def start_file_load(self, table: TTableSchema, file_path: str, load_id: str) -> LoadJob:
         job = super().start_file_load(table, file_path, load_id)
 
         if not job:
@@ -237,31 +213,20 @@ class SnowflakeClient(SqlJobClientWithStaging, SupportsStagingDestination):
                 self.sql_client,
                 stage_name=self.config.stage_name,
                 keep_staged_files=self.config.keep_staged_files,
-                staging_credentials=self.config.staging_config.credentials
-                if self.config.staging_config
-                else None,
+                staging_credentials=self.config.staging_config.credentials if self.config.staging_config else None,
             )
         return job
 
     def restore_file_load(self, file_path: str) -> LoadJob:
         return EmptyLoadJob.from_file_path(file_path, "completed")
 
-    def _make_add_column_sql(
-        self, new_columns: Sequence[TColumnSchema], table_format: TTableFormat = None
-    ) -> List[str]:
+    def _make_add_column_sql(self, new_columns: Sequence[TColumnSchema], table_format: TTableFormat = None) -> List[str]:
         # Override because snowflake requires multiple columns in a single ADD COLUMN clause
-        return [
-            "ADD COLUMN\n"
-            + ",\n".join(self._get_column_def_sql(c, table_format) for c in new_columns)
-        ]
+        return ["ADD COLUMN\n" + ",\n".join(self._get_column_def_sql(c, table_format) for c in new_columns)]
 
-    def _create_replace_followup_jobs(
-        self, table_chain: Sequence[TTableSchema]
-    ) -> List[NewLoadJob]:
+    def _create_replace_followup_jobs(self, table_chain: Sequence[TTableSchema]) -> List[NewLoadJob]:
         if self.config.replace_strategy == "staging-optimized":
-            return [
-                SnowflakeStagingCopyJob.from_table_chain(table_chain, self.sql_client)
-            ]
+            return [SnowflakeStagingCopyJob.from_table_chain(table_chain, self.sql_client)]
         return super()._create_replace_followup_jobs(table_chain)
 
     def _get_table_update_sql(
@@ -273,32 +238,22 @@ class SnowflakeClient(SqlJobClientWithStaging, SupportsStagingDestination):
     ) -> List[str]:
         sql = super()._get_table_update_sql(table_name, new_columns, generate_alter)
 
-        cluster_list = [
-            self.capabilities.escape_identifier(c["name"])
-            for c in new_columns
-            if c.get("cluster")
-        ]
+        cluster_list = [self.capabilities.escape_identifier(c["name"]) for c in new_columns if c.get("cluster")]
 
         if cluster_list:
             sql[0] = sql[0] + "\nCLUSTER BY (" + ",".join(cluster_list) + ")"
 
         return sql
 
-    def _from_db_type(
-        self, bq_t: str, precision: Optional[int], scale: Optional[int]
-    ) -> TColumnType:
+    def _from_db_type(self, bq_t: str, precision: Optional[int], scale: Optional[int]) -> TColumnType:
         return self.type_mapper.from_db_type(bq_t, precision, scale)
 
-    def _get_column_def_sql(
-        self, c: TColumnSchema, table_format: TTableFormat = None
-    ) -> str:
+    def _get_column_def_sql(self, c: TColumnSchema, table_format: TTableFormat = None) -> str:
         name = self.capabilities.escape_identifier(c["name"])
         return f"{name} {self.type_mapper.to_db_type(c)} {self._gen_not_null(c.get('nullable', True))}"
 
     def get_storage_table(self, table_name: str) -> Tuple[bool, TTableSchemaColumns]:
-        table_name = (
-            table_name.upper()
-        )  # All snowflake tables are uppercased in information schema
+        table_name = table_name.upper()  # All snowflake tables are uppercased in information schema
         exists, table = super().get_storage_table(table_name)
         if not exists:
             return exists, table

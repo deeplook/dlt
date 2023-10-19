@@ -174,9 +174,7 @@ def test_inject_with_sections_and_sections_context() -> None:
         return value
 
     # a section context that prefers existing context
-    @with_config(
-        sections=("test",), sections_merge_style=ConfigSectionContext.prefer_existing
-    )
+    @with_config(sections=("test",), sections_merge_style=ConfigSectionContext.prefer_existing)
     def test_sections_pref_existing(value=dlt.config.value):
         return value
 
@@ -208,9 +206,7 @@ def test_inject_with_sections_and_sections_context() -> None:
         # this one explicitly prefers existing context
         assert test_sections_pref_existing() == "injected_section"
 
-    with inject_section(
-        ConfigSectionContext(sections=("test", "existing_module", "existing_name"))
-    ):
+    with inject_section(ConfigSectionContext(sections=("test", "existing_module", "existing_name"))):
         assert test_sections_like_resource() == "resource_style_injected"
 
 
@@ -268,15 +264,9 @@ def test_initial_spec_from_arg_with_spec_type() -> None:
     pass
 
 
-def test_use_most_specific_union_type(
-    environment: Any, toml_providers: ConfigProvidersContext
-) -> None:
+def test_use_most_specific_union_type(environment: Any, toml_providers: ConfigProvidersContext) -> None:
     @with_config
-    def postgres_union(
-        local_credentials: Union[
-            ConnectionStringCredentials, str, StrAny
-        ] = dlt.secrets.value
-    ):
+    def postgres_union(local_credentials: Union[ConnectionStringCredentials, str, StrAny] = dlt.secrets.value):
         return local_credentials
 
     @with_config
@@ -358,16 +348,11 @@ def test_auto_derived_spec_type_name() -> None:
             pass
 
     # name is composed via __qualname__ of func
-    assert (
-        _get_spec_name_from_f(AutoNameTest.__init__)
-        == "TestAutoDerivedSpecTypeNameAutoNameTestInitConfiguration"
-    )
+    assert _get_spec_name_from_f(AutoNameTest.__init__) == "TestAutoDerivedSpecTypeNameAutoNameTestInitConfiguration"
     # synthesized spec present in current module
     assert "TestAutoDerivedSpecTypeNameAutoNameTestInitConfiguration" in globals()
     # instantiate
-    C: BaseConfiguration = globals()[
-        "TestAutoDerivedSpecTypeNameAutoNameTestInitConfiguration"
-    ]()
+    C: BaseConfiguration = globals()["TestAutoDerivedSpecTypeNameAutoNameTestInitConfiguration"]()
     # pos_par converted to secrets, kw_par converted to optional
     assert C.get_resolvable_fields() == {
         "pos_par": TSecretValue,

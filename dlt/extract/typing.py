@@ -62,9 +62,7 @@ class SupportsPipe(Protocol):
 
 ItemTransformFunctionWithMeta = Callable[[TDataItem, str], TAny]
 ItemTransformFunctionNoMeta = Callable[[TDataItem], TAny]
-ItemTransformFunc = Union[
-    ItemTransformFunctionWithMeta[TAny], ItemTransformFunctionNoMeta[TAny]
-]
+ItemTransformFunc = Union[ItemTransformFunctionWithMeta[TAny], ItemTransformFunctionNoMeta[TAny]]
 
 
 class ItemTransform(ABC, Generic[TAny]):

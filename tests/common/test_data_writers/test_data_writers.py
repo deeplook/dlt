@@ -107,22 +107,10 @@ def test_unicode_insert_writer(insert_writer: _StringIOWriter) -> None:
 
 
 def test_string_literal_escape() -> None:
-    assert (
-        escape_redshift_literal(", NULL'); DROP TABLE --")
-        == "', NULL''); DROP TABLE --'"
-    )
-    assert (
-        escape_redshift_literal(", NULL');\n DROP TABLE --")
-        == "', NULL'');\\n DROP TABLE --'"
-    )
-    assert (
-        escape_redshift_literal(", NULL);\n DROP TABLE --")
-        == "', NULL);\\n DROP TABLE --'"
-    )
-    assert (
-        escape_redshift_literal(", NULL);\\n DROP TABLE --\\")
-        == "', NULL);\\\\n DROP TABLE --\\\\'"
-    )
+    assert escape_redshift_literal(", NULL'); DROP TABLE --") == "', NULL''); DROP TABLE --'"
+    assert escape_redshift_literal(", NULL');\n DROP TABLE --") == "', NULL'');\\n DROP TABLE --'"
+    assert escape_redshift_literal(", NULL);\n DROP TABLE --") == "', NULL);\\n DROP TABLE --'"
+    assert escape_redshift_literal(", NULL);\\n DROP TABLE --\\") == "', NULL);\\\\n DROP TABLE --\\\\'"
     # assert escape_redshift_literal(b'hello_word') == "\\x68656c6c6f5f776f7264"
 
 
@@ -141,31 +129,16 @@ def test_string_complex_escape(escaper: AnyFun) -> None:
 
 
 def test_identifier_escape() -> None:
-    assert (
-        escape_redshift_identifier(", NULL'); DROP TABLE\" -\\-")
-        == '", NULL\'); DROP TABLE"" -\\\\-"'
-    )
+    assert escape_redshift_identifier(", NULL'); DROP TABLE\" -\\-") == '", NULL\'); DROP TABLE"" -\\\\-"'
 
 
 def test_identifier_escape_bigquery() -> None:
-    assert (
-        escape_bigquery_identifier(", NULL'); DROP TABLE\"` -\\-")
-        == "`, NULL'); DROP TABLE\"\\` -\\\\-`"
-    )
+    assert escape_bigquery_identifier(", NULL'); DROP TABLE\"` -\\-") == "`, NULL'); DROP TABLE\"\\` -\\\\-`"
 
 
 def test_string_literal_escape_unicode() -> None:
     # test on some unicode characters
-    assert (
-        escape_redshift_literal(", NULL);\n DROP TABLE --")
-        == "', NULL);\\n DROP TABLE --'"
-    )
-    assert (
-        escape_redshift_literal("イロハニホヘト チリヌルヲ ワカヨタレソ ツネナラム")
-        == "'イロハニホヘト チリヌルヲ ワカヨタレソ ツネナラム'"
-    )
+    assert escape_redshift_literal(", NULL);\n DROP TABLE --") == "', NULL);\\n DROP TABLE --'"
+    assert escape_redshift_literal("イロハニホヘト チリヌルヲ ワカヨタレソ ツネナラム") == "'イロハニホヘト チリヌルヲ ワカヨタレソ ツネナラム'"
     assert escape_redshift_identifier('ąćł"') == '"ąćł"""'
-    assert (
-        escape_redshift_identifier('イロハニホヘト チリヌルヲ "ワカヨタレソ ツネナラム')
-        == '"イロハニホヘト チリヌルヲ ""ワカヨタレソ ツネナラム"'
-    )
+    assert escape_redshift_identifier('イロハニホヘト チリヌルヲ "ワカヨタレソ ツネナラム') == '"イロハニホヘト チリヌルヲ ""ワカヨタレソ ツネナラム"'

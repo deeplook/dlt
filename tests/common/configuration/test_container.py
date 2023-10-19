@@ -167,13 +167,9 @@ def test_container_provider(container: Container) -> None:
     assert k == "typing.Literal['a']"
 
 
-def test_container_provider_embedded_inject(
-    container: Container, environment: Any
-) -> None:
+def test_container_provider_embedded_inject(container: Container, environment: Any) -> None:
     environment["INJECTED"] = "unparsable"
-    with container.injectable_context(
-        InjectableTestContext(current_value="Embed")
-    ) as injected:
+    with container.injectable_context(InjectableTestContext(current_value="Embed")) as injected:
         # must have top precedence - over the environ provider. environ provider is returning a value that will cannot be parsed
         # but the container provider has a precedence and the lookup in environ provider will never happen
         C = resolve_configuration(EmbeddedWithInjectableContext())

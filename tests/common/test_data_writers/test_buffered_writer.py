@@ -43,9 +43,7 @@ def test_write_no_item() -> None:
     assert writer.closed_files == []
 
 
-@pytest.mark.parametrize(
-    "disable_compression", [True, False], ids=["no_compression", "compression"]
-)
+@pytest.mark.parametrize("disable_compression", [True, False], ids=["no_compression", "compression"])
 def test_rotation_on_schema_change(disable_compression: bool) -> None:
     c1 = new_column("col1", "bigint")
     c2 = new_column("col2", "bigint")
@@ -78,9 +76,7 @@ def test_rotation_on_schema_change(disable_compression: bool) -> None:
     # writer is closed and data was written
     assert len(writer.closed_files) == 1
     # check the content, mind that we swapped the columns
-    with FileStorage.open_zipsafe_ro(
-        writer.closed_files[0], "r", encoding="utf-8"
-    ) as f:
+    with FileStorage.open_zipsafe_ro(writer.closed_files[0], "r", encoding="utf-8") as f:
         content = f.readlines()
     assert "col2,col1" in content[0]
     assert "NULL,0" in content[2]
@@ -132,16 +128,12 @@ def test_rotation_on_schema_change(disable_compression: bool) -> None:
         assert len(writer.closed_files) == 2
         assert writer._buffered_items == []
     # the last file must contain text value of the column3
-    with FileStorage.open_zipsafe_ro(
-        writer.closed_files[-1], "r", encoding="utf-8"
-    ) as f:
+    with FileStorage.open_zipsafe_ro(writer.closed_files[-1], "r", encoding="utf-8") as f:
         content = f.readlines()
     assert "(col3_value" in content[-1]
 
 
-@pytest.mark.parametrize(
-    "disable_compression", [True, False], ids=["no_compression", "compression"]
-)
+@pytest.mark.parametrize("disable_compression", [True, False], ids=["no_compression", "compression"])
 def test_NO_rotation_on_schema_change(disable_compression: bool) -> None:
     c1 = new_column("col1", "bigint")
     c2 = new_column("col2", "bigint")
@@ -156,9 +148,7 @@ def test_NO_rotation_on_schema_change(disable_compression: bool) -> None:
         return map(lambda x: {"col1": x, "col2": x * 2 + 1}, range(0, count))
 
     # change schema before file first flush
-    with get_insert_writer(
-        _format="jsonl", disable_compression=disable_compression
-    ) as writer:
+    with get_insert_writer(_format="jsonl", disable_compression=disable_compression) as writer:
         writer.write_data_item(list(c1_doc(15)), t1)
         # flushed
         assert writer._file is not None
@@ -168,16 +158,12 @@ def test_NO_rotation_on_schema_change(disable_compression: bool) -> None:
         # only the initial 15 items written
         assert writer._writer.items_count == 15
     # all written
-    with FileStorage.open_zipsafe_ro(
-        writer.closed_files[-1], "r", encoding="utf-8"
-    ) as f:
+    with FileStorage.open_zipsafe_ro(writer.closed_files[-1], "r", encoding="utf-8") as f:
         content = f.readlines()
     assert content[-1] == '{"col1":1,"col2":3}\n'
 
 
-@pytest.mark.parametrize(
-    "disable_compression", [True, False], ids=["no_compression", "compression"]
-)
+@pytest.mark.parametrize("disable_compression", [True, False], ids=["no_compression", "compression"])
 def test_writer_requiring_schema(disable_compression: bool) -> None:
     # assertion on flushing
     with pytest.raises(AssertionError):
@@ -191,12 +177,8 @@ def test_writer_requiring_schema(disable_compression: bool) -> None:
         writer.write_data_item([{"col1": 1}], t1)
 
 
-@pytest.mark.parametrize(
-    "disable_compression", [True, False], ids=["no_compression", "compression"]
-)
+@pytest.mark.parametrize("disable_compression", [True, False], ids=["no_compression", "compression"])
 def test_writer_optional_schema(disable_compression: bool) -> None:
-    with get_insert_writer(
-        _format="jsonl", disable_compression=disable_compression
-    ) as writer:
+    with get_insert_writer(_format="jsonl", disable_compression=disable_compression) as writer:
         writer.write_data_item([{"col1": 1}], None)
         writer.write_data_item([{"col1": 1}], None)

@@ -12,16 +12,12 @@ from tests.utils import skip_if_not_active
 skip_if_not_active("filesystem")
 
 
-def assert_file_matches(
-    layout: str, job: LoadJobInfo, load_id: str, client: FilesystemClient
-) -> None:
+def assert_file_matches(layout: str, job: LoadJobInfo, load_id: str, client: FilesystemClient) -> None:
     """Verify file contents of load job are identical to the corresponding file in destination"""
     local_path = Path(job.file_path)
     filename = local_path.name
 
-    destination_fn = LoadFilesystemJob.make_destination_filename(
-        layout, filename, client.schema.name, load_id
-    )
+    destination_fn = LoadFilesystemJob.make_destination_filename(layout, filename, client.schema.name, load_id)
     destination_path = posixpath.join(client.dataset_path, destination_fn)
 
     assert local_path.read_bytes() == client.fs_client.read_bytes(destination_path)
@@ -86,12 +82,8 @@ def test_pipeline_merge_write_disposition(all_buckets_env: str) -> None:
     complete_fn = f"{client.schema.name}.{LOADS_TABLE_NAME}.%s"
 
     # Test complete_load markers are saved
-    assert client.fs_client.isfile(
-        posixpath.join(client.dataset_path, complete_fn % load_id1)
-    )
-    assert client.fs_client.isfile(
-        posixpath.join(client.dataset_path, complete_fn % load_id2)
-    )
+    assert client.fs_client.isfile(posixpath.join(client.dataset_path, complete_fn % load_id1))
+    assert client.fs_client.isfile(posixpath.join(client.dataset_path, complete_fn % load_id2))
 
     # Force replace
     pipeline.run(some_source(), write_disposition="replace")

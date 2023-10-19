@@ -30,9 +30,7 @@ class PydanticValidator(ValidateItem, Generic[_TPydanticModel]):
             items=(List[model], ...),  # type: ignore[valid-type]
         )
 
-    def __call__(
-        self, item: TDataItems, meta: Any = None
-    ) -> Union[_TPydanticModel, List[_TPydanticModel]]:
+    def __call__(self, item: TDataItems, meta: Any = None) -> Union[_TPydanticModel, List[_TPydanticModel]]:
         """Validate a data item against the pydantic model"""
         if item is None:
             return None
@@ -50,10 +48,6 @@ class PydanticValidator(ValidateItem, Generic[_TPydanticModel]):
 def get_column_validator(
     columns: TTableHintTemplate[TAnySchemaColumns],
 ) -> Optional[ValidateItem]:
-    if (
-        PydanticBaseModel is not None
-        and isinstance(columns, type)
-        and issubclass(columns, PydanticBaseModel)
-    ):
+    if PydanticBaseModel is not None and isinstance(columns, type) and issubclass(columns, PydanticBaseModel):
         return PydanticValidator(columns)
     return None

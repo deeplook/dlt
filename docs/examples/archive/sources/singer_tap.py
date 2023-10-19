@@ -35,9 +35,7 @@ class SingerState(SingerMessage):
 # pip install ../singer/singer-python
 # https://github.com/datamill-co/singer-runner/tree/master/singer_runner
 # https://techgaun.github.io/active-forks/index.html#singer-io/singer-python
-def get_source_from_stream(
-    singer_messages: Iterator[SingerMessage], state: DictStrAny = None
-) -> Iterator[TDataItem]:
+def get_source_from_stream(singer_messages: Iterator[SingerMessage], state: DictStrAny = None) -> Iterator[TDataItem]:
     last_state = {}
     for msg in singer_messages:
         if msg["type"] == "RECORD":
@@ -52,16 +50,12 @@ def get_source_from_stream(
 
 
 @dlt.transformer()
-def singer_raw_stream(
-    singer_messages: TDataItems, use_state: bool = True
-) -> Iterator[TDataItem]:
+def singer_raw_stream(singer_messages: TDataItems, use_state: bool = True) -> Iterator[TDataItem]:
     if use_state:
         state = dlt.current.source_state()
     else:
         state = None
-    yield from get_source_from_stream(
-        cast(Iterator[SingerMessage], singer_messages), state
-    )
+    yield from get_source_from_stream(cast(Iterator[SingerMessage], singer_messages), state)
 
 
 @dlt.source(spec=BaseConfiguration)  # use BaseConfiguration spec to prevent injections
@@ -104,15 +98,7 @@ def tap(
         else:
             state_params = ()  # type: ignore
 
-        pipe_iterator = singer_process_pipe(
-            venv,
-            tap_name,
-            "--config",
-            os.path.abspath(config_file_path),
-            "--catalog",
-            os.path.abspath(catalog_file_path),
-            *state_params
-        )
+        pipe_iterator = singer_process_pipe(venv, tap_name, "--config", os.path.abspath(config_file_path), "--catalog", os.path.abspath(catalog_file_path), *state_params)
         yield from get_source_from_stream(pipe_iterator, state)
 
     return singer_messages

@@ -33,9 +33,7 @@ def chess(
     @dlt.transformer(data_from=players, write_disposition="replace")
     @dlt.defer
     def players_profiles(username: Any) -> TDataItems:
-        print(
-            f"getting {username} profile via thread {threading.current_thread().name}"
-        )
+        print(f"getting {username} profile via thread {threading.current_thread().name}")
         sleep(1)  # add some latency to show parallel runs
         return _get_data_with_retry(f"player/{username}")
 

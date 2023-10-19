@@ -19,14 +19,10 @@ def _make_sql_escape_re(escape_dict: Dict[str, str]) -> re.Pattern:  # type: ign
 SQL_ESCAPE_RE = _make_sql_escape_re(SQL_ESCAPE_DICT)
 
 
-def _escape_extended(
-    v: str, prefix: str = "E'", escape_dict: Dict[str, str] = None, escape_re: re.Pattern = None  # type: ignore[type-arg]
-) -> str:
+def _escape_extended(v: str, prefix: str = "E'", escape_dict: Dict[str, str] = None, escape_re: re.Pattern = None) -> str:  # type: ignore[type-arg]
     escape_dict = escape_dict or SQL_ESCAPE_DICT
     escape_re = escape_re or SQL_ESCAPE_RE
-    return "{}{}{}".format(
-        prefix, escape_re.sub(lambda x: escape_dict[x.group(0)], v), "'"
-    )
+    return "{}{}{}".format(prefix, escape_re.sub(lambda x: escape_dict[x.group(0)], v), "'")
 
 
 def escape_redshift_literal(v: Any) -> Any:
@@ -84,9 +80,7 @@ MS_SQL_ESCAPE_RE = _make_sql_escape_re(MS_SQL_ESCAPE_DICT)
 
 def escape_mssql_literal(v: Any) -> Any:
     if isinstance(v, str):
-        return _escape_extended(
-            v, prefix="N'", escape_dict=MS_SQL_ESCAPE_DICT, escape_re=MS_SQL_ESCAPE_RE
-        )
+        return _escape_extended(v, prefix="N'", escape_dict=MS_SQL_ESCAPE_DICT, escape_re=MS_SQL_ESCAPE_RE)
     if isinstance(v, (datetime, date, time)):
         return f"'{v.isoformat()}'"
     if isinstance(v, (list, dict)):

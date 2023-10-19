@@ -28,10 +28,7 @@ class Wei(Decimal, SupportsVariant[Decimal]):
     def __call__(self) -> Union["Wei", TVariantRV]:
         # TODO: this should look into DestinationCapabilitiesContext to get maximum Decimal value.
         # this is BigQuery BIGDECIMAL max
-        if (
-            self > 578960446186580977117854925043439539266
-            or self < -578960446186580977117854925043439539267
-        ):
+        if self > 578960446186580977117854925043439539266 or self < -578960446186580977117854925043439539267:
             return ("str", str(self))
         else:
             return self

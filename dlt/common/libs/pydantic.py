@@ -14,14 +14,10 @@ from dlt.common.typing import (
 try:
     from pydantic import BaseModel, Field, Json
 except ImportError:
-    raise MissingDependencyException(
-        "DLT pydantic Helpers", ["pydantic"], "DLT Helpers for for pydantic."
-    )
+    raise MissingDependencyException("DLT pydantic Helpers", ["pydantic"], "DLT Helpers for for pydantic.")
 
 
-def pydantic_to_table_schema_columns(
-    model: Union[BaseModel, Type[BaseModel]], skip_complex_types: bool = False
-) -> TTableSchemaColumns:
+def pydantic_to_table_schema_columns(model: Union[BaseModel, Type[BaseModel]], skip_complex_types: bool = False) -> TTableSchemaColumns:
     """Convert a pydantic model to a table schema columns dict
 
     Args:

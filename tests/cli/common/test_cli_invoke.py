@@ -57,10 +57,7 @@ def test_invoke_init_chess_and_template(script_runner: ScriptRunner) -> None:
             assert "Verified source chess was added to your project!" in result.stdout
             assert result.returncode == 0
             result = script_runner.run(["dlt", "init", "debug_pipeline", "dummy"])
-            assert (
-                "Your new pipeline debug_pipeline is ready to be customized!"
-                in result.stdout
-            )
+            assert "Your new pipeline debug_pipeline is ready to be customized!" in result.stdout
             assert result.returncode == 0
 
 
@@ -88,9 +85,7 @@ def test_invoke_deploy_project(script_runner: ScriptRunner) -> None:
             )
             assert result.returncode == -4
             assert "The pipeline script does not exist" in result.stderr
-            result = script_runner.run(
-                ["dlt", "deploy", "debug_pipeline.py", "airflow-composer"]
-            )
+            result = script_runner.run(["dlt", "deploy", "debug_pipeline.py", "airflow-composer"])
             assert result.returncode == -4
             assert "The pipeline script does not exist" in result.stderr
             # now init
@@ -107,9 +102,7 @@ def test_invoke_deploy_project(script_runner: ScriptRunner) -> None:
                 ]
             )
             assert "NOTE: You must run the pipeline locally" in result.stdout
-            result = script_runner.run(
-                ["dlt", "deploy", "chess_pipeline.py", "airflow-composer"]
-            )
+            result = script_runner.run(["dlt", "deploy", "chess_pipeline.py", "airflow-composer"])
             assert "NOTE: You must run the pipeline locally" in result.stdout
 
 
@@ -167,17 +160,13 @@ def test_invoke_deploy_mock(script_runner: ScriptRunner) -> None:
         }
         # no schedule fails
         _deploy_command.reset_mock()
-        result = script_runner.run(
-            ["dlt", "deploy", "debug_pipeline.py", "github-action"]
-        )
+        result = script_runner.run(["dlt", "deploy", "debug_pipeline.py", "github-action"])
         assert not _deploy_command.called
         assert result.returncode != 0
         assert "the following arguments are required: --schedule" in result.stderr
         # airflow without schedule works
         _deploy_command.reset_mock()
-        result = script_runner.run(
-            ["dlt", "deploy", "debug_pipeline.py", "airflow-composer"]
-        )
+        result = script_runner.run(["dlt", "deploy", "debug_pipeline.py", "airflow-composer"])
         assert _deploy_command.called
         assert result.returncode == 0
         assert _deploy_command.call_args[1] == {

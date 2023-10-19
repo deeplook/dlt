@@ -89,9 +89,7 @@ class RedshiftTypeMapper(TypeMapper):
         "integer": "bigint",
     }
 
-    def to_db_integer_type(
-        self, precision: Optional[int], table_format: TTableFormat = None
-    ) -> str:
+    def to_db_integer_type(self, precision: Optional[int], table_format: TTableFormat = None) -> str:
         if precision is None:
             return "bigint"
         if precision <= 16:
@@ -100,9 +98,7 @@ class RedshiftTypeMapper(TypeMapper):
             return "integer"
         return "bigint"
 
-    def from_db_type(
-        self, db_type: str, precision: Optional[int], scale: Optional[int]
-    ) -> TColumnType:
+    def from_db_type(self, db_type: str, precision: Optional[int], scale: Optional[int]) -> TColumnType:
         if db_type == "numeric":
             if (precision, scale) == self.capabilities.wei_precision:
                 return dict(data_type="wei")
@@ -143,9 +139,7 @@ class RedshiftCopyFileLoadJob(CopyRemoteFileLoadJob):
         credentials = ""
         if self._staging_iam_role:
             credentials = f"IAM_ROLE '{self._staging_iam_role}'"
-        elif self._staging_credentials and isinstance(
-            self._staging_credentials, AwsCredentialsWithoutDefaults
-        ):
+        elif self._staging_credentials and isinstance(self._staging_credentials, AwsCredentialsWithoutDefaults):
             aws_access_key = self._staging_credentials.aws_access_key_id
             aws_secret_key = self._staging_credentials.aws_secret_access_key
             credentials = f"CREDENTIALS 'aws_access_key_id={aws_access_key};aws_secret_access_key={aws_secret_key}'"
@@ -216,51 +210,33 @@ class RedshiftMergeJob(SqlMergeJob):
         A list of clauses may be returned for engines that do not support OR in subqueries. Like BigQuery
         """
         if for_delete:
-            return [
-                f"FROM {root_table_name} WHERE EXISTS (SELECT 1 FROM {staging_root_table_name} WHERE {' OR '.join([c.format(d=root_table_name,s=staging_root_table_name) for c in key_clauses])})"
-            ]
-        return SqlMergeJob.gen_key_table_clauses(
-            root_table_name, staging_root_table_name, key_clauses, for_delete
-        )
+            return [f"FROM {root_table_name} WHERE EXISTS (SELECT 1 FROM {staging_root_table_name} WHERE {' OR '.join([c.format(d=root_table_name,s=staging_root_table_name) for c in key_clauses])})"]
+        return SqlMergeJob.gen_key_table_clauses(root_table_name, staging_root_table_name, key_clauses, for_delete)
 
 
 class RedshiftClient(InsertValuesJobClient, SupportsStagingDestination):
     capabilities: ClassVar[DestinationCapabilitiesContext] = capabilities()
 
     def __init__(self, schema: Schema, config: RedshiftClientConfiguration) -> None:
-        sql_client = RedshiftSqlClient(
-            config.normalize_dataset_name(schema), config.credentials
-        )
+        sql_client = RedshiftSqlClient(config.normalize_dataset_name(schema), config.credentials)
         super().__init__(schema, config, sql_client)
         self.sql_client = sql_client
         self.config: RedshiftClientConfiguration = config
         self.type_mapper = RedshiftTypeMapper(self.capabilities)
 
-    def _create_merge_followup_jobs(
-        self, table_chain: Sequence[TTableSchema]
-    ) -> List[NewLoadJob]:
+    def _create_merge_followup_jobs(self, table_chain: Sequence[TTableSchema]) -> List[NewLoadJob]:
         return [RedshiftMergeJob.from_table_chain(table_chain, self.sql_client)]
 
-    def _get_column_def_sql(
-        self, c: TColumnSchema, table_format: TTableFormat = None
-    ) -> str:
-        hints_str = " ".join(
-            HINT_TO_REDSHIFT_ATTR.get(h, "")
-            for h in HINT_TO_REDSHIFT_ATTR.keys()
-            if c.get(h, False) is True
-        )
+    def _get_column_def_sql(self, c: TColumnSchema, table_format: TTableFormat = None) -> str:
+        hints_str = " ".join(HINT_TO_REDSHIFT_ATTR.get(h, "") for h in HINT_TO_REDSHIFT_ATTR.keys() if c.get(h, False) is True)
         column_name = self.capabilities.escape_identifier(c["name"])
         return f"{column_name} {self.type_mapper.to_db_type(c)} {hints_str} {self._gen_not_null(c.get('nullable', True))}"
 
-    def start_file_load(
-        self, table: TTableSchema, file_path: str, load_id: str
-    ) -> LoadJob:
+    def start_file_load(self, table: TTableSchema, file_path: str, load_id: str) -> LoadJob:
         """Starts SqlLoadJob for files ending with .sql or returns None to let derived classes to handle their specific jobs"""
         job = super().start_file_load(table, file_path, load_id)
         if not job:
-            assert NewReferenceJob.is_reference_job(
-                file_path
-            ), "Redshift must use staging to load files"
+            assert NewReferenceJob.is_reference_job(file_path), "Redshift must use staging to load files"
             job = RedshiftCopyFileLoadJob(
                 table,
                 file_path,
@@ -270,7 +246,5 @@ class RedshiftClient(InsertValuesJobClient, SupportsStagingDestination):
             )
         return job
 
-    def _from_db_type(
-        self, pq_t: str, precision: Optional[int], scale: Optional[int]
-    ) -> TColumnType:
+    def _from_db_type(self, pq_t: str, precision: Optional[int], scale: Optional[int]) -> TColumnType:
         return self.type_mapper.from_db_type(pq_t, precision, scale)

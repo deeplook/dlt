@@ -58,9 +58,7 @@ class PostgresTypeMapper(TypeMapper):
         "integer": "bigint",
     }
 
-    def to_db_integer_type(
-        self, precision: Optional[int], table_format: TTableFormat = None
-    ) -> str:
+    def to_db_integer_type(self, precision: Optional[int], table_format: TTableFormat = None) -> str:
         if precision is None:
             return "bigint"
         # Precision is number of bits
@@ -70,9 +68,7 @@ class PostgresTypeMapper(TypeMapper):
             return "integer"
         return "bigint"
 
-    def from_db_type(
-        self, db_type: str, precision: Optional[int] = None, scale: Optional[int] = None
-    ) -> TColumnType:
+    def from_db_type(self, db_type: str, precision: Optional[int] = None, scale: Optional[int] = None) -> TColumnType:
         if db_type == "numeric":
             if (precision, scale) == self.capabilities.wei_precision:
                 return dict(data_type="wei")
@@ -95,13 +91,9 @@ class PostgresStagingCopyJob(SqlStagingCopyJob):
             # drop destination table
             sql.append(f"DROP TABLE IF EXISTS {table_name};")
             # moving staging table to destination schema
-            sql.append(
-                f"ALTER TABLE {staging_table_name} SET SCHEMA {sql_client.fully_qualified_dataset_name()};"
-            )
+            sql.append(f"ALTER TABLE {staging_table_name} SET SCHEMA {sql_client.fully_qualified_dataset_name()};")
             # recreate staging table
-            sql.append(
-                f"CREATE TABLE {staging_table_name} (like {table_name} including all);"
-            )
+            sql.append(f"CREATE TABLE {staging_table_name} (like {table_name} including all);")
         return sql
 
 
@@ -109,36 +101,22 @@ class PostgresClient(InsertValuesJobClient):
     capabilities: ClassVar[DestinationCapabilitiesContext] = capabilities()
 
     def __init__(self, schema: Schema, config: PostgresClientConfiguration) -> None:
-        sql_client = Psycopg2SqlClient(
-            config.normalize_dataset_name(schema), config.credentials
-        )
+        sql_client = Psycopg2SqlClient(config.normalize_dataset_name(schema), config.credentials)
         super().__init__(schema, config, sql_client)
         self.config: PostgresClientConfiguration = config
         self.sql_client = sql_client
         self.active_hints = HINT_TO_POSTGRES_ATTR if self.config.create_indexes else {}
         self.type_mapper = PostgresTypeMapper(self.capabilities)
 
-    def _get_column_def_sql(
-        self, c: TColumnSchema, table_format: TTableFormat = None
-    ) -> str:
-        hints_str = " ".join(
-            self.active_hints.get(h, "")
-            for h in self.active_hints.keys()
-            if c.get(h, False) is True
-        )
+    def _get_column_def_sql(self, c: TColumnSchema, table_format: TTableFormat = None) -> str:
+        hints_str = " ".join(self.active_hints.get(h, "") for h in self.active_hints.keys() if c.get(h, False) is True)
         column_name = self.capabilities.escape_identifier(c["name"])
         return f"{column_name} {self.type_mapper.to_db_type(c)} {hints_str} {self._gen_not_null(c.get('nullable', True))}"
 
-    def _create_replace_followup_jobs(
-        self, table_chain: Sequence[TTableSchema]
-    ) -> List[NewLoadJob]:
+    def _create_replace_followup_jobs(self, table_chain: Sequence[TTableSchema]) -> List[NewLoadJob]:
         if self.config.replace_strategy == "staging-optimized":
-            return [
-                PostgresStagingCopyJob.from_table_chain(table_chain, self.sql_client)
-            ]
+            return [PostgresStagingCopyJob.from_table_chain(table_chain, self.sql_client)]
         return super()._create_replace_followup_jobs(table_chain)
 
-    def _from_db_type(
-        self, pq_t: str, precision: Optional[int], scale: Optional[int]
-    ) -> TColumnType:
+    def _from_db_type(self, pq_t: str, precision: Optional[int], scale: Optional[int]) -> TColumnType:
         return self.type_mapper.from_db_type(pq_t, precision, scale)

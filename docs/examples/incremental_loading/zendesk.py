@@ -11,9 +11,7 @@ from dlt.sources.helpers.requests import client
 @dlt.source(max_table_nesting=2)
 def zendesk_support(
     credentials: Dict[str, str] = dlt.secrets.value,
-    start_date: Optional[TAnyDateTime] = pendulum.datetime(
-        year=2000, month=1, day=1
-    ),  # noqa: B008
+    start_date: Optional[TAnyDateTime] = pendulum.datetime(year=2000, month=1, day=1),  # noqa: B008
     end_date: Optional[TAnyDateTime] = None,
 ):
     """
@@ -118,9 +116,7 @@ def get_pages(
 
 if __name__ == "__main__":
     # create dlt pipeline
-    pipeline = dlt.pipeline(
-        pipeline_name="zendesk", destination="duckdb", dataset_name="zendesk_data"
-    )
+    pipeline = dlt.pipeline(pipeline_name="zendesk", destination="duckdb", dataset_name="zendesk_data")
 
     load_info = pipeline.run(zendesk_support())
     print(load_info)

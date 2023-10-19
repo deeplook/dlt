@@ -96,11 +96,7 @@ def test_service_credentials_native_credentials_object(environment: Any) -> None
     def _assert_credentials(gcp_credentials):
         assert gcp_credentials.to_native_credentials() is credentials
         # check props
-        assert (
-            gcp_credentials.project_id
-            == credentials.project_id
-            == "level-dragon-333019"
-        )
+        assert gcp_credentials.project_id == credentials.project_id == "level-dragon-333019"
         assert gcp_credentials.client_email == credentials.service_account_email
         assert gcp_credentials.private_key is credentials
 
@@ -167,9 +163,7 @@ def test_oauth_credentials_native_credentials_object(environment: Any) -> None:
     oauth_dict = json.loads(oauth_str)
     # must add refresh_token
     oauth_dict["installed"]["refresh_token"] = "REFRESH TOKEN"
-    credentials = GoogleOAuth2Credentials.from_authorized_user_info(
-        oauth_dict["installed"]
-    )
+    credentials = GoogleOAuth2Credentials.from_authorized_user_info(oauth_dict["installed"])
 
     def _assert_credentials(gcp_credentials):
         # check props
@@ -259,16 +253,12 @@ def test_bigquery_job_errors(client: BigQueryClient, file_storage: FileStorage) 
 
     # start job with non existing file
     with pytest.raises(FileNotFoundError):
-        client.start_file_load(
-            client.schema.get_table(user_table_name), uniq_id() + ".", uniq_id()
-        )
+        client.start_file_load(client.schema.get_table(user_table_name), uniq_id() + ".", uniq_id())
 
     # start job with invalid name
     dest_path = file_storage.save("!!aaaa", b"data")
     with pytest.raises(LoadJobTerminalException):
-        client.start_file_load(
-            client.schema.get_table(user_table_name), dest_path, uniq_id()
-        )
+        client.start_file_load(client.schema.get_table(user_table_name), dest_path, uniq_id())
 
     user_table_name = prepare_table(client)
     load_json = {
@@ -290,9 +280,7 @@ def test_bigquery_job_errors(client: BigQueryClient, file_storage: FileStorage) 
 
 @pytest.mark.parametrize("location", ["US", "EU"])
 def test_bigquery_location(location: str, file_storage: FileStorage) -> None:
-    with cm_yield_client_with_storage(
-        "bigquery", default_config_values={"location": location}
-    ) as client:
+    with cm_yield_client_with_storage("bigquery", default_config_values={"location": location}) as client:
         user_table_name = prepare_table(client)
         load_json = {
             "_dlt_id": uniq_id(),
@@ -300,9 +288,7 @@ def test_bigquery_location(location: str, file_storage: FileStorage) -> None:
             "sender_id": "90238094809sajlkjxoiewjhduuiuehd",
             "timestamp": str(pendulum.now()),
         }
-        job = expect_load_file(
-            client, file_storage, json.dumps(load_json), user_table_name
-        )
+        job = expect_load_file(client, file_storage, json.dumps(load_json), user_table_name)
 
         # start a job from the same file. it should fallback to retrieve job silently
         client.start_file_load(
@@ -310,9 +296,7 @@ def test_bigquery_location(location: str, file_storage: FileStorage) -> None:
             file_storage.make_full_path(job.file_name()),
             uniq_id(),
         )
-        canonical_name = client.sql_client.make_qualified_table_name(
-            user_table_name, escape=False
-        )
+        canonical_name = client.sql_client.make_qualified_table_name(user_table_name, escape=False)
         t = client.sql_client.native_connection.get_table(canonical_name)
         assert t.location == location
 
@@ -328,36 +312,26 @@ def test_loading_errors(client: BigQueryClient, file_storage: FileStorage) -> No
     }
     insert_json = copy(load_json)
     insert_json["_unk_"] = None
-    job = expect_load_file(
-        client, file_storage, json.dumps(insert_json), user_table_name, status="failed"
-    )
+    job = expect_load_file(client, file_storage, json.dumps(insert_json), user_table_name, status="failed")
     assert "No such field: _unk_" in job.exception()
 
     # insert null value
     insert_json = copy(load_json)
     insert_json["timestamp"] = None
-    job = expect_load_file(
-        client, file_storage, json.dumps(insert_json), user_table_name, status="failed"
-    )
-    assert (
-        "Only optional fields can be set to NULL. Field: timestamp;" in job.exception()
-    )
+    job = expect_load_file(client, file_storage, json.dumps(insert_json), user_table_name, status="failed")
+    assert "Only optional fields can be set to NULL. Field: timestamp;" in job.exception()
 
     # insert wrong type
     insert_json = copy(load_json)
     insert_json["timestamp"] = "AA"
-    job = expect_load_file(
-        client, file_storage, json.dumps(insert_json), user_table_name, status="failed"
-    )
+    job = expect_load_file(client, file_storage, json.dumps(insert_json), user_table_name, status="failed")
     assert "Couldn't convert value to timestamp:" in job.exception()
 
     # numeric overflow on bigint
     insert_json = copy(load_json)
     # 2**64//2 - 1 is a maximum bigint value
     insert_json["metadata__rasa_x_id"] = 2**64 // 2
-    job = expect_load_file(
-        client, file_storage, json.dumps(insert_json), user_table_name, status="failed"
-    )
+    job = expect_load_file(client, file_storage, json.dumps(insert_json), user_table_name, status="failed")
     assert "Could not convert value" in job.exception()
 
     # numeric overflow on NUMERIC
@@ -377,26 +351,14 @@ def test_loading_errors(client: BigQueryClient, file_storage: FileStorage) -> No
     )
     # this will fail
     insert_json["parse_data__intent__id"] = above_limit
-    job = expect_load_file(
-        client, file_storage, json.dumps(insert_json), user_table_name, status="failed"
-    )
-    assert (
-        "Invalid NUMERIC value: 100000000000000000000000000000 Field: parse_data__intent__id;"
-        in job.exception()
-    )
+    job = expect_load_file(client, file_storage, json.dumps(insert_json), user_table_name, status="failed")
+    assert "Invalid NUMERIC value: 100000000000000000000000000000 Field: parse_data__intent__id;" in job.exception()
 
     # max bigquery decimal is (76, 76) (256 bit) = 5.7896044618658097711785492504343953926634992332820282019728792003956564819967E+38
     insert_json = copy(load_json)
-    insert_json["parse_data__metadata__rasa_x_id"] = Decimal(
-        "5.7896044618658097711785492504343953926634992332820282019728792003956564819968E+38"
-    )
-    job = expect_load_file(
-        client, file_storage, json.dumps(insert_json), user_table_name, status="failed"
-    )
-    assert (
-        "Invalid BIGNUMERIC value: 578960446186580977117854925043439539266.34992332820282019728792003956564819968 Field: parse_data__metadata__rasa_x_id;"
-        in job.exception()
-    )
+    insert_json["parse_data__metadata__rasa_x_id"] = Decimal("5.7896044618658097711785492504343953926634992332820282019728792003956564819968E+38")
+    job = expect_load_file(client, file_storage, json.dumps(insert_json), user_table_name, status="failed")
+    assert "Invalid BIGNUMERIC value: 578960446186580977117854925043439539266.34992332820282019728792003956564819968 Field: parse_data__metadata__rasa_x_id;" in job.exception()
 
 
 def prepare_oauth_json() -> Tuple[str, str]:
@@ -415,9 +377,7 @@ def prepare_oauth_json() -> Tuple[str, str]:
 def prepare_service_json() -> Tuple[str, str]:
     # prepare real service.json
     storage = FileStorage("_secrets", makedirs=True)
-    with open(
-        common_json_case_path("level-dragon-333019-707809ee408a") + ".b64", mode="rb"
-    ) as f:
+    with open(common_json_case_path("level-dragon-333019-707809ee408a") + ".b64", mode="rb") as f:
         services_str = base64.b64decode(f.read().strip(), validate=True).decode()
     dest_path = storage.save("level-dragon-333019-707809ee408a.json", services_str)
     return services_str, dest_path

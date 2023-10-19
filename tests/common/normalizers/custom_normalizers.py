@@ -21,7 +21,5 @@ class DataItemNormalizer(RelationalNormalizer):
         d_h = self.schema._settings.setdefault("default_hints", {})
         d_h["not_null"] = json_config["not_null"]
 
-    def normalize_data_item(
-        self, source_event: TDataItem, load_id: str, table_name
-    ) -> TNormalizedRowIterator:
+    def normalize_data_item(self, source_event: TDataItem, load_id: str, table_name) -> TNormalizedRowIterator:
         yield (table_name, None), source_event

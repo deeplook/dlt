@@ -30,9 +30,7 @@ def echo_default_choice() -> Iterator[None]:
 
 @pytest.fixture(scope="module")
 def cloned_init_repo() -> FileStorage:
-    return git.get_fresh_repo_files(
-        INIT_REPO_LOCATION, get_dlt_repos_dir(), branch=INIT_REPO_BRANCH
-    )
+    return git.get_fresh_repo_files(INIT_REPO_LOCATION, get_dlt_repos_dir(), branch=INIT_REPO_BRANCH)
 
 
 @pytest.fixture
@@ -48,9 +46,7 @@ def project_files() -> Iterator[FileStorage]:
 
 
 def get_repo_dir(cloned_init_repo: FileStorage) -> str:
-    repo_dir = os.path.abspath(
-        os.path.join(TEST_STORAGE_ROOT, f"verified_sources_repo_{uniq_id()}")
-    )
+    repo_dir = os.path.abspath(os.path.join(TEST_STORAGE_ROOT, f"verified_sources_repo_{uniq_id()}"))
     # copy the whole repo into TEST_STORAGE_ROOT
     shutil.copytree(cloned_init_repo.storage_path, repo_dir)
     return repo_dir

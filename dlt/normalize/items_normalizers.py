@@ -39,18 +39,14 @@ class JsonLItemsNormalizer(ItemsNormalizer):
         root_table_name: str,
         items: List[TDataItem],
     ) -> Tuple[TSchemaUpdate, int, TRowCount]:
-        column_schemas: Dict[
-            str, TTableSchemaColumns
-        ] = {}  # quick access to column schema for writers below
+        column_schemas: Dict[str, TTableSchemaColumns] = {}  # quick access to column schema for writers below
         schema_update: TSchemaUpdate = {}
         schema_name = schema.name
         items_count = 0
         row_counts: TRowCount = {}
 
         for item in items:
-            for (table_name, parent_table), row in schema.normalize_data_item(
-                item, load_id, root_table_name
-            ):
+            for (table_name, parent_table), row in schema.normalize_data_item(item, load_id, root_table_name):
                 # filter row, may eliminate some or all fields
                 row = schema.filter_row(table_name, row)
                 # do not process empty rows
@@ -59,9 +55,7 @@ class JsonLItemsNormalizer(ItemsNormalizer):
                     for k, v in row.items():
                         row[k] = custom_pua_decode(v)  # type: ignore
                     # coerce row of values into schema table, generating partial table with new columns if any
-                    row, partial_table = schema.coerce_row(
-                        table_name, parent_table, row
-                    )
+                    row, partial_table = schema.coerce_row(table_name, parent_table, row)
                     # theres a new table or new columns in existing table
                     if partial_table:
                         # update schema and save the change
@@ -69,9 +63,7 @@ class JsonLItemsNormalizer(ItemsNormalizer):
                         table_updates = schema_update.setdefault(table_name, [])
                         table_updates.append(partial_table)
                         # update our columns
-                        column_schemas[table_name] = schema.get_table_columns(
-                            table_name
-                        )
+                        column_schemas[table_name] = schema.get_table_columns(table_name)
                     # get current columns schema
                     columns = column_schemas.get(table_name)
                     if not columns:
@@ -79,9 +71,7 @@ class JsonLItemsNormalizer(ItemsNormalizer):
                         column_schemas[table_name] = columns
                     # store row
                     # TODO: it is possible to write to single file from many processes using this: https://gitlab.com/warsaw/flufl.lock
-                    load_storage.write_data_item(
-                        load_id, schema_name, table_name, row, columns
-                    )
+                    load_storage.write_data_item(load_id, schema_name, table_name, row, columns)
                     # count total items
                     items_count += 1
                     increase_row_count(row_counts, table_name, 1)
@@ -104,14 +94,10 @@ class JsonLItemsNormalizer(ItemsNormalizer):
             items_count = 0
             for line_no, line in enumerate(f):
                 items: List[TDataItem] = json.loads(line)
-                partial_update, items_count, r_counts = self._normalize_chunk(
-                    load_storage, schema, load_id, root_table_name, items
-                )
+                partial_update, items_count, r_counts = self._normalize_chunk(load_storage, schema, load_id, root_table_name, items)
                 schema_updates.append(partial_update)
                 merge_row_count(row_counts, r_counts)
-                logger.debug(
-                    f"Processed {line_no} items from file {extracted_items_file}, items {items_count}"
-                )
+                logger.debug(f"Processed {line_no} items from file {extracted_items_file}, items {items_count}")
 
         return schema_updates, items_count, row_counts
 
@@ -130,13 +116,9 @@ class ParquetItemsNormalizer(ItemsNormalizer):
 
         with normalize_storage.storage.open_file(extracted_items_file, "rb") as f:
             items_count = pyarrow.get_row_count(f)
-        target_folder = load_storage.storage.make_full_path(
-            os.path.join(load_id, LoadStorage.NEW_JOBS_FOLDER)
-        )
+        target_folder = load_storage.storage.make_full_path(os.path.join(load_id, LoadStorage.NEW_JOBS_FOLDER))
         parts = NormalizeStorage.parse_normalize_file_name(extracted_items_file)
-        new_file_name = load_storage.build_job_file_name(
-            parts.table_name, parts.file_id, with_extension=True
-        )
+        new_file_name = load_storage.build_job_file_name(parts.table_name, parts.file_id, with_extension=True)
         FileStorage.link_hard_with_fallback(
             normalize_storage.storage.make_full_path(extracted_items_file),
             os.path.join(target_folder, new_file_name),

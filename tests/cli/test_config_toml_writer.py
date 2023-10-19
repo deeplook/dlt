@@ -36,9 +36,7 @@ def test_write_value(example_toml):
     assert toml_table["species"] == "Homo sapiens"
 
     # Test with is_default_of_interest=True and non-optional, non-final hint
-    write_value(
-        toml_table, "species", str, overwrite_existing=True, is_default_of_interest=True
-    )
+    write_value(toml_table, "species", str, overwrite_existing=True, is_default_of_interest=True)
     assert toml_table["species"] == "species"
 
     # Test with is_default_of_interest=False and non-optional, non-final hint, and no default
@@ -96,9 +94,7 @@ def test_write_value(example_toml):
 def test_write_values(example_toml):
     values = [
         WritableConfigValue("species", str, "Homo sapiens", ("taxonomy", "genus")),
-        WritableConfigValue(
-            "species", str, "Mus musculus", ("taxonomy", "genus", "subgenus")
-        ),
+        WritableConfigValue("species", str, "Mus musculus", ("taxonomy", "genus", "subgenus")),
         WritableConfigValue("genome_size", float, 3.2, ("genomic_info",)),
     ]
     write_values(example_toml, values, overwrite_existing=True)
@@ -109,9 +105,7 @@ def test_write_values(example_toml):
 
     new_values = [
         WritableConfigValue("species", str, "Canis lupus", ("taxonomy", "genus")),
-        WritableConfigValue(
-            "species", str, "Canis lupus familiaris", ("taxonomy", "genus", "subgenus")
-        ),
+        WritableConfigValue("species", str, "Canis lupus familiaris", ("taxonomy", "genus", "subgenus")),
         WritableConfigValue("genome_size", float, 2.8, ("genomic_info",)),
     ]
     write_values(example_toml, new_values, overwrite_existing=False)
@@ -123,10 +117,7 @@ def test_write_values(example_toml):
     write_values(example_toml, new_values, overwrite_existing=True)
 
     assert example_toml["taxonomy"]["genus"]["species"] == "Canis lupus"
-    assert (
-        example_toml["taxonomy"]["genus"]["subgenus"]["species"]
-        == "Canis lupus familiaris"
-    )
+    assert example_toml["taxonomy"]["genus"]["subgenus"]["species"] == "Canis lupus familiaris"
     assert example_toml["genomic_info"]["genome_size"] == 2.8
 
 
@@ -157,17 +148,13 @@ def test_write_values_without_defaults(example_toml):
         WritableConfigValue("species", str, None, ("taxonomy", "genus")),
         WritableConfigValue("genome_size", float, None, ("genomic_info",)),
         WritableConfigValue("is_animal", bool, None, ("animal_info",)),
-        WritableConfigValue(
-            "chromosomes", list, None, ("genomic_info", "chromosome_data")
-        ),
+        WritableConfigValue("chromosomes", list, None, ("genomic_info", "chromosome_data")),
         WritableConfigValue("genes", dict, None, ("genomic_info", "gene_data")),
     ]
     write_values(example_toml, values, overwrite_existing=True)
 
     assert example_toml["taxonomy"]["genus"]["species"] == "species"
-    assert (
-        example_toml["taxonomy"]["genus"]["species"].trivia.comment == EXAMPLE_COMMENT
-    )
+    assert example_toml["taxonomy"]["genus"]["species"].trivia.comment == EXAMPLE_COMMENT
 
     assert example_toml["genomic_info"]["genome_size"] == 1.0
     assert example_toml["genomic_info"]["genome_size"].trivia.comment == EXAMPLE_COMMENT
@@ -179,13 +166,7 @@ def test_write_values_without_defaults(example_toml):
         "b",
         "c",
     ]
-    assert (
-        example_toml["genomic_info"]["chromosome_data"]["chromosomes"].trivia.comment
-        == EXAMPLE_COMMENT
-    )
+    assert example_toml["genomic_info"]["chromosome_data"]["chromosomes"].trivia.comment == EXAMPLE_COMMENT
 
     assert example_toml["genomic_info"]["gene_data"]["genes"] == {"key": "value"}
-    assert (
-        example_toml["genomic_info"]["gene_data"]["genes"].trivia.comment
-        == EXAMPLE_COMMENT
-    )
+    assert example_toml["genomic_info"]["gene_data"]["genes"].trivia.comment == EXAMPLE_COMMENT

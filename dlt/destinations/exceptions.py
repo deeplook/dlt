@@ -30,9 +30,7 @@ class DatabaseTransientException(DestinationTransientException, DatabaseExceptio
 
 
 class DestinationConnectionError(DestinationTransientException):
-    def __init__(
-        self, client_type: str, dataset_name: str, reason: str, inner_exc: Exception
-    ) -> None:
+    def __init__(self, client_type: str, dataset_name: str, reason: str, inner_exc: Exception) -> None:
         self.client_type = client_type
         self.dataset_name = dataset_name
         self.inner_exc = inner_exc
@@ -45,24 +43,18 @@ class LoadClientNotConnected(DestinationTransientException):
     def __init__(self, client_type: str, dataset_name: str) -> None:
         self.client_type = client_type
         self.dataset_name = dataset_name
-        super().__init__(
-            f"Connection with {client_type} to dataset {dataset_name} is closed. Open the connection with 'client.open_connection' or with the 'with client:' statement"
-        )
+        super().__init__(f"Connection with {client_type} to dataset {dataset_name} is closed. Open the connection with 'client.open_connection' or with the 'with client:' statement")
 
 
 class DestinationSchemaWillNotUpdate(DestinationTerminalException):
     def __init__(self, table_name: str, columns: Sequence[str], msg: str) -> None:
         self.table_name = table_name
         self.columns = columns
-        super().__init__(
-            f"Schema for table {table_name} column(s) {columns} will not update: {msg}"
-        )
+        super().__init__(f"Schema for table {table_name} column(s) {columns} will not update: {msg}")
 
 
 class DestinationSchemaTampered(DestinationTerminalException):
-    def __init__(
-        self, schema_name: str, version_hash: str, stored_version_hash: str
-    ) -> None:
+    def __init__(self, schema_name: str, version_hash: str, stored_version_hash: str) -> None:
         self.version_hash = version_hash
         self.stored_version_hash = stored_version_hash
         super().__init__(
@@ -78,9 +70,7 @@ class LoadJobNotExistsException(DestinationTerminalException):
 
 class LoadJobTerminalException(DestinationTerminalException):
     def __init__(self, file_path: str, message: str) -> None:
-        super().__init__(
-            f"Job with id/file name {file_path} encountered unrecoverable problem: {message}"
-        )
+        super().__init__(f"Job with id/file name {file_path} encountered unrecoverable problem: {message}")
 
 
 class LoadJobInvalidStateTransitionException(DestinationTerminalException):
@@ -92,9 +82,7 @@ class LoadJobInvalidStateTransitionException(DestinationTerminalException):
 
 class LoadJobFileTooBig(DestinationTerminalException):
     def __init__(self, file_name: str, max_size: int) -> None:
-        super().__init__(
-            f"File {file_name} exceeds {max_size} and cannot be loaded. Split the file and try again."
-        )
+        super().__init__(f"File {file_name} exceeds {max_size} and cannot be loaded. Split the file and try again.")
 
 
 class MergeDispositionException(DestinationTerminalException):
@@ -118,9 +106,7 @@ class MergeDispositionException(DestinationTerminalException):
 class InvalidFilesystemLayout(DestinationTerminalException):
     def __init__(self, invalid_placeholders: Sequence[str]) -> None:
         self.invalid_placeholders = invalid_placeholders
-        super().__init__(
-            f"Invalid placeholders found in filesystem layout: {invalid_placeholders}"
-        )
+        super().__init__(f"Invalid placeholders found in filesystem layout: {invalid_placeholders}")
 
 
 class CantExtractTablePrefix(DestinationTerminalException):

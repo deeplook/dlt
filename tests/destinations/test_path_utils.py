@@ -20,9 +20,7 @@ def test_create_path() -> None:
         "file_id": "file_id",
         "ext": "ext",
     }
-    path = path_utils.create_path(
-        "{schema_name}/{table_name}/{load_id}.{file_id}.{ext}", **path_vars
-    )
+    path = path_utils.create_path("{schema_name}/{table_name}/{load_id}.{file_id}.{ext}", **path_vars)
     assert path == "schema_name/table_name/load_id.file_id.ext"
 
     # extension gets added automatically
@@ -31,23 +29,13 @@ def test_create_path() -> None:
 
 
 def test_get_table_prefix_layout() -> None:
-    prefix_layout = path_utils.get_table_prefix_layout(
-        "{schema_name}/{table_name}/{load_id}.{file_id}.{ext}"
-    )
+    prefix_layout = path_utils.get_table_prefix_layout("{schema_name}/{table_name}/{load_id}.{file_id}.{ext}")
     assert prefix_layout == "{schema_name}/{table_name}/"
-    assert (
-        prefix_layout.format(schema_name="my_schema", table_name="my_table")
-        == "my_schema/my_table/"
-    )
+    assert prefix_layout.format(schema_name="my_schema", table_name="my_table") == "my_schema/my_table/"
 
-    prefix_layout = path_utils.get_table_prefix_layout(
-        "some_random{schema_name}/stuff_in_between/{table_name}/{load_id}"
-    )
+    prefix_layout = path_utils.get_table_prefix_layout("some_random{schema_name}/stuff_in_between/{table_name}/{load_id}")
     assert prefix_layout == "some_random{schema_name}/stuff_in_between/{table_name}/"
-    assert (
-        prefix_layout.format(schema_name="my_schema", table_name="my_table")
-        == "some_randommy_schema/stuff_in_between/my_table/"
-    )
+    assert prefix_layout.format(schema_name="my_schema", table_name="my_table") == "some_randommy_schema/stuff_in_between/my_table/"
 
     # disallow missing table_name
     with pytest.raises(CantExtractTablePrefix):
@@ -55,9 +43,7 @@ def test_get_table_prefix_layout() -> None:
 
     # disallow other params before table_name
     with pytest.raises(CantExtractTablePrefix):
-        path_utils.get_table_prefix_layout(
-            "{file_id}some_random{table_name}/stuff_in_between/"
-        )
+        path_utils.get_table_prefix_layout("{file_id}some_random{table_name}/stuff_in_between/")
 
     # disallow any placeholders before table name (ie. Athena)
     with pytest.raises(CantExtractTablePrefix):
@@ -68,6 +54,4 @@ def test_get_table_prefix_layout() -> None:
 
     # disallow table_name without following separator
     with pytest.raises(CantExtractTablePrefix):
-        path_utils.get_table_prefix_layout(
-            "{schema_name}/{table_name}{load_id}.{file_id}.{ext}"
-        )
+        path_utils.get_table_prefix_layout("{schema_name}/{table_name}{load_id}.{file_id}.{ext}")

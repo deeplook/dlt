@@ -152,9 +152,7 @@ def get_resolved_traces() -> Dict[str, ResolvedValueTrace]:
     return _RESOLVED_TRACES
 
 
-def add_config_to_env(
-    config: BaseConfiguration, sections: Tuple[str, ...] = ()
-) -> None:
+def add_config_to_env(config: BaseConfiguration, sections: Tuple[str, ...] = ()) -> None:
     """Writes values in configuration back into environment using the naming convention of EnvironProvider. Will descend recursively if embedded BaseConfiguration instances are found"""
     if config.__section__:
         sections += (config.__section__,)

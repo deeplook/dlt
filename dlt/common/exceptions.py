@@ -10,24 +10,18 @@ class DltException(Exception):
 class UnsupportedProcessStartMethodException(DltException):
     def __init__(self, method: str) -> None:
         self.method = method
-        super().__init__(
-            f"Process pool supports only fork start method, {method} not supported. Switch the pool type to threading"
-        )
+        super().__init__(f"Process pool supports only fork start method, {method} not supported. Switch the pool type to threading")
 
 
 class CannotInstallDependencies(DltException):
-    def __init__(
-        self, dependencies: Sequence[str], interpreter: str, output: AnyStr
-    ) -> None:
+    def __init__(self, dependencies: Sequence[str], interpreter: str, output: AnyStr) -> None:
         self.dependencies = dependencies
         self.interpreter = interpreter
         if isinstance(output, bytes):
             str_output = output.decode("utf-8")
         else:
             str_output = output
-        super().__init__(
-            f"Cannot install dependencies {', '.join(dependencies)} with {interpreter} and pip:\n{str_output}\n"
-        )
+        super().__init__(f"Cannot install dependencies {', '.join(dependencies)} with {interpreter} and pip:\n{str_output}\n")
 
 
 class VenvNotFound(DltException):
@@ -63,9 +57,7 @@ class SignalReceivedException(KeyboardInterrupt, TerminalException):
 
 
 class DictValidationException(DltException):
-    def __init__(
-        self, msg: str, path: str, field: str = None, value: Any = None
-    ) -> None:
+    def __init__(self, msg: str, path: str, field: str = None, value: Any = None) -> None:
         self.path = path
         self.field = field
         self.value = value
@@ -81,9 +73,7 @@ class ArgumentsOverloadException(DltException):
 
 
 class MissingDependencyException(DltException):
-    def __init__(
-        self, caller: str, dependencies: Sequence[str], appendix: str = ""
-    ) -> None:
+    def __init__(self, caller: str, dependencies: Sequence[str], appendix: str = "") -> None:
         self.caller = caller
         self.dependencies = dependencies
         super().__init__(self._get_msg(appendix))
@@ -142,17 +132,13 @@ class DestinationTransientException(DestinationException, TransientException):
 class DestinationLoadingViaStagingNotSupported(DestinationTerminalException):
     def __init__(self, destination: str) -> None:
         self.destination = destination
-        super().__init__(
-            f"Destination {destination} does not support loading via staging."
-        )
+        super().__init__(f"Destination {destination} does not support loading via staging.")
 
 
 class DestinationLoadingWithoutStagingNotSupported(DestinationTerminalException):
     def __init__(self, destination: str) -> None:
         self.destination = destination
-        super().__init__(
-            f"Destination {destination} does not support loading without staging."
-        )
+        super().__init__(f"Destination {destination} does not support loading without staging.")
 
 
 class DestinationNoStagingMode(DestinationTerminalException):
@@ -196,21 +182,15 @@ class IdentifierTooLongException(DestinationTerminalException):
         self.identifier_type = identifier_type
         self.identifier_name = identifier_name
         self.max_identifier_length = max_identifier_length
-        super().__init__(
-            f"The length of {identifier_type} {identifier_name} exceeds {max_identifier_length} allowed for {destination_name}"
-        )
+        super().__init__(f"The length of {identifier_type} {identifier_name} exceeds {max_identifier_length} allowed for {destination_name}")
 
 
 class DestinationHasFailedJobs(DestinationTerminalException):
-    def __init__(
-        self, destination_name: str, load_id: str, failed_jobs: List[Any]
-    ) -> None:
+    def __init__(self, destination_name: str, load_id: str, failed_jobs: List[Any]) -> None:
         self.destination_name = destination_name
         self.load_id = load_id
         self.failed_jobs = failed_jobs
-        super().__init__(
-            f"Destination {destination_name} has failed jobs in load package {load_id}"
-        )
+        super().__init__(f"Destination {destination_name} has failed jobs in load package {load_id}")
 
 
 class PipelineException(DltException):

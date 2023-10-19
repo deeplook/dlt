@@ -84,11 +84,7 @@ def initialize_dbt_logging(level: str, is_json_logging: bool) -> Sequence[str]:
 
 def is_incremental_schema_out_of_sync_error(error: Any) -> bool:
     def _check_single_item(error_: dbt_results.RunResult) -> bool:
-        return (
-            error_.status == dbt_results.RunStatus.Error
-            and "The source and target schemas on this incremental model are out of sync"
-            in error_.message
-        )
+        return error_.status == dbt_results.RunStatus.Error and "The source and target schemas on this incremental model are out of sync" in error_.message
 
     if isinstance(error, dbt_results.RunResult):
         return _check_single_item(error)
@@ -109,11 +105,7 @@ def parse_dbt_execution_results(results: Any) -> Sequence[DBTNodeResult]:
         logger.warning(f"{type(results)} is unknown and cannot be logged")
         return None
 
-    return [
-        DBTNodeResult(res.node.name, res.message, res.execution_time, str(res.status))
-        for res in results
-        if isinstance(res, dbt_results.NodeResult)
-    ]
+    return [DBTNodeResult(res.node.name, res.message, res.execution_time, str(res.status)) for res in results if isinstance(res, dbt_results.NodeResult)]
 
 
 def run_dbt_command(
@@ -169,9 +161,7 @@ def run_dbt_command(
         # oftentimes dbt tries to exit on error
         raise DBTProcessingError(command, None, sys_ex)
     except FailFastException as ff:
-        dbt_exc = DBTProcessingError(
-            command, parse_dbt_execution_results(ff.result), ff.result
-        )
+        dbt_exc = DBTProcessingError(command, parse_dbt_execution_results(ff.result), ff.result)
         # detect incremental model out of sync
         if is_incremental_schema_out_of_sync_error(ff.result):
             raise IncrementalSchemaOutOfSyncError(dbt_exc) from ff

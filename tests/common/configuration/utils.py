@@ -144,9 +144,7 @@ class MockProvider(ConfigProvider):
         self.last_section: Tuple[str, ...] = None
         self.last_sections: List[Tuple[str, ...]] = []
 
-    def get_value(
-        self, key: str, hint: Type[Any], pipeline_name: str, *sections: str
-    ) -> Tuple[Optional[Any], str]:
+    def get_value(self, key: str, hint: Type[Any], pipeline_name: str, *sections: str) -> Tuple[Optional[Any], str]:
         if pipeline_name:
             sections = (pipeline_name,) + sections
         self.last_section = sections

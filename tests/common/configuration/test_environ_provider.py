@@ -114,19 +114,12 @@ def test_secret_kube_fallback(environment: Any) -> None:
 
 def test_configuration_files(environment: Any) -> None:
     # overwrite config file paths
-    environment[
-        "RUNTIME__CONFIG_FILES_STORAGE_PATH"
-    ] = "./tests/common/cases/schemas/ev1/"
+    environment["RUNTIME__CONFIG_FILES_STORAGE_PATH"] = "./tests/common/cases/schemas/ev1/"
     C = resolve.resolve_configuration(MockProdRunConfigurationVar())
-    assert (
-        C.config_files_storage_path == environment["RUNTIME__CONFIG_FILES_STORAGE_PATH"]
-    )
+    assert C.config_files_storage_path == environment["RUNTIME__CONFIG_FILES_STORAGE_PATH"]
     assert C.has_configuration_file("hasn't") is False
     assert C.has_configuration_file("event.schema.json") is True
-    assert (
-        C.get_configuration_file_path("event.schema.json")
-        == "./tests/common/cases/schemas/ev1/event.schema.json"
-    )
+    assert C.get_configuration_file_path("event.schema.json") == "./tests/common/cases/schemas/ev1/event.schema.json"
     with C.open_configuration_file("event.schema.json", "r") as f:
         f.read()
     with pytest.raises(ConfigFileNotFoundException):

@@ -37,9 +37,7 @@ from dlt.pipeline.typing import TPipelineStep
 from dlt.pipeline import Pipeline
 
 
-def retry_load(
-    retry_on_pipeline_steps: Sequence[TPipelineStep] = ("load",)
-) -> Callable[[BaseException], bool]:
+def retry_load(retry_on_pipeline_steps: Sequence[TPipelineStep] = ("load",)) -> Callable[[BaseException], bool]:
     """A retry strategy for Tenacity that, with default setting, will repeat `load` step for all exceptions that are not terminal
 
     Use this condition with tenacity `retry_if_exception`. Terminal exceptions are exceptions that will not go away when operations is repeated.
@@ -57,15 +55,10 @@ def retry_load(
 
     def _retry_load(ex: BaseException) -> bool:
         # do not retry in normalize or extract stages
-        if (
-            isinstance(ex, PipelineStepFailed)
-            and ex.step not in retry_on_pipeline_steps
-        ):
+        if isinstance(ex, PipelineStepFailed) and ex.step not in retry_on_pipeline_steps:
             return False
         # do not retry on terminal exceptions
-        if isinstance(ex, TerminalException) or (
-            ex.__context__ is not None and isinstance(ex.__context__, TerminalException)
-        ):
+        if isinstance(ex, TerminalException) or (ex.__context__ is not None and isinstance(ex.__context__, TerminalException)):
             return False
         return True
 
@@ -88,9 +81,7 @@ class DropCommand:
     def __init__(
         self,
         pipeline: Pipeline,
-        resources: Union[
-            Iterable[Union[str, TSimpleRegex]], Union[str, TSimpleRegex]
-        ] = (),
+        resources: Union[Iterable[Union[str, TSimpleRegex]], Union[str, TSimpleRegex]] = (),
         schema_name: Optional[str] = None,
         state_paths: TAnyJsonPath = (),
         drop_all: bool = False,
@@ -102,9 +93,7 @@ class DropCommand:
         if isinstance(state_paths, str):
             state_paths = [state_paths]
 
-        self.schema = pipeline.schemas[
-            schema_name or pipeline.default_schema_name
-        ].clone()
+        self.schema = pipeline.schemas[schema_name or pipeline.default_schema_name].clone()
         self.schema_tables = self.schema.tables
         self.drop_tables = not state_only
         self.drop_state = True
@@ -113,27 +102,17 @@ class DropCommand:
         resources = set(resources)
         resource_names = []
         if drop_all:
-            self.resource_pattern = compile_simple_regex(
-                TSimpleRegex("re:.*")
-            )  # Match everything
+            self.resource_pattern = compile_simple_regex(TSimpleRegex("re:.*"))  # Match everything
         elif resources:
-            self.resource_pattern = compile_simple_regexes(
-                TSimpleRegex(r) for r in resources
-            )
+            self.resource_pattern = compile_simple_regexes(TSimpleRegex(r) for r in resources)
         else:
             self.resource_pattern = None
 
         if self.resource_pattern:
-            data_tables = {
-                t["name"]: t for t in self.schema.data_tables()
-            }  # Don't remove _dlt tables
-            resource_tables = group_tables_by_resource(
-                data_tables, pattern=self.resource_pattern
-            )
+            data_tables = {t["name"]: t for t in self.schema.data_tables()}  # Don't remove _dlt tables
+            resource_tables = group_tables_by_resource(data_tables, pattern=self.resource_pattern)
             if self.drop_tables:
-                self.tables_to_drop = list(
-                    chain.from_iterable(resource_tables.values())
-                )
+                self.tables_to_drop = list(chain.from_iterable(resource_tables.values()))
                 self.tables_to_drop.reverse()
             else:
                 self.tables_to_drop = []
@@ -163,11 +142,7 @@ class DropCommand:
 
     @property
     def is_empty(self) -> bool:
-        return (
-            len(self.info["tables"]) == 0
-            and len(self.info["state_paths"]) == 0
-            and len(self.info["resource_states"]) == 0
-        )
+        return len(self.info["tables"]) == 0 and len(self.info["state_paths"]) == 0 and len(self.info["resource_states"]) == 0
 
     def _drop_destination_tables(self) -> None:
         table_names = [tbl["name"] for tbl in self.tables_to_drop]
@@ -201,13 +176,9 @@ class DropCommand:
             # drop additional state paths
             resolved_paths = resolve_paths(self.state_paths_to_drop, source_state)
             if self.state_paths_to_drop and not resolved_paths:
-                self.info["warnings"].append(
-                    f"State paths {self.state_paths_to_drop} did not select any paths in source {source_name}"
-                )
+                self.info["warnings"].append(f"State paths {self.state_paths_to_drop} did not select any paths in source {source_name}")
             _delete_source_state_keys(resolved_paths, source_state)
-            self.info["state_paths"].extend(
-                f"{source_name}.{p}" for p in resolved_paths
-            )
+            self.info["state_paths"].extend(f"{source_name}.{p}" for p in resolved_paths)
         return state  # type: ignore[return-value]
 
     def _drop_state_keys(self) -> None:
@@ -217,12 +188,8 @@ class DropCommand:
             state.update(self._new_state)
 
     def __call__(self) -> None:
-        if (
-            self.pipeline.has_pending_data
-        ):  # Raise when there are pending extracted/load files to prevent conflicts
-            raise PipelineHasPendingDataException(
-                self.pipeline.pipeline_name, self.pipeline.pipelines_dir
-            )
+        if self.pipeline.has_pending_data:  # Raise when there are pending extracted/load files to prevent conflicts
+            raise PipelineHasPendingDataException(self.pipeline.pipeline_name, self.pipeline.pipelines_dir)
         self.pipeline.sync_destination()
 
         if not self.drop_state and not self.drop_tables:
@@ -255,6 +222,4 @@ def drop(
     drop_all: bool = False,
     state_only: bool = False,
 ) -> None:
-    return DropCommand(
-        pipeline, resources, schema_name, state_paths, drop_all, state_only
-    )()
+    return DropCommand(pipeline, resources, schema_name, state_paths, drop_all, state_only)()

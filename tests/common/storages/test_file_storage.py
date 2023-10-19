@@ -74,12 +74,7 @@ def test_in_storage(test_storage: FileStorage) -> None:
     assert test_storage.in_storage(".") is True
     assert test_storage.in_storage(os.curdir) is True
     assert test_storage.in_storage(os.path.realpath(os.curdir)) is False
-    assert (
-        test_storage.in_storage(
-            os.path.join(os.path.realpath(os.curdir), TEST_STORAGE_ROOT)
-        )
-        is True
-    )
+    assert test_storage.in_storage(os.path.join(os.path.realpath(os.curdir), TEST_STORAGE_ROOT)) is True
 
 
 def test_from_wd_to_relative_path(test_storage: FileStorage) -> None:
@@ -137,9 +132,7 @@ def test_validate_file_name_component() -> None:
     FileStorage.validate_file_name_component("BAN__ANA is allowed")
 
 
-@pytest.mark.parametrize(
-    "action", ("rename_tree_files", "rename_tree", "atomic_rename")
-)
+@pytest.mark.parametrize("action", ("rename_tree_files", "rename_tree", "atomic_rename"))
 def test_rename_nested_tree(test_storage: FileStorage, action: str) -> None:
     source_dir = os.path.join(test_storage.storage_path, "source")
     nested_dir_1 = os.path.join(source_dir, "nested1")

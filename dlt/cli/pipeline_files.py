@@ -59,19 +59,13 @@ class TVerifiedSourcesFileIndex(TypedDict):
 
 
 def _save_dot_sources(index: TVerifiedSourcesFileIndex) -> None:
-    with open(
-        make_dlt_settings_path(SOURCES_INIT_INFO_FILE), "w", encoding="utf-8"
-    ) as f:
-        yaml.dump(
-            index, f, allow_unicode=True, default_flow_style=False, sort_keys=False
-        )
+    with open(make_dlt_settings_path(SOURCES_INIT_INFO_FILE), "w", encoding="utf-8") as f:
+        yaml.dump(index, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
 
 
 def _load_dot_sources() -> TVerifiedSourcesFileIndex:
     try:
-        with open(
-            make_dlt_settings_path(SOURCES_INIT_INFO_FILE), "r", encoding="utf-8"
-        ) as f:
+        with open(make_dlt_settings_path(SOURCES_INIT_INFO_FILE), "r", encoding="utf-8") as f:
             index: TVerifiedSourcesFileIndex = yaml.safe_load(f)
             if not index:
                 raise FileNotFoundError(SOURCES_INIT_INFO_FILE)
@@ -125,9 +119,7 @@ def save_verified_source_local_index(
     _save_dot_sources(all_sources)
 
 
-def get_remote_source_index(
-    repo_path: str, files: Sequence[str], dlt_version_constraint: str
-) -> TVerifiedSourceFileIndex:
+def get_remote_source_index(repo_path: str, files: Sequence[str], dlt_version_constraint: str) -> TVerifiedSourceFileIndex:
     with git.get_repo(repo_path) as repo:
         tree = repo.tree()
         commit_sha = repo.head.commit.hexsha
@@ -161,23 +153,14 @@ def get_remote_source_index(
 
 def get_verified_source_names(sources_storage: FileStorage) -> List[str]:
     candidates: List[str] = []
-    for name in [
-        n
-        for n in sources_storage.list_folder_dirs(".", to_root=False)
-        if not any(fnmatch.fnmatch(n, ignore) for ignore in IGNORE_SOURCES)
-    ]:
+    for name in [n for n in sources_storage.list_folder_dirs(".", to_root=False) if not any(fnmatch.fnmatch(n, ignore) for ignore in IGNORE_SOURCES)]:
         # must contain at least one valid python script
-        if any(
-            f.endswith(".py")
-            for f in sources_storage.list_folder_files(name, to_root=False)
-        ):
+        if any(f.endswith(".py") for f in sources_storage.list_folder_files(name, to_root=False)):
             candidates.append(name)
     return candidates
 
 
-def get_verified_source_files(
-    sources_storage: FileStorage, source_name: str
-) -> VerifiedSourceFiles:
+def get_verified_source_files(sources_storage: FileStorage, source_name: str) -> VerifiedSourceFiles:
     if not sources_storage.has_folder(source_name):
         raise VerifiedSourceRepoError(
             f"Verified source {source_name} could not be found in the repository",
@@ -198,13 +181,7 @@ def get_verified_source_files(
             if any(fnmatch.fnmatch(subdir, ignore) for ignore in IGNORE_FILES):
                 subdirs.remove(subdir)
         rel_root = sources_storage.to_relative_path(root)
-        files.extend(
-            [
-                os.path.join(rel_root, file)
-                for file in _files
-                if all(not fnmatch.fnmatch(file, ignore) for ignore in IGNORE_FILES)
-            ]
-        )
+        files.extend([os.path.join(rel_root, file) for file in _files if all(not fnmatch.fnmatch(file, ignore) for ignore in IGNORE_FILES)])
     # read the docs
     init_py = os.path.join(source_name, utils.MODULE_INIT)
     docstring: str = ""
@@ -215,9 +192,7 @@ def get_verified_source_files(
     # read requirements
     requirements_path = os.path.join(source_name, utils.REQUIREMENTS_TXT)
     if sources_storage.has_file(requirements_path):
-        requirements = SourceRequirements.from_string(
-            sources_storage.load(requirements_path)
-        )
+        requirements = SourceRequirements.from_string(sources_storage.load(requirements_path))
     else:
         requirements = SourceRequirements([])
     # find requirements
@@ -234,11 +209,7 @@ def get_verified_source_files(
 
 def gen_index_diff(
     local_index: TVerifiedSourceFileIndex, remote_index: TVerifiedSourceFileIndex
-) -> Tuple[
-    Dict[str, TVerifiedSourceFileEntry],
-    Dict[str, TVerifiedSourceFileEntry],
-    Dict[str, TVerifiedSourceFileEntry],
-]:
+) -> Tuple[Dict[str, TVerifiedSourceFileEntry], Dict[str, TVerifiedSourceFileEntry], Dict[str, TVerifiedSourceFileEntry],]:
     deleted: Dict[str, TVerifiedSourceFileEntry] = {}
     modified: Dict[str, TVerifiedSourceFileEntry] = {}
     new: Dict[str, TVerifiedSourceFileEntry] = {}
@@ -291,9 +262,7 @@ def find_conflict_files(
     for file, entry in remote_modified.items():
         if dest_storage.has_file(file):
             # if local file was changes and it is different from incoming
-            if is_file_modified(file, entry) and is_file_modified(
-                file, local_index["files"][file]
-            ):
+            if is_file_modified(file, entry) and is_file_modified(file, local_index["files"][file]):
                 conflict_modified.append(file)
         else:
             # file was deleted but is modified on remote

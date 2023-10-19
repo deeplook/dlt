@@ -8,9 +8,7 @@ def start_snippet() -> None:
 
     data = [{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}]
 
-    pipeline = dlt.pipeline(
-        pipeline_name="quick_start", destination="duckdb", dataset_name="mydata"
-    )
+    pipeline = dlt.pipeline(pipeline_name="quick_start", destination="duckdb", dataset_name="mydata")
     load_info = pipeline.run(data, table_name="users")
 
     print(load_info)
@@ -99,14 +97,10 @@ def db_snippet() -> None:
     # use any sql database supported by SQLAlchemy, below we use a public mysql instance to get data
     # NOTE: you'll need to install pymysql with "pip install pymysql"
     # NOTE: loading data from public mysql instance may take several seconds
-    engine = create_engine(
-        "mysql+pymysql://rfamro@mysql-rfam-public.ebi.ac.uk:4497/Rfam"
-    )
+    engine = create_engine("mysql+pymysql://rfamro@mysql-rfam-public.ebi.ac.uk:4497/Rfam")
     with engine.connect() as conn:
         # select genome table, stream data in batches of 100 elements
-        rows = conn.execution_options(yield_per=100).exec_driver_sql(
-            "SELECT * FROM genome LIMIT 1000"
-        )
+        rows = conn.execution_options(yield_per=100).exec_driver_sql("SELECT * FROM genome LIMIT 1000")
 
         pipeline = dlt.pipeline(
             pipeline_name="from_database",
@@ -115,9 +109,7 @@ def db_snippet() -> None:
         )
 
         # here we convert the rows into dictionaries on the fly with a map function
-        load_info = pipeline.run(
-            map(lambda row: dict(row._mapping), rows), table_name="genome"
-        )
+        load_info = pipeline.run(map(lambda row: dict(row._mapping), rows), table_name="genome")
 
     print(load_info)
     # @@@DLT_SNIPPET_END db
@@ -150,11 +142,7 @@ def incremental_snippet() -> None:
     from dlt.sources.helpers import requests
 
     @dlt.resource(table_name="issues", write_disposition="append")
-    def get_issues(
-        created_at=dlt.sources.incremental(
-            "created_at", initial_value="1970-01-01T00:00:00Z"
-        )
-    ):
+    def get_issues(created_at=dlt.sources.incremental("created_at", initial_value="1970-01-01T00:00:00Z")):
         # NOTE: we read only open issues to minimize number of calls to the API. There's a limit of ~50 calls for not authenticated Github users
         url = "https://api.github.com/repos/dlt-hub/dlt/issues?per_page=100&sort=created&directions=desc&state=open"
 
@@ -199,11 +187,7 @@ def incremental_merge_snippet() -> None:
         write_disposition="merge",
         primary_key="id",
     )
-    def get_issues(
-        updated_at=dlt.sources.incremental(
-            "updated_at", initial_value="1970-01-01T00:00:00Z"
-        )
-    ):
+    def get_issues(updated_at=dlt.sources.incremental("updated_at", initial_value="1970-01-01T00:00:00Z")):
         # NOTE: we read only open issues to minimize number of calls to the API. There's a limit of ~50 calls for not authenticated Github users
         url = f"https://api.github.com/repos/dlt-hub/dlt/issues?since={updated_at.last_value}&per_page=100&sort=updated&directions=desc&state=open"
 
@@ -238,9 +222,7 @@ def table_dispatch_snippet() -> None:
     import dlt
     from dlt.sources.helpers import requests
 
-    @dlt.resource(
-        primary_key="id", table_name=lambda i: i["type"], write_disposition="append"
-    )
+    @dlt.resource(primary_key="id", table_name=lambda i: i["type"], write_disposition="append")
     def repo_events(last_created_at=dlt.sources.incremental("created_at")):
         url = "https://api.github.com/repos/dlt-hub/dlt/events?per_page=100"
 
@@ -311,9 +293,7 @@ def pdf_to_weaviate_snippet() -> None:
 
     # this constructs a simple pipeline that: (1) reads files from "invoices" folder (2) filters only those ending with ".pdf"
     # (3) sends them to pdf_to_text transformer with pipe (|) operator
-    pdf_pipeline = list_files("assets/invoices").add_filter(
-        lambda item: item["file_name"].endswith(".pdf")
-    ) | pdf_to_text(separate_pages=True)
+    pdf_pipeline = list_files("assets/invoices").add_filter(lambda item: item["file_name"].endswith(".pdf")) | pdf_to_text(separate_pages=True)
 
     # set the name of the destination table to receive pages
     # NOTE: Weaviate, dlt's tables are mapped to classes
@@ -334,7 +314,5 @@ def pdf_to_weaviate_snippet() -> None:
 
     client = weaviate.Client("http://localhost:8080")
     # get text of all the invoices in InvoiceText class we just created above
-    print(
-        client.query.get("InvoiceText", ["text", "file_name", "mtime", "page_id"]).do()
-    )
+    print(client.query.get("InvoiceText", ["text", "file_name", "mtime", "page_id"]).do())
     # @@@DLT_SNIPPET_END pdf_to_weaviate_read

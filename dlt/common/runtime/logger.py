@@ -87,9 +87,7 @@ class _MetricsFormatter(logging.Formatter):
         return s
 
 
-def _init_logging(
-    logger_name: str, level: str, fmt: str, component: str, version: StrStr
-) -> Logger:
+def _init_logging(logger_name: str, level: str, fmt: str, component: str, version: StrStr) -> Logger:
     if logger_name == "root":
         logging.basicConfig(level=level)
         handler = logging.getLogger().handlers[0]
@@ -110,9 +108,7 @@ def _init_logging(
             version: StrStr = None
 
             def _format_log_object(self, record: LogRecord) -> Any:
-                json_log_object = super(_CustomJsonFormatter, self)._format_log_object(
-                    record
-                )
+                json_log_object = super(_CustomJsonFormatter, self)._format_log_object(record)
                 if self.version:
                     json_log_object.update({"version": self.version})
                 return json_log_object

@@ -64,9 +64,7 @@ ALL_FILESYSTEM_DRIVERS = dlt.config.get("ALL_FILESYSTEM_DRIVERS", list) or [
 
 # Filter out buckets not in all filesystem drivers
 ALL_BUCKETS = [GCS_BUCKET, AWS_BUCKET, FILE_BUCKET, MEMORY_BUCKET, AZ_BUCKET]
-ALL_BUCKETS = [
-    bucket for bucket in ALL_BUCKETS if bucket.split(":")[0] in ALL_FILESYSTEM_DRIVERS
-]
+ALL_BUCKETS = [bucket for bucket in ALL_BUCKETS if bucket.split(":")[0] in ALL_FILESYSTEM_DRIVERS]
 
 
 @dataclass
@@ -141,23 +139,15 @@ def destinations_configs(
 ) -> List[DestinationTestConfiguration]:
     # sanity check
     for item in subset:
-        assert (
-            item in IMPLEMENTED_DESTINATIONS
-        ), f"Destination {item} is not implemented"
+        assert item in IMPLEMENTED_DESTINATIONS, f"Destination {item} is not implemented"
 
     # build destination configs
     destination_configs: List[DestinationTestConfiguration] = []
 
     # default non staging sql based configs, one per destination
     if default_sql_configs:
-        destination_configs += [
-            DestinationTestConfiguration(destination=destination)
-            for destination in SQL_DESTINATIONS
-            if destination != "athena"
-        ]
-        destination_configs += [
-            DestinationTestConfiguration(destination="duckdb", file_format="parquet")
-        ]
+        destination_configs += [DestinationTestConfiguration(destination=destination) for destination in SQL_DESTINATIONS if destination != "athena"]
+        destination_configs += [DestinationTestConfiguration(destination="duckdb", file_format="parquet")]
         # athena needs filesystem staging, which will be automatically set, we have to supply a bucket url though
         destination_configs += [
             DestinationTestConfiguration(
@@ -283,50 +273,26 @@ def destinations_configs(
                 file_format="insert_values",
             )
         ]
-        destination_configs += [
-            DestinationTestConfiguration(
-                destination="filesystem", bucket_url=FILE_BUCKET, file_format="parquet"
-            )
-        ]
-        destination_configs += [
-            DestinationTestConfiguration(
-                destination="filesystem", bucket_url=FILE_BUCKET, file_format="jsonl"
-            )
-        ]
+        destination_configs += [DestinationTestConfiguration(destination="filesystem", bucket_url=FILE_BUCKET, file_format="parquet")]
+        destination_configs += [DestinationTestConfiguration(destination="filesystem", bucket_url=FILE_BUCKET, file_format="jsonl")]
 
     if all_buckets_filesystem_configs:
         for bucket in ALL_BUCKETS:
-            destination_configs += [
-                DestinationTestConfiguration(
-                    destination="filesystem", bucket_url=bucket, extra_info=bucket
-                )
-            ]
+            destination_configs += [DestinationTestConfiguration(destination="filesystem", bucket_url=bucket, extra_info=bucket)]
 
     # filter out non active destinations
-    destination_configs = [
-        conf for conf in destination_configs if conf.destination in ACTIVE_DESTINATIONS
-    ]
+    destination_configs = [conf for conf in destination_configs if conf.destination in ACTIVE_DESTINATIONS]
 
     # filter out destinations not in subset
     if subset:
-        destination_configs = [
-            conf for conf in destination_configs if conf.destination in subset
-        ]
+        destination_configs = [conf for conf in destination_configs if conf.destination in subset]
     if exclude:
-        destination_configs = [
-            conf for conf in destination_configs if conf.destination not in exclude
-        ]
+        destination_configs = [conf for conf in destination_configs if conf.destination not in exclude]
     if file_format:
-        destination_configs = [
-            conf for conf in destination_configs if conf.file_format == file_format
-        ]
+        destination_configs = [conf for conf in destination_configs if conf.file_format == file_format]
 
     # filter out excluded configs
-    destination_configs = [
-        conf
-        for conf in destination_configs
-        if conf.name not in EXCLUDED_DESTINATION_CONFIGURATIONS
-    ]
+    destination_configs = [conf for conf in destination_configs if conf.name not in EXCLUDED_DESTINATION_CONFIGURATIONS]
 
     return destination_configs
 
@@ -335,9 +301,7 @@ def get_normalized_dataset_name(client: JobClientBase) -> str:
     if isinstance(client.config, DestinationClientDwhConfiguration):
         return client.config.normalize_dataset_name(client.schema)
     else:
-        raise TypeError(
-            f"{type(client)} client has configuration {type(client.config)} that does not support dataset name"
-        )
+        raise TypeError(f"{type(client)} client has configuration {type(client.config)} that does not support dataset name")
 
 
 def load_table(name: str) -> Dict[str, TTableSchemaColumns]:
@@ -352,14 +316,10 @@ def expect_load_file(
     table_name: str,
     status="completed",
 ) -> LoadJob:
-    file_name = ParsedLoadJobFileName(
-        table_name, uniq_id(), 0, client.capabilities.preferred_loader_file_format
-    ).job_id()
+    file_name = ParsedLoadJobFileName(table_name, uniq_id(), 0, client.capabilities.preferred_loader_file_format).job_id()
     file_storage.save(file_name, query.encode("utf-8"))
     table = client.get_load_table(table_name)
-    job = client.start_file_load(
-        table, file_storage.make_full_path(file_name), uniq_id()
-    )
+    job = client.start_file_load(table, file_storage.make_full_path(file_name), uniq_id())
     while job.state() == "running":
         sleep(0.5)
     assert job.file_name() == file_name
@@ -380,9 +340,7 @@ def prepare_table(
         user_table_name = table_name + uniq_id()
     else:
         user_table_name = table_name
-    client.schema.update_table(
-        new_table(user_table_name, columns=list(user_table.values()))
-    )
+    client.schema.update_table(new_table(user_table_name, columns=list(user_table.values())))
     client.schema.bump_version()
     client.update_stored_schema()
     return user_table_name
@@ -447,9 +405,7 @@ def cm_yield_client(
     default_config_values: StrAny = None,
     schema_name: str = "event",
 ) -> Iterator[SqlJobClientBase]:
-    return yield_client(
-        destination_name, dataset_name, default_config_values, schema_name
-    )
+    return yield_client(destination_name, dataset_name, default_config_values, schema_name)
 
 
 def yield_client_with_storage(
@@ -460,9 +416,7 @@ def yield_client_with_storage(
     # create dataset with random name
     dataset_name = "test_" + uniq_id()
 
-    with cm_yield_client(
-        destination_name, dataset_name, default_config_values, schema_name
-    ) as client:
+    with cm_yield_client(destination_name, dataset_name, default_config_values, schema_name) as client:
         client.initialize_storage()
         yield client
         # print(dataset_name)
@@ -487,9 +441,7 @@ def cm_yield_client_with_storage(
     default_config_values: StrAny = None,
     schema_name: str = "event",
 ) -> Iterator[SqlJobClientBase]:
-    return yield_client_with_storage(
-        destination_name, default_config_values, schema_name
-    )
+    return yield_client_with_storage(destination_name, default_config_values, schema_name)
 
 
 def write_dataset(
@@ -498,9 +450,7 @@ def write_dataset(
     rows: Union[List[Dict[str, Any]], List[StrAny]],
     columns_schema: TTableSchemaColumns,
 ) -> None:
-    data_format = DataWriter.data_format_from_file_format(
-        client.capabilities.preferred_loader_file_format
-    )
+    data_format = DataWriter.data_format_from_file_format(client.capabilities.preferred_loader_file_format)
     # adapt bytes stream to text file format
     if not data_format.is_binary_format and isinstance(f.read(0), bytes):
         f = codecs.getwriter("utf-8")(f)  # type: ignore[assignment]
@@ -511,18 +461,14 @@ def write_dataset(
     writer.write_all(columns_schema, rows)
 
 
-def prepare_load_package(
-    load_storage: LoadStorage, cases: Sequence[str], write_disposition: str = "append"
-) -> Tuple[str, Schema]:
+def prepare_load_package(load_storage: LoadStorage, cases: Sequence[str], write_disposition: str = "append") -> Tuple[str, Schema]:
     load_id = uniq_id()
     load_storage.create_temp_load_package(load_id)
     for case in cases:
         path = f"./tests/load/cases/loading/{case}"
         shutil.copy(
             path,
-            load_storage.storage.make_full_path(
-                f"{load_id}/{LoadStorage.NEW_JOBS_FOLDER}"
-            ),
+            load_storage.storage.make_full_path(f"{load_id}/{LoadStorage.NEW_JOBS_FOLDER}"),
         )
     schema_path = Path("./tests/load/cases/loading/schema.json")
     data = json.loads(schema_path.read_text(encoding="utf8"))
@@ -530,9 +476,7 @@ def prepare_load_package(
         if name.startswith("_dlt"):
             continue
         table["write_disposition"] = write_disposition
-    Path(load_storage.storage.make_full_path(load_id)).joinpath(
-        schema_path.name
-    ).write_text(json.dumps(data), encoding="utf8")
+    Path(load_storage.storage.make_full_path(load_id)).joinpath(schema_path.name).write_text(json.dumps(data), encoding="utf8")
 
     schema_update_path = "./tests/load/cases/loading/schema_updates.json"
     shutil.copy(schema_update_path, load_storage.storage.make_full_path(load_id))

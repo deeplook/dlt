@@ -56,10 +56,7 @@ PACKAGE_PARAMS = [
     ("snowflake", "1.5.2"),
     ("snowflake", None),
 ]
-PACKAGE_IDS = [
-    f"{destination}-venv-{version}" if version else f"{destination}-local"
-    for destination, version in PACKAGE_PARAMS
-]
+PACKAGE_IDS = [f"{destination}-venv-{version}" if version else f"{destination}-local" for destination, version in PACKAGE_PARAMS]
 
 
 @pytest.fixture(scope="module", params=PACKAGE_PARAMS, ids=PACKAGE_IDS)
@@ -94,9 +91,7 @@ def test_infer_venv_deps() -> None:
 
 
 def test_default_profile_name() -> None:
-    bigquery_config = BigQueryClientConfiguration(
-        credentials=GcpServiceAccountCredentials()
-    )
+    bigquery_config = BigQueryClientConfiguration(credentials=GcpServiceAccountCredentials())
     assert isinstance(bigquery_config.credentials, CredentialsWithDefault)
     # default credentials are not present
     assert _default_profile_name(bigquery_config) == "bigquery"
@@ -194,9 +189,7 @@ def test_runner_setup(client: PostgresClient, test_storage: FileStorage) -> None
     }
 
 
-def test_runner_dbt_destinations(
-    test_storage: FileStorage, dbt_package_f: Tuple[str, AnyFun]
-) -> None:
+def test_runner_dbt_destinations(test_storage: FileStorage, dbt_package_f: Tuple[str, AnyFun]) -> None:
     destination_name, dbt_func = dbt_package_f
     with cm_yield_client_with_storage(destination_name) as client:
         jaffle_base_dir = "jaffle_" + destination_name
@@ -214,9 +207,7 @@ def test_runner_dbt_destinations(
         )
 
 
-def test_run_jaffle_from_folder_incremental(
-    test_storage: FileStorage, dbt_package_f: Tuple[str, AnyFun]
-) -> None:
+def test_run_jaffle_from_folder_incremental(test_storage: FileStorage, dbt_package_f: Tuple[str, AnyFun]) -> None:
     destination_name, dbt_func = dbt_package_f
     with cm_yield_client_with_storage(destination_name) as client:
         repo_path = clone_jaffle_repo(test_storage)
@@ -226,69 +217,47 @@ def test_run_jaffle_from_folder_incremental(
             os.path.join(repo_path, "models", "customers.sql"),
         )
         results = dbt_func(client.config, None, repo_path).run_all(run_params=None)
-        assert_jaffle_completed(
-            test_storage, results, destination_name, jaffle_dir="jaffle_shop"
-        )
+        assert_jaffle_completed(test_storage, results, destination_name, jaffle_dir="jaffle_shop")
         results = dbt_func(client.config, None, repo_path).run_all()
         # out of 100 records 0 was inserted
         customers = find_run_result(results, "customers")
-        assert (
-            customers.message
-            in JAFFLE_MESSAGES_INCREMENTAL[destination_name]["customers"]
-        )
+        assert customers.message in JAFFLE_MESSAGES_INCREMENTAL[destination_name]["customers"]
         # change the column name. that will force dbt to fail (on_schema_change='fail'). the runner should do a full refresh
         shutil.copy(
             "./tests/helpers/dbt_tests/cases/jaffle_customers_incremental_new_column.sql",
             os.path.join(repo_path, "models", "customers.sql"),
         )
         results = dbt_func(client.config, None, repo_path).run_all(run_params=None)
-        assert_jaffle_completed(
-            test_storage, results, destination_name, jaffle_dir="jaffle_shop"
-        )
+        assert_jaffle_completed(test_storage, results, destination_name, jaffle_dir="jaffle_shop")
 
 
-def test_run_jaffle_fail_prerequisites(
-    test_storage: FileStorage, dbt_package_f: Tuple[str, AnyFun]
-) -> None:
+def test_run_jaffle_fail_prerequisites(test_storage: FileStorage, dbt_package_f: Tuple[str, AnyFun]) -> None:
     destination_name, dbt_func = dbt_package_f
     with cm_yield_client_with_storage(destination_name) as client:
         test_storage.create_folder("jaffle")
         # we run all the tests before tables are materialized
         with pytest.raises(PrerequisitesException) as pr_exc:
-            dbt_func(
-                client.config, test_storage.make_full_path("jaffle"), JAFFLE_SHOP_REPO
-            ).run_all(["--fail-fast", "--full-refresh"], source_tests_selector="*")
+            dbt_func(client.config, test_storage.make_full_path("jaffle"), JAFFLE_SHOP_REPO).run_all(["--fail-fast", "--full-refresh"], source_tests_selector="*")
         proc_err = pr_exc.value.args[0]
         assert isinstance(proc_err, DBTProcessingError)
-        customers = find_run_result(
-            proc_err.run_results, "unique_customers_customer_id"
-        )
+        customers = find_run_result(proc_err.run_results, "unique_customers_customer_id")
         assert customers.status == "error"
         assert len(proc_err.run_results) == 20
         assert all(r.status == "error" for r in proc_err.run_results)
 
 
-def test_run_jaffle_invalid_run_args(
-    test_storage: FileStorage, dbt_package_f: Tuple[str, AnyFun]
-) -> None:
+def test_run_jaffle_invalid_run_args(test_storage: FileStorage, dbt_package_f: Tuple[str, AnyFun]) -> None:
     destination_name, dbt_func = dbt_package_f
     with cm_yield_client_with_storage(destination_name) as client:
         test_storage.create_folder("jaffle")
         # we run all the tests before tables are materialized
         with pytest.raises(DBTProcessingError) as pr_exc:
-            dbt_func(
-                client.config, test_storage.make_full_path("jaffle"), JAFFLE_SHOP_REPO
-            ).run_all(["--wrong_flag"])
+            dbt_func(client.config, test_storage.make_full_path("jaffle"), JAFFLE_SHOP_REPO).run_all(["--wrong_flag"])
         # dbt < 1.5 raises systemexit, dbt >= 1.5 just returns success False
-        assert (
-            isinstance(pr_exc.value.dbt_results, SystemExit)
-            or pr_exc.value.dbt_results is None
-        )
+        assert isinstance(pr_exc.value.dbt_results, SystemExit) or pr_exc.value.dbt_results is None
 
 
-def test_run_jaffle_failed_run(
-    test_storage: FileStorage, dbt_package_f: Tuple[str, AnyFun]
-) -> None:
+def test_run_jaffle_failed_run(test_storage: FileStorage, dbt_package_f: Tuple[str, AnyFun]) -> None:
     destination_name, dbt_func = dbt_package_f
     with cm_yield_client_with_storage(destination_name) as client:
         repo_path = clone_jaffle_repo(test_storage)

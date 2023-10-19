@@ -125,9 +125,7 @@ class PipelineTasksGroup(TaskGroup):
             data_dir = os.path.join("/home/airflow/gcs/data", f"dlt_{uniq_id(8)}")
         else:
             # create random path
-            data_dir = os.path.join(
-                local_data_folder or gettempdir(), f"dlt_{uniq_id(8)}"
-            )
+            data_dir = os.path.join(local_data_folder or gettempdir(), f"dlt_{uniq_id(8)}")
         os.environ["DLT_DATA_DIR"] = data_dir
 
         # delete existing config providers in container, they will get reloaded on next use
@@ -167,9 +165,7 @@ class PipelineTasksGroup(TaskGroup):
 
         # make sure that pipeline was created after dag was initialized
         if not pipeline.pipelines_dir.startswith(os.environ["DLT_DATA_DIR"]):
-            raise ValueError(
-                "Please create your Pipeline instance after AirflowTasks are created. The dlt pipelines directory is not set correctly"
-            )
+            raise ValueError("Please create your Pipeline instance after AirflowTasks are created. The dlt pipelines directory is not set correctly")
 
         def task_name(pipeline: Pipeline, data: Any) -> str:
             task_name = pipeline.pipeline_name
@@ -196,32 +192,18 @@ class PipelineTasksGroup(TaskGroup):
                         logger.LOGGER = ti.log
 
                     # set global number of buffered items
-                    if (
-                        dlt.config.get("data_writer.buffer_max_items") is None
-                        and self.buffer_max_items > 0
-                    ):
-                        dlt.config[
-                            "data_writer.buffer_max_items"
-                        ] = self.buffer_max_items
-                        logger.info(
-                            f"Set data_writer.buffer_max_items to {self.buffer_max_items}"
-                        )
+                    if dlt.config.get("data_writer.buffer_max_items") is None and self.buffer_max_items > 0:
+                        dlt.config["data_writer.buffer_max_items"] = self.buffer_max_items
+                        logger.info(f"Set data_writer.buffer_max_items to {self.buffer_max_items}")
 
                     # enable abort package if job failed
                     if self.abort_task_if_any_job_failed:
                         dlt.config["load.raise_on_failed_jobs"] = True
                         logger.info("Set load.abort_task_if_any_job_failed to True")
 
-                    if (
-                        self.log_progress_period > 0
-                        and task_pipeline.collector == NULL_COLLECTOR
-                    ):
-                        task_pipeline.collector = log(
-                            log_period=self.log_progress_period, logger=logger.LOGGER
-                        )
-                        logger.info(
-                            f"Enabled log progress with period {self.log_progress_period}"
-                        )
+                    if self.log_progress_period > 0 and task_pipeline.collector == NULL_COLLECTOR:
+                        task_pipeline.collector = log(log_period=self.log_progress_period, logger=logger.LOGGER)
+                        logger.info(f"Enabled log progress with period {self.log_progress_period}")
 
                     logger.info(f"Pipeline data in {task_pipeline.working_dir}")
 
@@ -235,18 +217,11 @@ class PipelineTasksGroup(TaskGroup):
                     try:
                         # retry with given policy on selected pipeline steps
                         for attempt in self.retry_policy.copy(
-                            retry=retry_if_exception(
-                                retry_load(
-                                    retry_on_pipeline_steps=self.retry_pipeline_steps
-                                )
-                            ),
+                            retry=retry_if_exception(retry_load(retry_on_pipeline_steps=self.retry_pipeline_steps)),
                             after=log_after_attempt,
                         ):
                             with attempt:
-                                logger.info(
-                                    "Running the pipeline, attempt=%s"
-                                    % attempt.retry_state.attempt_number
-                                )
+                                logger.info("Running the pipeline, attempt=%s" % attempt.retry_state.attempt_number)
                                 load_info = task_pipeline.run(
                                     data,
                                     table_name=table_name,
@@ -255,17 +230,11 @@ class PipelineTasksGroup(TaskGroup):
                                 logger.info(str(load_info))
                                 # save load and trace
                                 if self.save_load_info:
-                                    logger.info(
-                                        "Saving the load info in the destination"
-                                    )
-                                    task_pipeline.run(
-                                        [load_info], table_name="_load_info"
-                                    )
+                                    logger.info("Saving the load info in the destination")
+                                    task_pipeline.run([load_info], table_name="_load_info")
                                 if self.save_trace_info:
                                     logger.info("Saving the trace in the destination")
-                                    task_pipeline.run(
-                                        [task_pipeline.last_trace], table_name="_trace"
-                                    )
+                                    task_pipeline.run([task_pipeline.last_trace], table_name="_trace")
                                 # raise on failed jobs if requested
                                 if self.fail_task_if_any_job_failed:
                                     load_info.raise_on_failed_jobs()
@@ -275,9 +244,7 @@ class PipelineTasksGroup(TaskGroup):
                             logger.info(f"Removing folder {pipeline.working_dir}")
                             task_pipeline._wipe_working_folder()
 
-                return PythonOperator(
-                    task_id=task_name(pipeline, data), python_callable=_run, **kwargs
-                )
+                return PythonOperator(task_id=task_name(pipeline, data), python_callable=_run, **kwargs)
 
             if decompose == "none":
                 # run pipeline as single task
@@ -305,9 +272,7 @@ class PipelineTasksGroup(TaskGroup):
         raise NotImplementedError()
 
 
-def airflow_get_execution_dates() -> (
-    Tuple[pendulum.DateTime, Optional[pendulum.DateTime]]
-):
+def airflow_get_execution_dates() -> Tuple[pendulum.DateTime, Optional[pendulum.DateTime]]:
     # prefer logging to task logger
     try:
         from airflow.operators.python import get_current_context  # noqa

@@ -45,9 +45,7 @@ class RunConfiguration(BaseConfiguration):
             # it may be obfuscated base64 value
             # TODO: that needs to be removed ASAP
             try:
-                self.slack_incoming_hook = TSecretStrValue(
-                    reveal_pseudo_secret(self.slack_incoming_hook, b"dlt-runtime-2022")
-                )
+                self.slack_incoming_hook = TSecretStrValue(reveal_pseudo_secret(self.slack_incoming_hook, b"dlt-runtime-2022"))
             except binascii.Error:
                 # just keep the original value
                 pass

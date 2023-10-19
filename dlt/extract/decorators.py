@@ -113,9 +113,7 @@ def source(
     schema: Schema = None,
     spec: Type[BaseConfiguration] = None,
     _impl_cls: Type[TDltSourceImpl] = DltSource,  # type: ignore[assignment]
-) -> Callable[
-    [Callable[TSourceFunParams, Any]], Callable[TSourceFunParams, TDltSourceImpl]
-]:
+) -> Callable[[Callable[TSourceFunParams, Any]], Callable[TSourceFunParams, TDltSourceImpl]]:
     ...
 
 
@@ -171,13 +169,9 @@ def source(
     """
 
     if name and schema:
-        raise ArgumentsOverloadException(
-            "'name' has no effect when `schema` argument is present", source.__name__
-        )
+        raise ArgumentsOverloadException("'name' has no effect when `schema` argument is present", source.__name__)
 
-    def decorator(
-        f: Callable[TSourceFunParams, Any]
-    ) -> Callable[TSourceFunParams, TDltSourceImpl]:
+    def decorator(f: Callable[TSourceFunParams, Any]) -> Callable[TSourceFunParams, TDltSourceImpl]:
         nonlocal schema, name
 
         if not callable(f) or isinstance(f, DltResource):
@@ -191,9 +185,7 @@ def source(
 
         if not schema:
             # load the schema from file with name_schema.yaml/json from the same directory, the callable resides OR create new default schema
-            schema = _maybe_load_schema_for_callable(f, effective_name) or Schema(
-                effective_name
-            )
+            schema = _maybe_load_schema_for_callable(f, effective_name) or Schema(effective_name)
 
         if name and name != schema.name:
             raise ExplicitSourceNameInvalid(name, schema.name)
@@ -214,9 +206,7 @@ def source(
             with Container().injectable_context(SourceSchemaInjectableContext(schema)):
                 # configurations will be accessed in this section in the source
                 proxy = Container()[PipelineContext]
-                pipeline_name = (
-                    None if not proxy.is_active() else proxy.pipeline().pipeline_name
-                )
+                pipeline_name = None if not proxy.is_active() else proxy.pipeline().pipeline_name
                 with inject_section(
                     ConfigSectionContext(
                         pipeline_name=pipeline_name,
@@ -232,9 +222,7 @@ def source(
                         rv = list(rv)
 
             # convert to source
-            s = _impl_cls.from_data(
-                name, source_section, schema.clone(update_normalizers=True), rv
-            )
+            s = _impl_cls.from_data(name, source_section, schema.clone(update_normalizers=True), rv)
             # apply hints
             if max_table_nesting is not None:
                 s.max_table_nesting = max_table_nesting
@@ -306,9 +294,7 @@ def resource(
     selected: bool = True,
     spec: Type[BaseConfiguration] = None,
     standalone: Literal[True] = True,
-) -> Callable[
-    [Callable[TResourceFunParams, Any]], Callable[TResourceFunParams, DltResource]
-]:
+) -> Callable[[Callable[TResourceFunParams, Any]], Callable[TResourceFunParams, DltResource]]:
     ...
 
 
@@ -430,15 +416,11 @@ def resource(
             incremental=incremental,
         )
 
-    def decorator(
-        f: Callable[TResourceFunParams, Any]
-    ) -> Callable[TResourceFunParams, DltResource]:
+    def decorator(f: Callable[TResourceFunParams, Any]) -> Callable[TResourceFunParams, DltResource]:
         if not callable(f):
             if data_from:
                 # raise more descriptive exception if we construct transformer
-                raise InvalidTransformerDataTypeGeneratorFunctionRequired(
-                    name or "<no name>", f, type(f)
-                )
+                raise InvalidTransformerDataTypeGeneratorFunctionRequired(name or "<no name>", f, type(f))
             raise ResourceFunctionExpected(name or "<no name>", f, type(f))
         if not standalone and callable(name):
             raise DynamicNameNotStandaloneResource(get_callable_name(f))
@@ -471,9 +453,7 @@ def resource(
         )
         is_inner_resource = is_inner_callable(f)
         if conf_f != incr_f and is_inner_resource:
-            raise ResourceInnerCallableConfigWrapDisallowed(
-                resource_name, source_section
-            )
+            raise ResourceInnerCallableConfigWrapDisallowed(resource_name, source_section)
         # get spec for wrapped function
         SPEC = get_fun_spec(conf_f)
 
@@ -489,12 +469,8 @@ def resource(
 
             @wraps(conf_f)
             def _wrap(*args: Any, **kwargs: Any) -> DltResource:
-                _, mod_sig, bound_args = simulate_func_call(
-                    conf_f, skip_args, *args, **kwargs
-                )
-                actual_resource_name = (
-                    name(bound_args.arguments) if callable(name) else resource_name
-                )
+                _, mod_sig, bound_args = simulate_func_call(conf_f, skip_args, *args, **kwargs)
+                actual_resource_name = name(bound_args.arguments) if callable(name) else resource_name
                 r = make_resource(
                     actual_resource_name,
                     source_section,
@@ -560,10 +536,7 @@ def transformer(
     selected: bool = True,
     spec: Type[BaseConfiguration] = None,
     standalone: Literal[True] = True,
-) -> Callable[
-    [Callable[Concatenate[TDataItem, TResourceFunParams], Any]],
-    Callable[TResourceFunParams, DltResource],
-]:
+) -> Callable[[Callable[Concatenate[TDataItem, TResourceFunParams], Any]], Callable[TResourceFunParams, DltResource],]:
     ...
 
 
@@ -598,9 +571,7 @@ def transformer(
     selected: bool = True,
     spec: Type[BaseConfiguration] = None,
     standalone: Literal[True] = True,
-) -> Callable[
-    ..., DltResource
-]:  # TODO: change back to Callable[TResourceFunParams, DltResource] when mypy 1.6 is fixed
+) -> Callable[..., DltResource]:  # TODO: change back to Callable[TResourceFunParams, DltResource] when mypy 1.6 is fixed
     ...
 
 
@@ -673,9 +644,7 @@ def transformer(
         standalone (bool, optional): Returns a wrapped decorated function that creates DltResource instance. Must be called before use. Cannot be part of a source.
     """
     if isinstance(f, DltResource):
-        raise ValueError(
-            "Please pass `data_from=` argument as keyword argument. The only positional argument to transformer is the decorated function"
-        )
+        raise ValueError("Please pass `data_from=` argument as keyword argument. The only positional argument to transformer is the decorated function")
 
     return resource(  # type: ignore
         f,
@@ -727,9 +696,7 @@ TDeferred = Callable[[], TBoundItems]
 TDeferredFunParams = ParamSpec("TDeferredFunParams")
 
 
-def defer(
-    f: Callable[TDeferredFunParams, TBoundItems]
-) -> Callable[TDeferredFunParams, TDeferred[TBoundItems]]:
+def defer(f: Callable[TDeferredFunParams, TBoundItems]) -> Callable[TDeferredFunParams, TDeferred[TBoundItems]]:
     @wraps(f)
     def _wrap(*args: Any, **kwargs: Any) -> TDeferred[TBoundItems]:
         def _curry() -> TBoundItems:

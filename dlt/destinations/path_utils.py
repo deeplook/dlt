@@ -31,9 +31,7 @@ def get_placeholders(layout: str) -> List[str]:
     return re.findall(r"\{(.*?)\}", layout)
 
 
-def create_path(
-    layout: str, schema_name: str, table_name: str, load_id: str, file_id: str, ext: str
-) -> str:
+def create_path(layout: str, schema_name: str, table_name: str, load_id: str, file_id: str, ext: str) -> str:
     """create a filepath from the layout and our default params"""
     placeholders = check_layout(layout)
     path = layout.format(
@@ -52,9 +50,7 @@ def create_path(
 
 def get_table_prefix_layout(
     layout: str,
-    supported_prefix_placeholders: Sequence[
-        str
-    ] = SUPPORTED_TABLE_NAME_PREFIX_PLACEHOLDERS,
+    supported_prefix_placeholders: Sequence[str] = SUPPORTED_TABLE_NAME_PREFIX_PLACEHOLDERS,
 ) -> str:
     """get layout fragment that defines positions of the table, cutting other placeholders
 
@@ -68,29 +64,17 @@ def get_table_prefix_layout(
     table_name_index = placeholders.index("table_name")
 
     # fail if any other prefix is defined before table_name
-    if [
-        p
-        for p in placeholders[:table_name_index]
-        if p not in supported_prefix_placeholders
-    ]:
+    if [p for p in placeholders[:table_name_index] if p not in supported_prefix_placeholders]:
         if len(supported_prefix_placeholders) == 0:
-            details = (
-                "No other placeholders are allowed before {table_name} but you have %s present. "
-                % placeholders[:table_name_index]
-            )
+            details = "No other placeholders are allowed before {table_name} but you have %s present. " % placeholders[:table_name_index]
         else:
-            details = (
-                "Only %s are allowed before {table_name} but you have %s present. "
-                % (supported_prefix_placeholders, placeholders[:table_name_index])
-            )
+            details = "Only %s are allowed before {table_name} but you have %s present. " % (supported_prefix_placeholders, placeholders[:table_name_index])
         raise CantExtractTablePrefix(layout, details)
 
     # we include the char after the table_name here, this should be a separator not a new placeholder
     # this is to prevent selecting tables that have the same starting name
     prefix = layout[: layout.index("{table_name}") + 13]
     if prefix[-1] == "{":
-        raise CantExtractTablePrefix(
-            layout, "A separator is required after a {table_name}. "
-        )
+        raise CantExtractTablePrefix(layout, "A separator is required after a {table_name}. ")
 
     return prefix

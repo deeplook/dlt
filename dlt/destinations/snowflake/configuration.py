@@ -77,9 +77,7 @@ class SnowflakeCredentials(ConnectionStringCredentials):
 
     def on_resolved(self) -> None:
         if not self.password and not self.private_key:
-            raise ConfigurationValueError(
-                "Please specify password or private_key. SnowflakeCredentials supports password and private key authentication and one of those must be specified."
-            )
+            raise ConfigurationValueError("Please specify password or private_key. SnowflakeCredentials supports password and private key authentication and one of those must be specified.")
 
     def to_url(self) -> URL:
         query = dict(self.query or {})
@@ -100,9 +98,7 @@ class SnowflakeCredentials(ConnectionStringCredentials):
     def to_connector_params(self) -> Dict[str, Any]:
         private_key: Optional[bytes] = None
         if self.private_key:
-            private_key = _read_private_key(
-                self.private_key, self.private_key_passphrase
-            )
+            private_key = _read_private_key(self.private_key, self.private_key_passphrase)
         return dict(
             self.query or {},
             user=self.username,

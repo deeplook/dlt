@@ -72,9 +72,7 @@ def complex_to_str(value: Any) -> str:
     return json.dumps(map_nested_in_place(custom_pua_remove, value))
 
 
-def coerce_from_date_types(
-    to_type: TDataType, value: datetime.datetime
-) -> Union[datetime.datetime, datetime.date, datetime.time, int, float, str]:
+def coerce_from_date_types(to_type: TDataType, value: datetime.datetime) -> Union[datetime.datetime, datetime.date, datetime.time, int, float, str]:
     v = ensure_pendulum_datetime(value)
     if to_type == "timestamp":
         return v

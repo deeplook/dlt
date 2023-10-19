@@ -28,9 +28,7 @@ from dlt.destinations.mssql import capabilities
 
 def handle_datetimeoffset(dto_value: bytes) -> datetime:
     # ref: https://github.com/mkleehammer/pyodbc/issues/134#issuecomment-281739794
-    tup = struct.unpack(
-        "<6hI2h", dto_value
-    )  # e.g., (2017, 3, 16, 10, 35, 18, 500000000, -6, 0)
+    tup = struct.unpack("<6hI2h", dto_value)  # e.g., (2017, 3, 16, 10, 35, 18, 500000000, -6, 0)
     return datetime(
         tup[0],
         tup[1],
@@ -109,22 +107,15 @@ class PyOdbcMsSqlClient(SqlClientBase[pyodbc.Connection], DBTransaction):
         table_names = [row[0] for row in rows]
         self.drop_tables(*table_names)
 
-        self.execute_sql(
-            "DROP SCHEMA IF EXISTS %s;" % self.fully_qualified_dataset_name()
-        )
+        self.execute_sql("DROP SCHEMA IF EXISTS %s;" % self.fully_qualified_dataset_name())
 
     def _drop_views(self, *tables: str) -> None:
         if not tables:
             return
-        statements = [
-            f"DROP VIEW IF EXISTS {self.make_qualified_table_name(table)};"
-            for table in tables
-        ]
+        statements = [f"DROP VIEW IF EXISTS {self.make_qualified_table_name(table)};" for table in tables]
         self.execute_fragments(statements)
 
-    def execute_sql(
-        self, sql: AnyStr, *args: Any, **kwargs: Any
-    ) -> Optional[Sequence[Sequence[Any]]]:
+    def execute_sql(self, sql: AnyStr, *args: Any, **kwargs: Any) -> Optional[Sequence[Sequence[Any]]]:
         with self.execute_query(sql, *args, **kwargs) as curr:
             if curr.description is None:
                 return None
@@ -134,15 +125,11 @@ class PyOdbcMsSqlClient(SqlClientBase[pyodbc.Connection], DBTransaction):
 
     @contextmanager
     @raise_database_error
-    def execute_query(
-        self, query: AnyStr, *args: Any, **kwargs: Any
-    ) -> Iterator[DBApiCursor]:
+    def execute_query(self, query: AnyStr, *args: Any, **kwargs: Any) -> Iterator[DBApiCursor]:
         assert isinstance(query, str)
         curr: DBApiCursor = None
         if kwargs:
-            raise NotImplementedError(
-                "pyodbc does not support named parameters in queries"
-            )
+            raise NotImplementedError("pyodbc does not support named parameters in queries")
         if args:
             # TODO: this is bad. See duckdb & athena also
             query = query.replace("%s", "?")
@@ -156,11 +143,7 @@ class PyOdbcMsSqlClient(SqlClientBase[pyodbc.Connection], DBTransaction):
             raise outer
 
     def fully_qualified_dataset_name(self, escape: bool = True) -> str:
-        return (
-            self.capabilities.escape_identifier(self.dataset_name)
-            if escape
-            else self.dataset_name
-        )
+        return self.capabilities.escape_identifier(self.dataset_name) if escape else self.dataset_name
 
     @classmethod
     def _make_database_exception(cls, ex: Exception) -> Exception:

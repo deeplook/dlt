@@ -96,19 +96,13 @@ class DummyClient(JobClientBase):
     def drop_storage(self) -> None:
         pass
 
-    def update_stored_schema(
-        self, only_tables: Iterable[str] = None, expected_update: TSchemaTables = None
-    ) -> Optional[TSchemaTables]:
+    def update_stored_schema(self, only_tables: Iterable[str] = None, expected_update: TSchemaTables = None) -> Optional[TSchemaTables]:
         applied_update = super().update_stored_schema(only_tables, expected_update)
         if self.config.fail_schema_update:
-            raise DestinationTransientException(
-                "Raise on schema update due to fail_schema_update config flag"
-            )
+            raise DestinationTransientException("Raise on schema update due to fail_schema_update config flag")
         return applied_update
 
-    def start_file_load(
-        self, table: TTableSchema, file_path: str, load_id: str
-    ) -> LoadJob:
+    def start_file_load(self, table: TTableSchema, file_path: str, load_id: str) -> LoadJob:
         job_id = FileStorage.get_file_name_from_file_path(file_path)
         file_name = FileStorage.get_file_name_from_file_path(file_path)
         # return existing job if already there
@@ -127,9 +121,7 @@ class DummyClient(JobClientBase):
             raise LoadJobNotExistsException(job_id)
         return JOBS[job_id]
 
-    def create_table_chain_completed_followup_jobs(
-        self, table_chain: Sequence[TTableSchema]
-    ) -> List[NewLoadJob]:
+    def create_table_chain_completed_followup_jobs(self, table_chain: Sequence[TTableSchema]) -> List[NewLoadJob]:
         """Creates a list of followup jobs that should be executed after a table chain is completed"""
         return []
 

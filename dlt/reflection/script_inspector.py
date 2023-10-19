@@ -86,9 +86,7 @@ def _import_module(name: str, missing_modules: Tuple[str, ...] = ()) -> ModuleTy
         builtins.__import__ = real_import
 
 
-def load_script_module(
-    module_path: str, script_relative_path: str, ignore_missing_imports: bool = False
-) -> ModuleType:
+def load_script_module(module_path: str, script_relative_path: str, ignore_missing_imports: bool = False) -> ModuleType:
     """Loads a module in `script_relative_path` by splitting it into a script module (file part) and package (folders).  `module_path` is added to sys.path
     Optionally, missing imports will be ignored by importing a dummy module instead.
     """
@@ -108,9 +106,7 @@ def load_script_module(
         # path must be first so we always load our module of
         sys.path.insert(0, sys_path)
     try:
-        logger.info(
-            f"Importing pipeline script from path {module_path} and module: {module}"
-        )
+        logger.info(f"Importing pipeline script from path {module_path} and module: {module}")
         if ignore_missing_imports:
             return _import_module(f"{module}")
         else:
@@ -122,13 +118,9 @@ def load_script_module(
             sys.path.remove(sys_path)
 
 
-def inspect_pipeline_script(
-    module_path: str, script_relative_path: str, ignore_missing_imports: bool = False
-) -> ModuleType:
+def inspect_pipeline_script(module_path: str, script_relative_path: str, ignore_missing_imports: bool = False) -> ModuleType:
     # patch entry points to pipeline, sources and resources to prevent pipeline from running
-    with patch.object(Pipeline, "__init__", patch__init__), patch.object(
-        DltSource, "__init__", patch__init__
-    ), patch.object(ManagedPipeIterator, "__init__", patch__init__):
+    with patch.object(Pipeline, "__init__", patch__init__), patch.object(DltSource, "__init__", patch__init__), patch.object(ManagedPipeIterator, "__init__", patch__init__):
         return load_script_module(
             module_path,
             script_relative_path,

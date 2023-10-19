@@ -290,9 +290,7 @@ def test_call_clone_separate_pipe() -> None:
     # create two resource instances and extract in single ad hoc resource
     data1 = some_data("state1")
     data1._pipe.name = "state1_data"
-    dlt.pipeline(full_refresh=True).extract(
-        [data1, some_data("state2")], schema=Schema("default")
-    )
+    dlt.pipeline(full_refresh=True).extract([data1, some_data("state2")], schema=Schema("default"))
     # both should be extracted. what we test here is the combination of binding the resource by calling it that clones the internal pipe
     # and then creating a source with both clones. if we keep same pipe id when cloning on call, a single pipe would be created shared by two resources
     assert all_yields == ["state1", "state2"]
@@ -400,11 +398,7 @@ def test_select_resources() -> None:
     s_sel = s.with_resources("resource_1", "resource_7")
     # returns a clone
     assert s is not s_sel
-    assert (
-        list(s_sel.selected_resources)
-        == ["resource_1", "resource_7"]
-        == list(s_sel.resources.selected)
-    )
+    assert list(s_sel.selected_resources) == ["resource_1", "resource_7"] == list(s_sel.resources.selected)
     assert list(s_sel.resources) == all_resource_names
     info = str(s_sel)
     assert "resource resource_0 is not selected" in info
@@ -758,22 +752,12 @@ def test_source_resource_attrs_with_conflicting_attrs() -> None:
 def test_add_transform_steps() -> None:
     # add all step types, using indexes. final steps
     # gen -> map that converts to str and multiplies character -> filter str of len 2 -> yield all characters in str separately
-    r = (
-        dlt.resource([1, 2, 3, 4], name="all")
-        .add_limit(3)
-        .add_yield_map(lambda i: (yield from i))
-        .add_map(lambda i: str(i) * i, 1)
-        .add_filter(lambda i: len(i) == 2, 2)
-    )
+    r = dlt.resource([1, 2, 3, 4], name="all").add_limit(3).add_yield_map(lambda i: (yield from i)).add_map(lambda i: str(i) * i, 1).add_filter(lambda i: len(i) == 2, 2)
     assert list(r) == ["2", "2"]
 
 
 def test_add_transform_steps_pipe() -> None:
-    r = (
-        dlt.resource([1, 2, 3], name="all")
-        | (lambda i: str(i) * i)
-        | (lambda i: (yield from i))
-    )
+    r = dlt.resource([1, 2, 3], name="all") | (lambda i: str(i) * i) | (lambda i: (yield from i))
     assert list(r) == ["1", "2", "2", "3", "3", "3"]
 
 
@@ -847,14 +831,10 @@ def test_resource_state() -> None:
         # resource section is current module
         print(state.state)
         # the resource that is a part of the source will create a resource state key in the source state key
-        assert state.state["sources"]["schema_section"] == {
-            "resources": {"test_resource": {"in-source": True}}
-        }
+        assert state.state["sources"]["schema_section"] == {"resources": {"test_resource": {"in-source": True}}}
         assert s.state == {"resources": {"test_resource": {"in-source": True}}}
         # the standalone resource will create key which is default schema name
-        assert state.state["sources"][p._make_schema_with_default_name().name] == {
-            "resources": {"test_resource": {"direct": True}}
-        }
+        assert state.state["sources"][p._make_schema_with_default_name().name] == {"resources": {"test_resource": {"direct": True}}}
 
 
 # def test_add_resources_to_source_simple() -> None:
@@ -1045,9 +1025,7 @@ def test_exhausted_property() -> None:
     def open_generator_data():
         yield from [1, 2, 3, 4]
 
-    s = DltSource(
-        "source", "module", Schema("source"), [dlt.resource(open_generator_data())]
-    )
+    s = DltSource("source", "module", Schema("source"), [dlt.resource(open_generator_data())])
     assert s.exhausted is False
     assert next(iter(s)) == 1
     assert s.exhausted is True
@@ -1193,13 +1171,7 @@ def test_apply_hints() -> None:
 
     empty_r = empty()
     # check defaults
-    assert (
-        empty_r.name
-        == empty.name
-        == empty_r.table_name
-        == empty.table_name
-        == "empty_gen"
-    )
+    assert empty_r.name == empty.name == empty_r.table_name == empty.table_name == "empty_gen"
     assert empty_r._table_schema_template is None
     assert empty_r.compute_table_schema() == empty_table_schema
     assert empty_r.write_disposition == "append"
@@ -1237,9 +1209,7 @@ def test_apply_hints() -> None:
     assert empty_r.table_name == "table"
 
     # reset
-    empty_r.apply_hints(
-        table_name="", parent_table_name="", primary_key=[], merge_key="", columns={}
-    )
+    empty_r.apply_hints(table_name="", parent_table_name="", primary_key=[], merge_key="", columns={})
     assert empty_r._table_schema_template == {
         "columns": {},
         "incremental": None,
@@ -1284,9 +1254,7 @@ def test_apply_dynamic_hints() -> None:
     with pytest.raises(InconsistentTableTemplate):
         empty_r.apply_hints(parent_table_name=lambda ev: ev["p"])
 
-    empty_r.apply_hints(
-        table_name=lambda ev: ev["t"], parent_table_name=lambda ev: ev["p"]
-    )
+    empty_r.apply_hints(table_name=lambda ev: ev["t"], parent_table_name=lambda ev: ev["p"])
     assert empty_r._table_name_hint_fun is not None
     assert empty_r._table_has_other_dynamic_hints is True
 
@@ -1297,20 +1265,14 @@ def test_apply_dynamic_hints() -> None:
     assert table["parent"] == "parent"
 
     # try write disposition and primary key
-    empty_r.apply_hints(
-        primary_key=lambda ev: ev["pk"], write_disposition=lambda ev: ev["wd"]
-    )
-    table = empty_r.compute_table_schema(
-        {"t": "table", "p": "parent", "pk": ["a", "b"], "wd": "skip"}
-    )
+    empty_r.apply_hints(primary_key=lambda ev: ev["pk"], write_disposition=lambda ev: ev["wd"])
+    table = empty_r.compute_table_schema({"t": "table", "p": "parent", "pk": ["a", "b"], "wd": "skip"})
     assert table["write_disposition"] == "skip"
     assert "a" in table["columns"]
 
     # validate fails
     with pytest.raises(DictValidationException):
-        empty_r.compute_table_schema(
-            {"t": "table", "p": "parent", "pk": ["a", "b"], "wd": "x-skip"}
-        )
+        empty_r.compute_table_schema({"t": "table", "p": "parent", "pk": ["a", "b"], "wd": "x-skip"})
 
     # dynamic columns
     empty_r.apply_hints(columns=lambda ev: ev["c"])

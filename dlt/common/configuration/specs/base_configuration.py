@@ -52,22 +52,16 @@ def is_base_configuration_inner_hint(inner_hint: Type[Any]) -> bool:
 
 
 def is_context_inner_hint(inner_hint: Type[Any]) -> bool:
-    return inspect.isclass(inner_hint) and issubclass(
-        inner_hint, ContainerInjectableContext
-    )
+    return inspect.isclass(inner_hint) and issubclass(inner_hint, ContainerInjectableContext)
 
 
 def is_credentials_inner_hint(inner_hint: Type[Any]) -> bool:
-    return inspect.isclass(inner_hint) and issubclass(
-        inner_hint, CredentialsConfiguration
-    )
+    return inspect.isclass(inner_hint) and issubclass(inner_hint, CredentialsConfiguration)
 
 
 def get_config_if_union_hint(hint: Type[Any]) -> Type[Any]:
     if is_union(hint):
-        return next(
-            (t for t in get_args(hint) if is_base_configuration_inner_hint(t)), None
-        )
+        return next((t for t in get_args(hint) if is_base_configuration_inner_hint(t)), None)
     return None
 
 
@@ -166,9 +160,7 @@ def configspec(
                 except NameError:
                     # Dealing with BaseConfiguration itself before it is defined
                     continue
-            if not att_name.startswith(("__", "_abc_")) and not isinstance(
-                att_value, (staticmethod, classmethod, property)
-            ):
+            if not att_name.startswith(("__", "_abc_")) and not isinstance(att_value, (staticmethod, classmethod, property)):
                 if att_name not in cls.__annotations__:
                     raise ConfigFieldMissingTypeHintException(att_name, cls)
                 hint = cls.__annotations__[att_name]
@@ -197,9 +189,7 @@ def configspec(
             is_base = True
         init = False
         base_params = getattr(cls, "__dataclass_params__", None)
-        if not is_base and (
-            base_params and base_params.init or cls.__init__ is object.__init__
-        ):
+        if not is_base and (base_params and base_params.init or cls.__init__ is object.__init__):
             init = True
         # do not generate repr as it may contain secret values
         return dataclasses.dataclass(cls, init=init, eq=False, repr=False)  # type: ignore
@@ -223,9 +213,7 @@ class BaseConfiguration(MutableMapping[str, Any]):
     """Additional annotations for config generator, currently holds a list of fields of interest that have defaults"""
     __dataclass_fields__: ClassVar[Dict[str, TDtcField]]
     """Typing for dataclass fields"""
-    __hint_resolvers__: ClassVar[
-        Dict[str, Callable[["BaseConfiguration"], Type[Any]]]
-    ] = {}
+    __hint_resolvers__: ClassVar[Dict[str, Callable[["BaseConfiguration"], Type[Any]]]] = {}
 
     def parse_native_representation(self, native_value: Any) -> None:
         """Initialize the configuration fields by parsing the `native_value` which should be a native representation of the configuration
@@ -273,11 +261,7 @@ class BaseConfiguration(MutableMapping[str, Any]):
         if self.__is_resolved__:
             return False
         # check if all resolvable fields have value
-        return any(
-            field
-            for field, hint in self.get_resolvable_fields().items()
-            if getattr(self, field) is None and not is_optional_type(hint)
-        )
+        return any(field for field, hint in self.get_resolvable_fields().items() if getattr(self, field) is None and not is_optional_type(hint))
 
     def resolve(self) -> None:
         self.call_method_in_mro("on_resolved")
@@ -333,9 +317,7 @@ class BaseConfiguration(MutableMapping[str, Any]):
     # helper functions
 
     def __has_attr(self, __key: str) -> bool:
-        return __key in self.__dataclass_fields__ and self.__is_valid_field(
-            self.__dataclass_fields__[__key]
-        )
+        return __key in self.__dataclass_fields__ and self.__is_valid_field(self.__dataclass_fields__[__key])
 
     @staticmethod
     def __is_valid_field(field: TDtcField) -> bool:

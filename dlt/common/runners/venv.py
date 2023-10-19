@@ -86,9 +86,7 @@ class Venv:
         if self.context.env_dir and os.path.isdir(self.context.env_dir):
             shutil.rmtree(self.context.env_dir)
 
-    def start_command(
-        self, entry_point: str, *script_args: Any, **popen_kwargs: Any
-    ) -> "subprocess.Popen[str]":
+    def start_command(self, entry_point: str, *script_args: Any, **popen_kwargs: Any) -> "subprocess.Popen[str]":
         command = os.path.join(self.context.bin_path, entry_point)
         cmd = [command, *script_args]
         return subprocess.Popen(cmd, **popen_kwargs)

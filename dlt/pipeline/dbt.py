@@ -16,9 +16,7 @@ from dlt.helpers.dbt import (
 from dlt.pipeline.pipeline import Pipeline
 
 
-def get_venv(
-    pipeline: Pipeline, venv_path: str = "dbt", dbt_version: str = _DEFAULT_DBT_VERSION
-) -> Venv:
+def get_venv(pipeline: Pipeline, venv_path: str = "dbt", dbt_version: str = _DEFAULT_DBT_VERSION) -> Venv:
     """Creates or restores a virtual environment in which the `dbt` packages are executed.
 
     The recommended way to execute dbt package is to use a separate virtual environment where only the dbt-core
@@ -44,13 +42,9 @@ def get_venv(
     # try to restore existing venv
     with contextlib.suppress(VenvNotFound):
         # TODO: check dlt version in venv and update it if local version updated
-        return _restore_venv(
-            venv_dir, [pipeline.destination.spec().destination_name], dbt_version
-        )
+        return _restore_venv(venv_dir, [pipeline.destination.spec().destination_name], dbt_version)
 
-    return _create_venv(
-        venv_dir, [pipeline.destination.spec().destination_name], dbt_version
-    )
+    return _create_venv(venv_dir, [pipeline.destination.spec().destination_name], dbt_version)
 
 
 def package(
@@ -82,11 +76,7 @@ def package(
     Returns:
         DBTPackageRunner: A configured and authenticated Python `dbt` wrapper
     """
-    schema = (
-        pipeline.default_schema
-        if pipeline.default_schema_name
-        else Schema(normalize_schema_name(pipeline.dataset_name))
-    )
+    schema = pipeline.default_schema if pipeline.default_schema_name else Schema(normalize_schema_name(pipeline.dataset_name))
     job_client = pipeline._sql_job_client(schema)
     if not venv:
         venv = Venv.restore_current()

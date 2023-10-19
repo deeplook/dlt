@@ -136,18 +136,10 @@ def write_load_status_page(pipeline: Pipeline) -> None:
 
         st.header("Last load info")
         col1, col2, col3 = st.columns(3)
-        loads_df = _query_data_live(
-            f"SELECT load_id, inserted_at FROM {pipeline.default_schema.loads_table_name} WHERE status = 0 ORDER BY inserted_at DESC LIMIT 101 "
-        )
+        loads_df = _query_data_live(f"SELECT load_id, inserted_at FROM {pipeline.default_schema.loads_table_name} WHERE status = 0 ORDER BY inserted_at DESC LIMIT 101 ")
         loads_no = loads_df.shape[0]
         if loads_df.shape[0] > 0:
-            rel_time = (
-                humanize.naturaldelta(
-                    pendulum.now()
-                    - pendulum.from_timestamp(loads_df.iloc[0, 1].timestamp())
-                )
-                + " ago"
-            )
+            rel_time = humanize.naturaldelta(pendulum.now() - pendulum.from_timestamp(loads_df.iloc[0, 1].timestamp())) + " ago"
             last_load_id = loads_df.iloc[0, 0]
             if loads_no > 100:
                 loads_no = "> " + str(loads_no)
@@ -168,9 +160,7 @@ def write_load_status_page(pipeline: Pipeline) -> None:
             if "parent" in table:
                 continue
             table_name = table["name"]
-            query_parts.append(
-                f"SELECT '{table_name}' as table_name, COUNT(1) As rows_count FROM {table_name} WHERE _dlt_load_id = '{selected_load_id}'"
-            )
+            query_parts.append(f"SELECT '{table_name}' as table_name, COUNT(1) As rows_count FROM {table_name} WHERE _dlt_load_id = '{selected_load_id}'")
             query_parts.append("UNION ALL")
         query_parts.pop()
         rows_counts_df = _query_data("\n".join(query_parts))
@@ -182,18 +172,14 @@ def write_load_status_page(pipeline: Pipeline) -> None:
         st.dataframe(loads_df)
 
         st.header("Schema updates")
-        schemas_df = _query_data_live(
-            f"SELECT schema_name, inserted_at, version, version_hash FROM {pipeline.default_schema.version_table_name} ORDER BY inserted_at DESC LIMIT 101 "
-        )
+        schemas_df = _query_data_live(f"SELECT schema_name, inserted_at, version, version_hash FROM {pipeline.default_schema.version_table_name} ORDER BY inserted_at DESC LIMIT 101 ")
         st.markdown("**100 recent schema updates**")
         st.dataframe(schemas_df)
 
         st.header("Pipeline state info")
         with pipeline.destination_client() as client:
             if isinstance(client, WithStateSync):
-                remote_state = load_state_from_destination(
-                    pipeline.pipeline_name, client
-                )
+                remote_state = load_state_from_destination(pipeline.pipeline_name, client)
         local_state = pipeline.state
 
         col1, col2 = st.columns(2)
@@ -206,26 +192,18 @@ def write_load_status_page(pipeline: Pipeline) -> None:
         col2.metric("Remote state version", remote_state_version)
 
         if remote_state_version != local_state["_state_version"]:
-            st.warning(
-                "Looks like that local state is not yet synchronized or synchronization is disabled"
-            )
+            st.warning("Looks like that local state is not yet synchronized or synchronization is disabled")
 
     except CannotRestorePipelineException as restore_ex:
-        st.error(
-            "Seems like the pipeline does not exist. Did you run it at least once?"
-        )
+        st.error("Seems like the pipeline does not exist. Did you run it at least once?")
         st.exception(restore_ex)
 
     except ConfigFieldMissingException as cf_ex:
-        st.error(
-            "Pipeline credentials/configuration is missing. This most often happen when you run the streamlit app from different folder than the `.dlt` with `toml` files resides."
-        )
+        st.error("Pipeline credentials/configuration is missing. This most often happen when you run the streamlit app from different folder than the `.dlt` with `toml` files resides.")
         st.text(str(cf_ex))
 
     except Exception as ex:
-        st.error(
-            "Pipeline info could not be prepared. Did you load the data at least once?"
-        )
+        st.error("Pipeline info could not be prepared. Did you load the data at least once?")
         st.exception(ex)
 
 
@@ -280,9 +258,7 @@ def write_data_explorer_page(
         st.markdown(" | ".join(table_hints))
 
         # table schema contains various hints (like clustering or partition options) that we do not want to show in basic view
-        essentials_f = lambda c: {
-            k: v for k, v in c.items() if k in ["name", "data_type", "nullable"]
-        }
+        essentials_f = lambda c: {k: v for k, v in c.items() if k in ["name", "data_type", "nullable"]}
 
         st.table(map(essentials_f, table["columns"].values()))
         # add a button that when pressed will show the full content of a table

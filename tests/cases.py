@@ -23,9 +23,7 @@ TArrowFormat = Literal["pandas", "table", "record_batch"]
 JSON_TYPED_DICT: StrAny = {
     "str": "string",
     "decimal": Decimal("21.37"),
-    "big_decimal": Decimal(
-        "115792089237316195423570985008687907853269984665640564039457584007913129639935.1"
-    ),
+    "big_decimal": Decimal("115792089237316195423570985008687907853269984665640564039457584007913129639935.1"),
     "datetime": pendulum.parse("2005-04-02T20:37:37.358236Z"),
     "date": ensure_pendulum_date("2022-02-02"),
     # "uuid": UUID(_UUID),
@@ -151,9 +149,7 @@ TABLE_ROW_ALL_DATA_TYPES = {
 }
 
 
-def table_update_and_row(
-    exclude_types: Sequence[TDataType] = None, exclude_columns: Sequence[str] = None
-) -> Tuple[TTableSchemaColumns, StrAny]:
+def table_update_and_row(exclude_types: Sequence[TDataType] = None, exclude_columns: Sequence[str] = None) -> Tuple[TTableSchemaColumns, StrAny]:
     """Get a table schema and a row with all possible data types.
     Optionally exclude some data types from the schema and row.
     """
@@ -161,13 +157,7 @@ def table_update_and_row(
     data_row = deepcopy(TABLE_ROW_ALL_DATA_TYPES)
     exclude_col_names = list(exclude_columns or [])
     if exclude_types:
-        exclude_col_names.extend(
-            [
-                key
-                for key, value in column_schemas.items()
-                if value["data_type"] in exclude_types
-            ]
-        )
+        exclude_col_names.extend([key for key, value in column_schemas.items() if value["data_type"] in exclude_types])
     for col_name in set(exclude_col_names):
         del column_schemas[col_name]
         del data_row[col_name]
@@ -187,24 +177,18 @@ def assert_all_data_types_row(
 
     # Include only columns requested in schema
     db_mapping = {col_name: db_row[i] for i, col_name in enumerate(schema)}
-    expected_rows = {
-        key: value for key, value in TABLE_ROW_ALL_DATA_TYPES.items() if key in schema
-    }
+    expected_rows = {key: value for key, value in TABLE_ROW_ALL_DATA_TYPES.items() if key in schema}
     # prepare date to be compared: convert into pendulum instance, adjust microsecond precision
     if "col4" in expected_rows:
         parsed_date = pendulum.instance(db_mapping["col4"])
-        db_mapping["col4"] = reduce_pendulum_datetime_precision(
-            parsed_date, timestamp_precision
-        )
+        db_mapping["col4"] = reduce_pendulum_datetime_precision(parsed_date, timestamp_precision)
         expected_rows["col4"] = reduce_pendulum_datetime_precision(
             ensure_pendulum_datetime(expected_rows["col4"]),  # type: ignore[arg-type]
             timestamp_precision,
         )
     if "col4_precision" in expected_rows:
         parsed_date = pendulum.instance(db_mapping["col4_precision"])
-        db_mapping["col4_precision"] = reduce_pendulum_datetime_precision(
-            parsed_date, 3
-        )
+        db_mapping["col4_precision"] = reduce_pendulum_datetime_precision(parsed_date, 3)
         expected_rows["col4_precision"] = reduce_pendulum_datetime_precision(
             ensure_pendulum_datetime(expected_rows["col4_precision"]),  # type: ignore[arg-type]
             3,
@@ -212,9 +196,7 @@ def assert_all_data_types_row(
 
     if "col11_precision" in expected_rows:
         parsed_time = ensure_pendulum_time(db_mapping["col11_precision"])
-        db_mapping["col11_precision"] = reduce_pendulum_datetime_precision(
-            parsed_time, 3
-        )
+        db_mapping["col11_precision"] = reduce_pendulum_datetime_precision(parsed_time, 3)
         expected_rows["col11_precision"] = reduce_pendulum_datetime_precision(
             ensure_pendulum_time(expected_rows["col11_precision"]),  # type: ignore[arg-type]
             3,
@@ -225,15 +207,11 @@ def assert_all_data_types_row(
         if binary_col in db_mapping:
             if isinstance(db_mapping[binary_col], str):
                 try:
-                    db_mapping[binary_col] = bytes.fromhex(
-                        db_mapping[binary_col]
-                    )  # redshift returns binary as hex string
+                    db_mapping[binary_col] = bytes.fromhex(db_mapping[binary_col])  # redshift returns binary as hex string
                 except ValueError:
                     if not allow_base64_binary:
                         raise
-                    db_mapping[binary_col] = base64.b64decode(
-                        db_mapping[binary_col], validate=True
-                    )
+                    db_mapping[binary_col] = base64.b64decode(db_mapping[binary_col], validate=True)
             else:
                 db_mapping[binary_col] = bytes(db_mapping[binary_col])
 
@@ -257,9 +235,7 @@ def assert_all_data_types_row(
     assert db_mapping == expected_rows
 
 
-def arrow_table_all_data_types(
-    object_format: TArrowFormat, include_json: bool = True, include_time: bool = True
-) -> Tuple[Any, List[Dict[str, Any]]]:
+def arrow_table_all_data_types(object_format: TArrowFormat, include_json: bool = True, include_time: bool = True) -> Tuple[Any, List[Dict[str, Any]]]:
     """Create an arrow object or pandas dataframe with all supported data types.
 
     Returns the table and its records in python format

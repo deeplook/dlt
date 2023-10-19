@@ -41,9 +41,7 @@ def run_pool(
 
     # start pool
     pool = create_pool(config)
-    logger.info(
-        f"Created {config.pool_type} pool with {config.workers or 'default no.'} workers"
-    )
+    logger.info(f"Created {config.pool_type} pool with {config.workers or 'default no.'} workers")
     runs_count = 1
 
     def _run_func() -> bool:

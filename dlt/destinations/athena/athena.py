@@ -112,9 +112,7 @@ class AthenaTypeMapper(TypeMapper):
     def __init__(self, capabilities: DestinationCapabilitiesContext):
         super().__init__(capabilities)
 
-    def to_db_integer_type(
-        self, precision: Optional[int], table_format: TTableFormat = None
-    ) -> str:
+    def to_db_integer_type(self, precision: Optional[int], table_format: TTableFormat = None) -> str:
         if precision is None:
             return "bigint"
         if precision <= 8:
@@ -125,9 +123,7 @@ class AthenaTypeMapper(TypeMapper):
             return "int"
         return "bigint"
 
-    def from_db_type(
-        self, db_type: str, precision: Optional[int], scale: Optional[int]
-    ) -> TColumnType:
+    def from_db_type(self, db_type: str, precision: Optional[int], scale: Optional[int]) -> TColumnType:
         for key, val in self.dbt_to_sct.items():
             if db_type.startswith(key):
                 return without_none(dict(data_type=val, precision=precision, scale=scale))  # type: ignore[return-value]
@@ -135,9 +131,7 @@ class AthenaTypeMapper(TypeMapper):
 
 
 # add a formatter for pendulum to be used by pyathen dbapi
-def _format_pendulum_datetime(
-    formatter: Formatter, escaper: Callable[[str], str], val: Any
-) -> Any:
+def _format_pendulum_datetime(formatter: Formatter, escaper: Callable[[str], str], val: Any) -> Any:
     # copied from https://github.com/laughingman7743/PyAthena/blob/f4b21a0b0f501f5c3504698e25081f491a541d4e/pyathena/formatter.py#L114
     # https://docs.aws.amazon.com/athena/latest/ug/engine-versions-reference-0003.html#engine-versions-reference-0003-timestamp-changes
     # ICEBERG tables have TIMESTAMP(6), other tables have TIMESTAMP(3), we always generate TIMESTAMP(6)
@@ -162,9 +156,7 @@ class DLTAthenaFormatter(DefaultParameterFormatter):
         formatters[datetime] = _format_pendulum_datetime
         formatters[Date] = _format_date
 
-        super(DefaultParameterFormatter, self).__init__(
-            mappings=formatters, default=None
-        )
+        super(DefaultParameterFormatter, self).__init__(mappings=formatters, default=None)
         DLTAthenaFormatter._INSTANCE = self
 
 
@@ -238,32 +230,21 @@ class AthenaSQLClient(SqlClientBase[Connection]):
         self.execute_sql(f"CREATE DATABASE {self.fully_qualified_ddl_dataset_name()};")
 
     def drop_dataset(self) -> None:
-        self.execute_sql(
-            f"DROP DATABASE {self.fully_qualified_ddl_dataset_name()} CASCADE;"
-        )
+        self.execute_sql(f"DROP DATABASE {self.fully_qualified_ddl_dataset_name()} CASCADE;")
 
     def fully_qualified_dataset_name(self, escape: bool = True) -> str:
-        return (
-            self.capabilities.escape_identifier(self.dataset_name)
-            if escape
-            else self.dataset_name
-        )
+        return self.capabilities.escape_identifier(self.dataset_name) if escape else self.dataset_name
 
     def drop_tables(self, *tables: str) -> None:
         if not tables:
             return
-        statements = [
-            f"DROP TABLE IF EXISTS {self.make_qualified_ddl_table_name(table)};"
-            for table in tables
-        ]
+        statements = [f"DROP TABLE IF EXISTS {self.make_qualified_ddl_table_name(table)};" for table in tables]
         self.execute_fragments(statements)
 
     @contextmanager
     @raise_database_error
     def begin_transaction(self) -> Iterator[DBTransaction]:
-        logger.warning(
-            "Athena does not support transactions! Each SQL statement is auto-committed separately."
-        )
+        logger.warning("Athena does not support transactions! Each SQL statement is auto-committed separately.")
         yield self
 
     @raise_database_error
@@ -292,9 +273,7 @@ class AthenaSQLClient(SqlClientBase[Connection]):
             return DatabaseTransientException(ex)
         return ex
 
-    def execute_sql(
-        self, sql: AnyStr, *args: Any, **kwargs: Any
-    ) -> Optional[Sequence[Sequence[Any]]]:
+    def execute_sql(self, sql: AnyStr, *args: Any, **kwargs: Any) -> Optional[Sequence[Sequence[Any]]]:
         with self.execute_query(sql, *args, **kwargs) as curr:
             if curr.description is None:
                 return None
@@ -303,15 +282,11 @@ class AthenaSQLClient(SqlClientBase[Connection]):
                 return f
 
     @staticmethod
-    def _convert_to_old_pyformat(
-        new_style_string: str, args: Tuple[Any, ...]
-    ) -> Tuple[str, Dict[str, Any]]:
+    def _convert_to_old_pyformat(new_style_string: str, args: Tuple[Any, ...]) -> Tuple[str, Dict[str, Any]]:
         # create a list of keys
         keys = ["arg" + str(i) for i, _ in enumerate(args)]
         # create an old style string and replace placeholders
-        old_style_string, count = re.subn(
-            r"%s", lambda _: "%(" + keys.pop(0) + ")s", new_style_string
-        )
+        old_style_string, count = re.subn(r"%s", lambda _: "%(" + keys.pop(0) + ")s", new_style_string)
         # create a dictionary mapping keys to args
         mapping = dict(zip(["arg" + str(i) for i, _ in enumerate(args)], args))
         # raise if there is a mismatch between args and string
@@ -321,9 +296,7 @@ class AthenaSQLClient(SqlClientBase[Connection]):
 
     @contextmanager
     @raise_database_error
-    def execute_query(
-        self, query: AnyStr, *args: Any, **kwargs: Any
-    ) -> Iterator[DBApiCursor]:
+    def execute_query(self, query: AnyStr, *args: Any, **kwargs: Any) -> Iterator[DBApiCursor]:
         assert isinstance(query, str)
         db_args = kwargs
         # convert sql and params to PyFormat, as athena does not support anything else
@@ -356,9 +329,7 @@ class AthenaClient(SqlJobClientWithStaging, SupportsStagingDestination):
         # verify if staging layout is valid for Athena
         # this will raise if the table prefix is not properly defined
         # we actually that {table_name} is first, no {schema_name} is allowed
-        self.table_prefix_layout = path_utils.get_table_prefix_layout(
-            config.staging_config.layout, []
-        )
+        self.table_prefix_layout = path_utils.get_table_prefix_layout(config.staging_config.layout, [])
 
         sql_client = AthenaSQLClient(config.normalize_dataset_name(schema), config)
         super().__init__(schema, config, sql_client)
@@ -371,14 +342,10 @@ class AthenaClient(SqlJobClientWithStaging, SupportsStagingDestination):
         truncate_tables = []
         super().initialize_storage(truncate_tables)
 
-    def _from_db_type(
-        self, hive_t: str, precision: Optional[int], scale: Optional[int]
-    ) -> TColumnType:
+    def _from_db_type(self, hive_t: str, precision: Optional[int], scale: Optional[int]) -> TColumnType:
         return self.type_mapper.from_db_type(hive_t, precision, scale)
 
-    def _get_column_def_sql(
-        self, c: TColumnSchema, table_format: TTableFormat = None
-    ) -> str:
+    def _get_column_def_sql(self, c: TColumnSchema, table_format: TTableFormat = None) -> str:
         return f"{self.sql_client.escape_ddl_identifier(c['name'])} {self.type_mapper.to_db_type(c, table_format)}"
 
     def _get_table_update_sql(
@@ -395,16 +362,8 @@ class AthenaClient(SqlJobClientWithStaging, SupportsStagingDestination):
         # for the system tables we need to create empty iceberg tables to be able to run, DELETE and UPDATE queries
         # or if we are in iceberg mode, we create iceberg tables for all tables
         table = self.get_load_table(table_name, self.in_staging_mode)
-        is_iceberg = (
-            self._is_iceberg_table(table)
-            or table.get("write_disposition", None) == "skip"
-        )
-        columns = ", ".join(
-            [
-                self._get_column_def_sql(c, table.get("table_format"))
-                for c in new_columns
-            ]
-        )
+        is_iceberg = self._is_iceberg_table(table) or table.get("write_disposition", None) == "skip"
+        columns = ", ".join([self._get_column_def_sql(c, table.get("table_format")) for c in new_columns])
 
         # this will fail if the table prefix is not properly defined
         table_prefix = self.table_prefix_layout.format(table_name=table_name)
@@ -428,15 +387,11 @@ class AthenaClient(SqlJobClientWithStaging, SupportsStagingDestination):
             )
         # alter table to add new columns at the end
         else:
-            sql.append(
-                f"""ALTER TABLE {qualified_table_name} ADD COLUMNS ({columns});"""
-            )
+            sql.append(f"""ALTER TABLE {qualified_table_name} ADD COLUMNS ({columns});""")
 
         return sql
 
-    def start_file_load(
-        self, table: TTableSchema, file_path: str, load_id: str
-    ) -> LoadJob:
+    def start_file_load(self, table: TTableSchema, file_path: str, load_id: str) -> LoadJob:
         """Starts SqlLoadJob for files ending with .sql or returns None to let derived classes to handle their specific jobs"""
         if table_schema_has_type(table, "time"):
             raise LoadJobTerminalException(
@@ -445,38 +400,20 @@ class AthenaClient(SqlJobClientWithStaging, SupportsStagingDestination):
             )
         job = super().start_file_load(table, file_path, load_id)
         if not job:
-            job = (
-                DoNothingFollowupJob(file_path)
-                if self._is_iceberg_table(self.get_load_table(table["name"]))
-                else DoNothingJob(file_path)
-            )
+            job = DoNothingFollowupJob(file_path) if self._is_iceberg_table(self.get_load_table(table["name"])) else DoNothingJob(file_path)
         return job
 
-    def _create_append_followup_jobs(
-        self, table_chain: Sequence[TTableSchema]
-    ) -> List[NewLoadJob]:
+    def _create_append_followup_jobs(self, table_chain: Sequence[TTableSchema]) -> List[NewLoadJob]:
         if self._is_iceberg_table(self.get_load_table(table_chain[0]["name"])):
-            return [
-                SqlStagingCopyJob.from_table_chain(
-                    table_chain, self.sql_client, {"replace": False}
-                )
-            ]
+            return [SqlStagingCopyJob.from_table_chain(table_chain, self.sql_client, {"replace": False})]
         return super()._create_append_followup_jobs(table_chain)
 
-    def _create_replace_followup_jobs(
-        self, table_chain: Sequence[TTableSchema]
-    ) -> List[NewLoadJob]:
+    def _create_replace_followup_jobs(self, table_chain: Sequence[TTableSchema]) -> List[NewLoadJob]:
         if self._is_iceberg_table(self.get_load_table(table_chain[0]["name"])):
-            return [
-                SqlStagingCopyJob.from_table_chain(
-                    table_chain, self.sql_client, {"replace": True}
-                )
-            ]
+            return [SqlStagingCopyJob.from_table_chain(table_chain, self.sql_client, {"replace": True})]
         return super()._create_replace_followup_jobs(table_chain)
 
-    def _create_merge_followup_jobs(
-        self, table_chain: Sequence[TTableSchema]
-    ) -> List[NewLoadJob]:
+    def _create_merge_followup_jobs(self, table_chain: Sequence[TTableSchema]) -> List[NewLoadJob]:
         # fall back to append jobs for merge
         return self._create_append_followup_jobs(table_chain)
 
@@ -490,20 +427,14 @@ class AthenaClient(SqlJobClientWithStaging, SupportsStagingDestination):
             return True
         return super().should_load_data_to_staging_dataset(table)
 
-    def should_truncate_table_before_load_on_staging_destination(
-        self, table: TTableSchema
-    ) -> bool:
+    def should_truncate_table_before_load_on_staging_destination(self, table: TTableSchema) -> bool:
         # on athena we only truncate replace tables that are not iceberg
         table = self.get_load_table(table["name"])
-        if table["write_disposition"] == "replace" and not self._is_iceberg_table(
-            self.get_load_table(table["name"])
-        ):
+        if table["write_disposition"] == "replace" and not self._is_iceberg_table(self.get_load_table(table["name"])):
             return True
         return False
 
-    def should_load_data_to_staging_dataset_on_staging_destination(
-        self, table: TTableSchema
-    ) -> bool:
+    def should_load_data_to_staging_dataset_on_staging_destination(self, table: TTableSchema) -> bool:
         """iceberg table data goes into staging on staging destination"""
         return self._is_iceberg_table(self.get_load_table(table["name"]))
 

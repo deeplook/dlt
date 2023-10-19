@@ -180,9 +180,7 @@ class JSONLogFormatter(BaseJSONFormatter):
         return json_log_object
 
 
-def update_formatter_for_loggers(
-    loggers_iter: List[Logger], formatter: Type[logging.Formatter]
-) -> None:
+def update_formatter_for_loggers(loggers_iter: List[Logger], formatter: Type[logging.Formatter]) -> None:
     """
     :param formatter:
     :param loggers_iter:
@@ -196,10 +194,7 @@ def update_formatter_for_loggers(
 
 
 def epoch_nano_second(datetime_: datetime) -> int:
-    return (
-        int((datetime_ - _epoch).total_seconds()) * 1000000000
-        + datetime_.microsecond * 1000
-    )
+    return int((datetime_ - _epoch).total_seconds()) * 1000000000 + datetime_.microsecond * 1000
 
 
 def iso_time_format(datetime_: datetime) -> str:

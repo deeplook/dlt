@@ -18,9 +18,7 @@ from tests.load.pipeline.utils import destinations_configs, DestinationTestConfi
     ids=lambda x: x.name,
 )
 def test_athena_destinations(destination_config: DestinationTestConfiguration) -> None:
-    pipeline = destination_config.setup_pipeline(
-        "athena_" + uniq_id(), full_refresh=True
-    )
+    pipeline = destination_config.setup_pipeline("athena_" + uniq_id(), full_refresh=True)
 
     @dlt.resource(name="items", write_disposition="append")
     def items():
@@ -36,9 +34,7 @@ def test_athena_destinations(destination_config: DestinationTestConfiguration) -
     pipeline.run(items)
 
     # see if we have athena tables with items
-    table_counts = load_table_counts(
-        pipeline, *[t["name"] for t in pipeline.default_schema._schema_tables.values()]
-    )
+    table_counts = load_table_counts(pipeline, *[t["name"] for t in pipeline.default_schema._schema_tables.values()])
     assert table_counts["items"] == 1
     assert table_counts["items__sub_items"] == 2
     assert table_counts["_dlt_loads"] == 1
@@ -65,9 +61,7 @@ def test_athena_destinations(destination_config: DestinationTestConfiguration) -
         }
 
     pipeline.run(items2)
-    table_counts = load_table_counts(
-        pipeline, *[t["name"] for t in pipeline.default_schema._schema_tables.values()]
-    )
+    table_counts = load_table_counts(pipeline, *[t["name"] for t in pipeline.default_schema._schema_tables.values()])
     assert table_counts["items"] == 2
     assert table_counts["items__sub_items"] == 4
     assert table_counts["_dlt_loads"] == 2
@@ -81,17 +75,13 @@ def test_athena_destinations(destination_config: DestinationTestConfiguration) -
 def test_athena_all_datatypes_and_timestamps(
     destination_config: DestinationTestConfiguration,
 ) -> None:
-    pipeline = destination_config.setup_pipeline(
-        "athena_" + uniq_id(), full_refresh=True
-    )
+    pipeline = destination_config.setup_pipeline("athena_" + uniq_id(), full_refresh=True)
 
     # TIME is not supported
     column_schemas, data_types = table_update_and_row(exclude_types=["time"])
 
     # apply the exact columns definitions so we process complex and wei types correctly!
-    @dlt.resource(
-        table_name="data_types", write_disposition="append", columns=column_schemas
-    )
+    @dlt.resource(table_name="data_types", write_disposition="append", columns=column_schemas)
     def my_resource() -> Iterator[Any]:
         nonlocal data_types
         yield [data_types] * 10
@@ -119,14 +109,10 @@ def test_athena_all_datatypes_and_timestamps(
         # https://docs.aws.amazon.com/athena/latest/ug/engine-versions-reference-0003.html#engine-versions-reference-0003-timestamp-changes
 
         # use string representation TIMESTAMP(2)
-        db_rows = sql_client.execute_sql(
-            "SELECT * FROM data_types WHERE col4 = TIMESTAMP '2022-05-23 13:26:45.176'"
-        )
+        db_rows = sql_client.execute_sql("SELECT * FROM data_types WHERE col4 = TIMESTAMP '2022-05-23 13:26:45.176'")
         assert len(db_rows) == 10
         # no rows - TIMESTAMP(6) not supported
-        db_rows = sql_client.execute_sql(
-            "SELECT * FROM data_types WHERE col4 = TIMESTAMP '2022-05-23 13:26:45.176145'"
-        )
+        db_rows = sql_client.execute_sql("SELECT * FROM data_types WHERE col4 = TIMESTAMP '2022-05-23 13:26:45.176145'")
         assert len(db_rows) == 0
         # use pendulum
         # that will pass
@@ -155,17 +141,11 @@ def test_athena_all_datatypes_and_timestamps(
         assert len(db_rows) == 0
 
         # check date
-        db_rows = sql_client.execute_sql(
-            "SELECT * FROM data_types WHERE col10 = DATE '2023-02-27'"
-        )
+        db_rows = sql_client.execute_sql("SELECT * FROM data_types WHERE col10 = DATE '2023-02-27'")
         assert len(db_rows) == 10
-        db_rows = sql_client.execute_sql(
-            "SELECT * FROM data_types WHERE col10 = %s", pendulum.date(2023, 2, 27)
-        )
+        db_rows = sql_client.execute_sql("SELECT * FROM data_types WHERE col10 = %s", pendulum.date(2023, 2, 27))
         assert len(db_rows) == 10
-        db_rows = sql_client.execute_sql(
-            "SELECT * FROM data_types WHERE col10 = %s", datetime.date(2023, 2, 27)
-        )
+        db_rows = sql_client.execute_sql("SELECT * FROM data_types WHERE col10 = %s", datetime.date(2023, 2, 27))
         assert len(db_rows) == 10
 
 
@@ -177,16 +157,12 @@ def test_athena_all_datatypes_and_timestamps(
 def test_athena_blocks_time_column(
     destination_config: DestinationTestConfiguration,
 ) -> None:
-    pipeline = destination_config.setup_pipeline(
-        "athena_" + uniq_id(), full_refresh=True
-    )
+    pipeline = destination_config.setup_pipeline("athena_" + uniq_id(), full_refresh=True)
 
     column_schemas, data_types = table_update_and_row()
 
     # apply the exact columns definitions so we process complex and wei types correctly!
-    @dlt.resource(
-        table_name="data_types", write_disposition="append", columns=column_schemas
-    )
+    @dlt.resource(table_name="data_types", write_disposition="append", columns=column_schemas)
     def my_resource() -> Iterator[Any]:
         nonlocal data_types
         yield [data_types] * 10
@@ -199,7 +175,4 @@ def test_athena_blocks_time_column(
 
     assert info.has_failed_jobs
 
-    assert (
-        "Athena cannot load TIME columns from parquet tables"
-        in info.load_packages[0].jobs["failed_jobs"][0].failed_message
-    )
+    assert "Athena cannot load TIME columns from parquet tables" in info.load_packages[0].jobs["failed_jobs"][0].failed_message

@@ -17,9 +17,7 @@ from dlt.common.reflection.utils import get_func_def_node, get_literal_defaults
 _DECIMAL_DEFAULT = Decimal("0.01")
 _SECRET_DEFAULT = TSecretValue("PASS")
 _CONFIG_DEFAULT = RunConfiguration()
-_CREDENTIALS_DEFAULT = ConnectionStringCredentials(
-    "postgresql://loader:loader@localhost:5432/dlt_data"
-)
+_CREDENTIALS_DEFAULT = ConnectionStringCredentials("postgresql://loader:loader@localhost:5432/dlt_data")
 
 
 def test_synthesize_spec_from_sig() -> None:
@@ -140,9 +138,7 @@ def test_synthesize_spec_from_sig() -> None:
     # skip arguments with defaults
     # deregister spec to disable cache
     del globals()[SPEC.__name__]
-    SPEC = spec_from_signature(
-        f_pos_kw_only, inspect.signature(f_pos_kw_only), include_defaults=False
-    )
+    SPEC = spec_from_signature(f_pos_kw_only, inspect.signature(f_pos_kw_only), include_defaults=False)
     assert not hasattr(SPEC, "kw_only_1")
     assert not hasattr(SPEC, "kw_only_2")
     assert not hasattr(SPEC, "pos_only_2")
@@ -155,9 +151,7 @@ def test_synthesize_spec_from_sig() -> None:
 
     SPEC = spec_from_signature(f_variadic, inspect.signature(f_variadic))
     assert SPEC.var_1 == "A"
-    assert not hasattr(
-        SPEC, "kw_var_1"
-    )  # kw parameters that must be explicitly passed are removed
+    assert not hasattr(SPEC, "kw_var_1")  # kw parameters that must be explicitly passed are removed
     assert not hasattr(SPEC, "args")
     fields = SPEC.get_resolvable_fields()
     assert fields == {"var_1": str}
@@ -171,9 +165,7 @@ def test_spec_none_when_no_fields() -> None:
     assert SPEC is not None
 
     del globals()[SPEC.__name__]
-    SPEC = spec_from_signature(
-        f_default_only, inspect.signature(f_default_only), include_defaults=False
-    )
+    SPEC = spec_from_signature(f_default_only, inspect.signature(f_default_only), include_defaults=False)
     assert SPEC is None
 
     def f_no_spec(arg1):

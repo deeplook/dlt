@@ -26,16 +26,12 @@ def snowflake_client(schema: Schema) -> SnowflakeClient:
     creds = SnowflakeCredentials()
     return SnowflakeClient(
         schema,
-        SnowflakeClientConfiguration(
-            dataset_name="test_" + uniq_id(), credentials=creds
-        ),
+        SnowflakeClientConfiguration(dataset_name="test_" + uniq_id(), credentials=creds),
     )
 
 
 def test_create_table(snowflake_client: SnowflakeClient) -> None:
-    statements = snowflake_client._get_table_update_sql(
-        "event_test_table", TABLE_UPDATE, False
-    )
+    statements = snowflake_client._get_table_update_sql("event_test_table", TABLE_UPDATE, False)
     assert len(statements) == 1
     sql = statements[0]
     sqlfluff.parse(sql, dialect="snowflake")
@@ -55,9 +51,7 @@ def test_create_table(snowflake_client: SnowflakeClient) -> None:
 
 
 def test_alter_table(snowflake_client: SnowflakeClient) -> None:
-    statements = snowflake_client._get_table_update_sql(
-        "event_test_table", TABLE_UPDATE, True
-    )
+    statements = snowflake_client._get_table_update_sql("event_test_table", TABLE_UPDATE, True)
     assert len(statements) == 1
     sql = statements[0]
 
@@ -95,9 +89,7 @@ def test_create_table_with_partition_and_cluster(
     mod_update[3]["partition"] = True
     mod_update[4]["cluster"] = True
     mod_update[1]["cluster"] = True
-    statements = snowflake_client._get_table_update_sql(
-        "event_test_table", mod_update, False
-    )
+    statements = snowflake_client._get_table_update_sql("event_test_table", mod_update, False)
     assert len(statements) == 1
     sql = statements[0]
 

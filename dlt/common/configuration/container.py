@@ -84,6 +84,4 @@ class Container:
                     self.contexts[spec] = previous_config
             else:
                 # value was modified in the meantime and not restored
-                raise ContainerInjectableContextMangled(
-                    spec, self.contexts[spec], config
-                )
+                raise ContainerInjectableContextMangled(spec, self.contexts[spec], config)

@@ -56,16 +56,12 @@ class TransactionalFile:
             path: The path to lock.
             fs: The fsspec file system.
         """
-        proto = (
-            fs.protocol[0] if isinstance(fs.protocol, (list, tuple)) else fs.protocol
-        )
+        proto = fs.protocol[0] if isinstance(fs.protocol, (list, tuple)) else fs.protocol
         self.extract_mtime = MTIME_DISPATCH.get(proto, MTIME_DISPATCH["file"])
 
         parsed_path = Path(path)
         if not parsed_path.is_absolute():
-            raise ValueError(
-                f"{path} is not absolute. Please pass only absolute paths to TransactionalFile"
-            )
+            raise ValueError(f"{path} is not absolute. Please pass only absolute paths to TransactionalFile")
         self.path = path
         if proto == "file":
             # standardize path separator to POSIX. fsspec always uses POSIX. Windows may use either.
@@ -100,9 +96,7 @@ class TransactionalFile:
         output = []
         now = pendulum.now()
 
-        for lock in self._fs.ls(
-            posixpath.dirname(self.lock_path), refresh=True, detail=True
-        ):
+        for lock in self._fs.ls(posixpath.dirname(self.lock_path), refresh=True, detail=True):
             name = lock["name"]
             if not name.startswith(self.lock_prefix):
                 continue
@@ -117,9 +111,7 @@ class TransactionalFile:
             # The name is timestamp + random suffix and is time sortable
             output.append(name)
         if not output:
-            raise RuntimeError(
-                f"When syncing locks for path {self.path} and lock {self.lock_path} no lock file was found"
-            )
+            raise RuntimeError(f"When syncing locks for path {self.path} and lock {self.lock_path} no lock file was found")
         return output
 
     def read(self) -> t.Optional[bytes]:
@@ -145,9 +137,7 @@ class TransactionalFile:
         elif self._fs.isfile(self.path):
             self._fs.rm(self.path)
 
-    def acquire_lock(
-        self, blocking: bool = True, timeout: float = -1, jitter_mean: float = 0
-    ) -> bool:
+    def acquire_lock(self, blocking: bool = True, timeout: float = -1, jitter_mean: float = 0) -> bool:
         """Acquires a lock on a path. Mimics the stdlib's `threading.Lock` interface.
 
         Acquire a lock, blocking or non-blocking.
@@ -175,9 +165,7 @@ class TransactionalFile:
             return True
 
         if jitter_mean > 0:
-            time.sleep(
-                random.random() * jitter_mean
-            )  # Add jitter to avoid thundering herd
+            time.sleep(random.random() * jitter_mean)  # Add jitter to avoid thundering herd
         self.lock_path = f"{self.lock_prefix}.{lock_id()}"
         self._fs.touch(self.lock_path)
         locks = self._sync_locks()

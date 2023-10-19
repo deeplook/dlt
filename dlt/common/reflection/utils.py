@@ -64,31 +64,23 @@ def set_ast_parents(tree: ast.AST) -> None:
             child.parent = node if node is not tree else None  # type: ignore
 
 
-def creates_func_def_name_node(
-    func_def: ast.FunctionDef, source_lines: Sequence[str]
-) -> ast.Name:
+def creates_func_def_name_node(func_def: ast.FunctionDef, source_lines: Sequence[str]) -> ast.Name:
     """Recreate function name as a ast.Name with known source code location"""
     func_name = ast.Name(func_def.name)
     func_name.lineno = func_name.end_lineno = func_def.lineno
-    func_name.col_offset = source_lines[func_name.lineno - 1].index(
-        func_def.name
-    )  # find where function name starts
+    func_name.col_offset = source_lines[func_name.lineno - 1].index(func_def.name)  # find where function name starts
     func_name.end_col_offset = func_name.col_offset + len(func_def.name)
     return func_name
 
 
-def rewrite_python_script(
-    source_script_lines: List[str], transformed_nodes: List[Tuple[ast.AST, ast.AST]]
-) -> List[str]:
+def rewrite_python_script(source_script_lines: List[str], transformed_nodes: List[Tuple[ast.AST, ast.AST]]) -> List[str]:
     """Replaces all the nodes present in `transformed_nodes` in the `script_lines`. The `transformed_nodes` is a tuple where the first element
     is must be a node with full location information created out of `script_lines`"""
     script_lines: List[str] = []
     last_line = -1
     last_offset = -1
     # sort transformed nodes by line and offset
-    for node, t_value in sorted(
-        transformed_nodes, key=lambda n: (n[0].lineno, n[0].col_offset)
-    ):
+    for node, t_value in sorted(transformed_nodes, key=lambda n: (n[0].lineno, n[0].col_offset)):
         # do we have a line changed
         if last_line != node.lineno - 1:
             # add remainder from the previous line
@@ -100,9 +92,7 @@ def rewrite_python_script(
             script_lines.append(source_script_lines[node.lineno - 1][: node.col_offset])
         elif last_offset >= 0:
             # no line change, add the characters from the end of previous node to the current
-            script_lines.append(
-                source_script_lines[last_line][last_offset : node.col_offset]
-            )
+            script_lines.append(source_script_lines[last_line][last_offset : node.col_offset])
 
         # replace node value
         script_lines.append(astunparse.unparse(t_value).strip())

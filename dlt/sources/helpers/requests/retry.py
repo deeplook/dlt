@@ -125,9 +125,7 @@ def _make_retry(
             retry_condition = [condition]
         retry_conds.extend([retry_if_predicate(c) for c in retry_condition])
 
-    wait_cls = (
-        wait_exponential_retry_after if respect_retry_after_header else wait_exponential
-    )
+    wait_cls = wait_exponential_retry_after if respect_retry_after_header else wait_exponential
     return Retrying(
         wait=wait_cls(multiplier=backoff_factor, max=max_delay),
         retry=(retry_any(*retry_conds)),
@@ -178,9 +176,7 @@ class Client:
     @with_config(spec=RunConfiguration)
     def __init__(
         self,
-        request_timeout: Optional[
-            Union[TimedeltaSeconds, Tuple[TimedeltaSeconds, TimedeltaSeconds]]
-        ] = DEFAULT_TIMEOUT,
+        request_timeout: Optional[Union[TimedeltaSeconds, Tuple[TimedeltaSeconds, TimedeltaSeconds]]] = DEFAULT_TIMEOUT,
         max_connections: int = 50,
         raise_for_status: bool = True,
         status_codes: Sequence[int] = DEFAULT_RETRY_STATUS,
@@ -194,9 +190,7 @@ class Client:
     ) -> None:
         self._adapter = HTTPAdapter(pool_maxsize=max_connections)
         self._local = local()
-        self._session_kwargs = dict(
-            timeout=request_timeout, raise_for_status=raise_for_status
-        )
+        self._session_kwargs = dict(timeout=request_timeout, raise_for_status=raise_for_status)
         self._retry_kwargs: Dict[str, Any] = dict(
             status_codes=status_codes,
             exceptions=exceptions,

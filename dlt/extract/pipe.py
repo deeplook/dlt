@@ -116,9 +116,7 @@ TPipeNextItemMode = Union[Literal["fifo"], Literal["round_robin"]]
 
 
 class ForkPipe:
-    def __init__(
-        self, pipe: "Pipe", step: int = -1, copy_on_fork: bool = False
-    ) -> None:
+    def __init__(self, pipe: "Pipe", step: int = -1, copy_on_fork: bool = False) -> None:
         """A transformer that forks the `pipe` and sends the data items to forks added via `add_pipe` method."""
         self._pipes: List[Tuple["Pipe", int]] = []
         self.copy_on_fork = copy_on_fork
@@ -144,9 +142,7 @@ class ForkPipe:
 
 
 class Pipe(SupportsPipe):
-    def __init__(
-        self, name: str, steps: List[TPipeStep] = None, parent: "Pipe" = None
-    ) -> None:
+    def __init__(self, name: str, steps: List[TPipeStep] = None, parent: "Pipe" = None) -> None:
         self.name = name
         self._gen_idx = 0
         self._steps: List[TPipeStep] = []
@@ -197,9 +193,7 @@ class Pipe(SupportsPipe):
 
     def find(self, *step_type: AnyType) -> int:
         """Finds a step with object of type `step_type`"""
-        return next(
-            (i for i, v in enumerate(self._steps) if isinstance(v, step_type)), -1
-        )
+        return next((i for i, v in enumerate(self._steps) if isinstance(v, step_type)), -1)
 
     def __getitem__(self, i: int) -> TPipeStep:
         return self._steps[i]
@@ -207,13 +201,9 @@ class Pipe(SupportsPipe):
     def __len__(self) -> int:
         return len(self._steps)
 
-    def fork(
-        self, child_pipe: "Pipe", child_step: int = -1, copy_on_fork: bool = False
-    ) -> "Pipe":
+    def fork(self, child_pipe: "Pipe", child_step: int = -1, copy_on_fork: bool = False) -> "Pipe":
         if len(self._steps) == 0:
-            raise CreatePipeException(
-                self.name, f"Cannot fork to empty pipe {child_pipe}"
-            )
+            raise CreatePipeException(self.name, f"Cannot fork to empty pipe {child_pipe}")
         fork_step = self.tail
         if not isinstance(fork_step, ForkPipe):
             fork_step = ForkPipe(child_pipe, child_step, copy_on_fork)
@@ -427,15 +417,9 @@ class Pipe(SupportsPipe):
                     # del kwargs["meta"]
                     return orig_step(*args, **kwargs)
 
-                meta_arg = inspect.Parameter(
-                    "meta", inspect._ParameterKind.KEYWORD_ONLY, default=None
-                )
+                meta_arg = inspect.Parameter("meta", inspect._ParameterKind.KEYWORD_ONLY, default=None)
                 kwargs_arg = next(
-                    (
-                        p
-                        for p in sig.parameters.values()
-                        if p.kind == inspect.Parameter.VAR_KEYWORD
-                    ),
+                    (p for p in sig.parameters.values() if p.kind == inspect.Parameter.VAR_KEYWORD),
                     None,
                 )
                 if kwargs_arg:
@@ -463,9 +447,7 @@ class Pipe(SupportsPipe):
             if step_no == self._gen_idx:
                 # error for gen step
                 if len(sig.parameters) == 0:
-                    raise InvalidTransformerGeneratorFunction(
-                        self.name, callable_name, sig, code=1
-                    )
+                    raise InvalidTransformerGeneratorFunction(self.name, callable_name, sig, code=1)
                 else:
                     # show the sig without first argument
                     raise ParametrizedResourceUnbound(
@@ -476,9 +458,7 @@ class Pipe(SupportsPipe):
                         str(ty_ex),
                     )
             else:
-                raise InvalidStepFunctionArguments(
-                    self.name, callable_name, sig, str(ty_ex)
-                )
+                raise InvalidStepFunctionArguments(self.name, callable_name, sig, str(ty_ex))
 
     def _clone(self, new_name: str = None, with_parent: bool = False) -> "Pipe":
         """Clones the pipe steps, optionally renaming the pipe. Used internally to clone a list of connected pipes."""
@@ -557,9 +537,7 @@ class PipeIterator(Iterator[PipeItem]):
         if not isinstance(pipe.gen, Iterator):
             raise PipeGenInvalid(pipe.name, pipe.gen)
         # create extractor
-        extract = cls(
-            max_parallel_items, workers, futures_poll_interval, next_item_mode
-        )
+        extract = cls(max_parallel_items, workers, futures_poll_interval, next_item_mode)
         # add as first source
         extract._sources.append(SourcePipeItem(pipe.gen, 0, pipe, None))
         cls._initial_sources_count = 1
@@ -579,9 +557,7 @@ class PipeIterator(Iterator[PipeItem]):
         next_item_mode: TPipeNextItemMode = "fifo",
     ) -> "PipeIterator":
         # print(f"max_parallel_items: {max_parallel_items} workers: {workers}")
-        extract = cls(
-            max_parallel_items, workers, futures_poll_interval, next_item_mode
-        )
+        extract = cls(max_parallel_items, workers, futures_poll_interval, next_item_mode)
         # clone all pipes before iterating (recursively) as we will fork them (this add steps) and evaluate gens
         pipes, _ = PipeIterator.clone_pipes(pipes)
 
@@ -593,9 +569,7 @@ class PipeIterator(Iterator[PipeItem]):
                 # make the parent yield by sending a clone of item to itself with position at the end
                 if yield_parents and pipe.parent in pipes:
                     # fork is last step of the pipe so it will yield
-                    pipe.parent.fork(
-                        pipe.parent, len(pipe.parent) - 1, copy_on_fork=copy_on_fork
-                    )
+                    pipe.parent.fork(pipe.parent, len(pipe.parent) - 1, copy_on_fork=copy_on_fork)
                 _fork_pipeline(pipe.parent)
             else:
                 # head of independent pipe must be iterator
@@ -642,23 +616,16 @@ class PipeIterator(Iterator[PipeItem]):
             # if item is iterator, then add it as a new source
             if isinstance(item, Iterator):
                 # print(f"adding iterable {item}")
-                self._sources.append(
-                    SourcePipeItem(item, pipe_item.step, pipe_item.pipe, pipe_item.meta)
-                )
+                self._sources.append(SourcePipeItem(item, pipe_item.step, pipe_item.pipe, pipe_item.meta))
                 pipe_item = None
                 continue
 
             if isinstance(item, Awaitable) or callable(item):
                 # do we have a free slot or one of the slots is done?
-                if (
-                    len(self._futures) < self.max_parallel_items
-                    or self._next_future() >= 0
-                ):
+                if len(self._futures) < self.max_parallel_items or self._next_future() >= 0:
                     # check if Awaitable first - awaitable can also be a callable
                     if isinstance(item, Awaitable):
-                        future = asyncio.run_coroutine_threadsafe(
-                            item, self._ensure_async_pool()
-                        )
+                        future = asyncio.run_coroutine_threadsafe(item, self._ensure_async_pool())
                     elif callable(item):
                         future = self._ensure_thread_pool().submit(item)
                     # print(future)
@@ -708,14 +675,10 @@ class PipeIterator(Iterator[PipeItem]):
             ):
                 raise
             except Exception as ex:
-                raise ResourceExtractionError(
-                    pipe_item.pipe.name, step, str(ex), "transform"
-                ) from ex
+                raise ResourceExtractionError(pipe_item.pipe.name, step, str(ex), "transform") from ex
             # create next pipe item if a value was returned. A None means that item was consumed/filtered out and should not be further processed
             if next_item is not None:
-                pipe_item = ResolvablePipeItem(
-                    next_item, pipe_item.step + 1, pipe_item.pipe, next_meta
-                )
+                pipe_item = ResolvablePipeItem(next_item, pipe_item.step + 1, pipe_item.pipe, next_meta)
             else:
                 pipe_item = None
 
@@ -740,9 +703,7 @@ class PipeIterator(Iterator[PipeItem]):
 
         # print("stopping loop")
         if self._async_pool:
-            self._async_pool.call_soon_threadsafe(
-                stop_background_loop, self._async_pool
-            )
+            self._async_pool.call_soon_threadsafe(stop_background_loop, self._async_pool)
             # print("joining thread")
             self._async_pool_thread.join()
             self._async_pool = None
@@ -920,13 +881,9 @@ class PipeIterator(Iterator[PipeItem]):
             raise ResourceExtractionError(pipe.name, gen, str(ex), "generator") from ex
 
     @staticmethod
-    def clone_pipes(
-        pipes: Sequence[Pipe], existing_cloned_pairs: Dict[int, Pipe] = None
-    ) -> Tuple[List[Pipe], Dict[int, Pipe]]:
+    def clone_pipes(pipes: Sequence[Pipe], existing_cloned_pairs: Dict[int, Pipe] = None) -> Tuple[List[Pipe], Dict[int, Pipe]]:
         """This will clone pipes and fix the parent/dependent references"""
-        cloned_pipes = [
-            p._clone() for p in pipes if id(p) not in (existing_cloned_pairs or {})
-        ]
+        cloned_pipes = [p._clone() for p in pipes if id(p) not in (existing_cloned_pairs or {})]
         cloned_pairs = {id(p): c for p, c in zip(pipes, cloned_pipes)}
         if existing_cloned_pairs:
             cloned_pairs.update(existing_cloned_pairs)

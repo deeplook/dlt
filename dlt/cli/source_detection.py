@@ -29,17 +29,13 @@ def find_call_arguments_to_replace(
             for t_arg_name, t_value in replace_nodes:
                 dn_node: ast.AST = args.arguments.get(t_arg_name)
                 if dn_node is not None:
-                    if not isinstance(dn_node, ast.Constant) or not isinstance(
-                        dn_node.value, str
-                    ):
+                    if not isinstance(dn_node, ast.Constant) or not isinstance(dn_node.value, str):
                         raise CliCommandException(
                             "init",
                             f"The pipeline script {init_script_name} must pass the {t_arg_name} as string to '{arg_name}' function in line {dn_node.lineno}",
                         )
                     else:
-                        transformed_nodes.append(
-                            (dn_node, ast.Constant(value=t_value, kind=None))
-                        )
+                        transformed_nodes.append((dn_node, ast.Constant(value=t_value, kind=None)))
                         replaced_args.add(t_arg_name)
 
     # there was at least one replacement
@@ -52,9 +48,7 @@ def find_call_arguments_to_replace(
     return transformed_nodes
 
 
-def find_source_calls_to_replace(
-    visitor: PipelineScriptVisitor, pipeline_name: str
-) -> List[Tuple[ast.AST, ast.AST]]:
+def find_source_calls_to_replace(visitor: PipelineScriptVisitor, pipeline_name: str) -> List[Tuple[ast.AST, ast.AST]]:
     transformed_nodes: List[Tuple[ast.AST, ast.AST]] = []
     for source_def in visitor.known_sources_resources.values():
         # append function name to be replaced
@@ -67,20 +61,14 @@ def find_source_calls_to_replace(
 
     for calls in visitor.known_sources_resources_calls.values():
         for call in calls:
-            transformed_nodes.append(
-                (call.func, ast.Name(id=pipeline_name + "_" + unparse(call.func)))
-            )
+            transformed_nodes.append((call.func, ast.Name(id=pipeline_name + "_" + unparse(call.func))))
 
     return transformed_nodes
 
 
 def detect_source_configs(
     sources: Dict[str, SourceInfo], module_prefix: str, section: Tuple[str, ...]
-) -> Tuple[
-    Dict[str, WritableConfigValue],
-    Dict[str, WritableConfigValue],
-    Dict[str, SourceInfo],
-]:
+) -> Tuple[Dict[str, WritableConfigValue], Dict[str, WritableConfigValue], Dict[str, SourceInfo],]:
     # all detected secrets with sections
     required_secrets: Dict[str, WritableConfigValue] = {}
     # all detected configs with sections
@@ -92,9 +80,7 @@ def detect_source_configs(
         # accept only sources declared in the `init` or `pipeline` modules
         if source_info.module.__name__.startswith(module_prefix):
             checked_sources[source_name] = source_info
-            source_config = (
-                source_info.SPEC() if source_info.SPEC else BaseConfiguration()
-            )
+            source_config = source_info.SPEC() if source_info.SPEC else BaseConfiguration()
             spec_fields = source_config.get_resolvable_fields()
             for field_name, field_type in spec_fields.items():
                 val_store = None
@@ -102,16 +88,11 @@ def detect_source_configs(
                 if is_secret_hint(field_type):
                     val_store = required_secrets
                 # all configs that are required and do not have a default value must go to config.toml
-                elif (
-                    not is_optional_type(field_type)
-                    and getattr(source_config, field_name) is None
-                ):
+                elif not is_optional_type(field_type) and getattr(source_config, field_name) is None:
                     val_store = required_config
 
                 if val_store is not None:
                     # we are sure that all resources come from single file so we can put them in single section
-                    val_store[source_name + ":" + field_name] = WritableConfigValue(
-                        field_name, field_type, None, section
-                    )
+                    val_store[source_name + ":" + field_name] = WritableConfigValue(field_name, field_type, None, section)
 
     return required_secrets, required_config, checked_sources

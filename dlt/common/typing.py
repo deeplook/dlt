@@ -157,20 +157,12 @@ def extract_inner_type(hint: Type[Any], preserve_new_types: bool = False) -> Typ
     return hint
 
 
-def get_all_types_of_class_in_union(
-    hint: Type[Any], cls: Type[TAny]
-) -> List[Type[TAny]]:
+def get_all_types_of_class_in_union(hint: Type[Any], cls: Type[TAny]) -> List[Type[TAny]]:
     # hint is an Union that contains classes, return all classes that are a subclass or superclass of cls
-    return [
-        t
-        for t in get_args(hint)
-        if inspect.isclass(t) and (issubclass(t, cls) or issubclass(cls, t))
-    ]
+    return [t for t in get_args(hint) if inspect.isclass(t) and (issubclass(t, cls) or issubclass(cls, t))]
 
 
-def get_generic_type_argument_from_instance(
-    instance: Any, sample_value: Optional[Any]
-) -> Type[Any]:
+def get_generic_type_argument_from_instance(instance: Any, sample_value: Optional[Any]) -> Type[Any]:
     """Infers type argument of a Generic class from an `instance` of that class using optional `sample_value` of the argument type
 
     Inference depends on the presence of __orig_class__ attribute in instance, if not present - sample_Value will be used
@@ -194,9 +186,7 @@ TInputArgs = ParamSpec("TInputArgs")
 TReturnVal = TypeVar("TReturnVal")
 
 
-def copy_sig(
-    wrapper: Callable[TInputArgs, Any]
-) -> Callable[[Callable[..., TReturnVal]], Callable[TInputArgs, TReturnVal]]:
+def copy_sig(wrapper: Callable[TInputArgs, Any]) -> Callable[[Callable[..., TReturnVal]], Callable[TInputArgs, TReturnVal]]:
     """Copies docstring and signature from wrapper to func but keeps the func return value type"""
 
     def decorator(func: Callable[..., TReturnVal]) -> Callable[TInputArgs, TReturnVal]:

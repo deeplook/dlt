@@ -13,17 +13,13 @@ from dlt.common.storages.load_storage import ParsedLoadJobFileName
 
 
 class EmptyLoadJobWithoutFollowup(LoadJob):
-    def __init__(
-        self, file_name: str, status: TLoadJobState, exception: str = None
-    ) -> None:
+    def __init__(self, file_name: str, status: TLoadJobState, exception: str = None) -> None:
         self._status = status
         self._exception = exception
         super().__init__(file_name)
 
     @classmethod
-    def from_file_path(
-        cls, file_path: str, status: TLoadJobState, message: str = None
-    ) -> "EmptyLoadJobWithoutFollowup":
+    def from_file_path(cls, file_path: str, status: TLoadJobState, message: str = None) -> "EmptyLoadJobWithoutFollowup":
         return cls(
             FileStorage.get_file_name_from_file_path(file_path),
             status,

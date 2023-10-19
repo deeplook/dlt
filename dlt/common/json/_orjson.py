@@ -22,9 +22,7 @@ def _dumps(
     return orjson.dumps(obj, default=default, option=options)
 
 
-def dump(
-    obj: Any, fp: IO[bytes], sort_keys: bool = False, pretty: bool = False
-) -> None:
+def dump(obj: Any, fp: IO[bytes], sort_keys: bool = False, pretty: bool = False) -> None:
     fp.write(_dumps(obj, sort_keys, pretty))
 
 
@@ -33,9 +31,7 @@ def typed_dump(obj: Any, fp: IO[bytes], pretty: bool = False) -> None:
 
 
 def typed_dumpb(obj: Any, sort_keys: bool = False, pretty: bool = False) -> bytes:
-    return _dumps(
-        obj, sort_keys, pretty, custom_pua_encode, orjson.OPT_PASSTHROUGH_DATETIME
-    )
+    return _dumps(obj, sort_keys, pretty, custom_pua_encode, orjson.OPT_PASSTHROUGH_DATETIME)
 
 
 def typed_dumps(obj: Any, sort_keys: bool = False, pretty: bool = False) -> str:

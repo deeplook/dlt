@@ -477,9 +477,7 @@ def test_map_step() -> None:
 def test_yield_map_step() -> None:
     p = Pipe.from_data("data", [1, 2, 3])
     # this creates number of rows as passed by the data
-    p.append_step(
-        YieldMapItem(lambda item: (yield from [f"item_{x}" for x in range(item)]))
-    )
+    p.append_step(YieldMapItem(lambda item: (yield from [f"item_{x}" for x in range(item)])))
     assert _f_items(list(PipeIterator.from_pipe(p))) == [
         "item_0",
         "item_0",
@@ -493,11 +491,7 @@ def test_yield_map_step() -> None:
     # package items into meta wrapper
     meta_data = [DataItemWithMeta(m, d) for m, d in zip(meta, data)]
     p = Pipe.from_data("data", meta_data)
-    p.append_step(
-        YieldMapItem(
-            lambda item, meta: (yield from [f"item_{meta}_{x}" for x in range(item)])
-        )
-    )
+    p.append_step(YieldMapItem(lambda item, meta: (yield from [f"item_{meta}_{x}" for x in range(item)])))
     assert _f_items(list(PipeIterator.from_pipe(p))) == [
         "item_A_0",
         "item_B_0",
@@ -515,20 +509,12 @@ def test_pipe_copy_on_fork() -> None:
     child2 = Pipe("tr2", [lambda x: x], parent=parent)
 
     # no copy, construct iterator
-    elems = list(
-        PipeIterator.from_pipes(
-            [child1, child2], yield_parents=False, copy_on_fork=False
-        )
-    )
+    elems = list(PipeIterator.from_pipes([child1, child2], yield_parents=False, copy_on_fork=False))
     # those are the same instances
     assert doc is elems[0].item is elems[1].item
 
     # copy item on fork
-    elems = list(
-        PipeIterator.from_pipes(
-            [child1, child2], yield_parents=False, copy_on_fork=True
-        )
-    )
+    elems = list(PipeIterator.from_pipes([child1, child2], yield_parents=False, copy_on_fork=True))
     # first fork does not copy
     assert doc is elems[0].item
     # second fork copies
@@ -618,9 +604,7 @@ def assert_cloned_pipes(pipes: List[Pipe], cloned_pipes: List[Pipe]) -> None:
 
     # must yield same data
     for pipe, cloned_pipe in zip(pipes, cloned_pipes):
-        assert _f_items(list(PipeIterator.from_pipe(pipe))) == _f_items(
-            list(PipeIterator.from_pipe(cloned_pipe))
-        )
+        assert _f_items(list(PipeIterator.from_pipe(pipe))) == _f_items(list(PipeIterator.from_pipe(cloned_pipe)))
 
 
 def test_circular_deps() -> None:
@@ -727,11 +711,7 @@ def assert_pipes_closed(raise_gen, long_gen) -> None:
     close_pipe_yielding = False
 
     pit: PipeIterator = None
-    with PipeIterator.from_pipe(
-        Pipe.from_data(
-            "failing", raise_gen, parent=Pipe.from_data("endless", long_gen())
-        )
-    ) as pit:
+    with PipeIterator.from_pipe(Pipe.from_data("failing", raise_gen, parent=Pipe.from_data("endless", long_gen()))) as pit:
         with pytest.raises(ResourceExtractionError) as py_ex:
             list(pit)
         assert isinstance(py_ex.value.__cause__, RuntimeError)
@@ -743,11 +723,7 @@ def assert_pipes_closed(raise_gen, long_gen) -> None:
 
     close_pipe_got_exit = False
     close_pipe_yielding = False
-    pit = ManagedPipeIterator.from_pipe(
-        Pipe.from_data(
-            "failing", raise_gen, parent=Pipe.from_data("endless", long_gen())
-        )
-    )
+    pit = ManagedPipeIterator.from_pipe(Pipe.from_data("failing", raise_gen, parent=Pipe.from_data("endless", long_gen())))
     with pytest.raises(ResourceExtractionError) as py_ex:
         list(pit)
     assert isinstance(py_ex.value.__cause__, RuntimeError)

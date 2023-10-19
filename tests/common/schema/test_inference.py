@@ -44,10 +44,7 @@ def test_map_column_preferred_type(schema: Schema) -> None:
     # timestamp from coercable type
     assert schema._infer_column_type(18271, "timestamp") == "timestamp"
     assert schema._infer_column_type("18271.11", "timestamp") == "timestamp"
-    assert (
-        schema._infer_column_type("2022-05-10T00:54:38.237000+00:00", "timestamp")
-        == "timestamp"
-    )
+    assert schema._infer_column_type("2022-05-10T00:54:38.237000+00:00", "timestamp") == "timestamp"
 
     # value should be wei
     assert schema._infer_column_type(" 0xfe ", "value") == "wei"
@@ -224,9 +221,7 @@ def test_shorten_variant_column(schema: Schema) -> None:
     # now variant is created and this will be normalized
     # TODO: we should move the handling of variants to normalizer
     new_row_2, new_table = schema.coerce_row("event_user", None, {"confidence": False})
-    tag = schema.naming._compute_tag(
-        "confidence__v_bool", collision_prob=schema.naming._DEFAULT_COLLISION_PROB
-    )
+    tag = schema.naming._compute_tag("confidence__v_bool", collision_prob=schema.naming._DEFAULT_COLLISION_PROB)
     new_row_2_keys = list(new_row_2.keys())
     assert tag in new_row_2_keys[0]
     assert len(new_row_2_keys[0]) == 9
@@ -403,9 +398,7 @@ def test_corece_null_value_over_not_null(schema: Schema) -> None:
     row = {"timestamp": 82178.1298812}
     _, new_table = schema.coerce_row("event_user", None, row)
     schema.update_table(new_table)
-    schema.get_table_columns("event_user", include_incomplete=True)["timestamp"][
-        "nullable"
-    ] = False
+    schema.get_table_columns("event_user", include_incomplete=True)["timestamp"]["nullable"] = False
     row = {"timestamp": None}
     with pytest.raises(CannotCoerceNullException):
         schema.coerce_row("event_user", None, row)

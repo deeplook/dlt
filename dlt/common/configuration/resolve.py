@@ -52,32 +52,20 @@ from dlt.common.configuration.exceptions import (
 TConfiguration = TypeVar("TConfiguration", bound=BaseConfiguration)
 
 
-def resolve_configuration(
-    config: TConfiguration,
-    *,
-    sections: Tuple[str, ...] = (),
-    explicit_value: Any = None,
-    accept_partial: bool = False
-) -> TConfiguration:
+def resolve_configuration(config: TConfiguration, *, sections: Tuple[str, ...] = (), explicit_value: Any = None, accept_partial: bool = False) -> TConfiguration:
     if not isinstance(config, BaseConfiguration):
         raise ConfigurationWrongTypeException(type(config))
 
     # try to get the native representation of the top level configuration using the config section as a key
     # allows, for example, to store connection string or service.json in their native form in single env variable or under single vault key
     if config.__section__ and explicit_value is None:
-        initial_hint = (
-            TSecretValue if isinstance(config, CredentialsConfiguration) else AnyType
-        )
-        explicit_value, traces = _resolve_single_value(
-            config.__section__, initial_hint, AnyType, None, sections, ()
-        )
+        initial_hint = TSecretValue if isinstance(config, CredentialsConfiguration) else AnyType
+        explicit_value, traces = _resolve_single_value(config.__section__, initial_hint, AnyType, None, sections, ())
         if isinstance(explicit_value, C_Mapping):
             # mappings cannot be used as explicit values, we want to enumerate mappings and request the fields' values one by one
             explicit_value = None
         else:
-            log_traces(
-                None, config.__section__, type(config), explicit_value, None, traces
-            )
+            log_traces(None, config.__section__, type(config), explicit_value, None, traces)
 
     return _resolve_configuration(config, sections, (), explicit_value, accept_partial)
 
@@ -108,9 +96,7 @@ def initialize_credentials(hint: Any, initial_value: Any) -> CredentialsConfigur
         return hint(initial_value)  # type: ignore
 
 
-def inject_section(
-    section_context: ConfigSectionContext, merge_existing: bool = True
-) -> ContextManager[ConfigSectionContext]:
+def inject_section(section_context: ConfigSectionContext, merge_existing: bool = True) -> ContextManager[ConfigSectionContext]:
     """Context manager that sets section specified in `section_context` to be used during configuration resolution. Optionally merges the context already in the container with the one provided
 
     Args:
@@ -132,21 +118,14 @@ def inject_section(
     return container.injectable_context(section_context)
 
 
-def _maybe_parse_native_value(
-    config: TConfiguration, explicit_value: Any, embedded_sections: Tuple[str, ...]
-) -> Any:
+def _maybe_parse_native_value(config: TConfiguration, explicit_value: Any, embedded_sections: Tuple[str, ...]) -> Any:
     # use initial value to resolve the whole configuration. if explicit value is a mapping it will be applied field by field later
-    if explicit_value and (
-        not isinstance(explicit_value, C_Mapping)
-        or isinstance(explicit_value, BaseConfiguration)
-    ):
+    if explicit_value and (not isinstance(explicit_value, C_Mapping) or isinstance(explicit_value, BaseConfiguration)):
         try:
             config.parse_native_representation(explicit_value)
         except ValueError as v_err:
             # provide generic exception
-            raise InvalidNativeValue(
-                type(config), type(explicit_value), embedded_sections, v_err
-            )
+            raise InvalidNativeValue(type(config), type(explicit_value), embedded_sections, v_err)
         except NotImplementedError:
             pass
         # explicit value was consumed
@@ -168,9 +147,7 @@ def _resolve_configuration(
     config.__exception__ = None
     try:
         try:
-            explicit_value = _maybe_parse_native_value(
-                config, explicit_value, embedded_sections
-            )
+            explicit_value = _maybe_parse_native_value(config, explicit_value, embedded_sections)
             # if native representation didn't fully resolve the config, we try to resolve field by field
             if not config.is_resolved():
                 _resolve_config_fields(
@@ -230,16 +207,10 @@ def _resolve_config_fields(
         current_value = None
         if is_union(hint):
             # if union contains a type of explicit value which is not a valid hint, return it as current value
-            if (
-                explicit_value
-                and not is_valid_hint(type(explicit_value))
-                and get_all_types_of_class_in_union(hint, type(explicit_value))
-            ):
+            if explicit_value and not is_valid_hint(type(explicit_value)) and get_all_types_of_class_in_union(hint, type(explicit_value)):
                 current_value, traces = explicit_value, []
             else:
-                specs_in_union = get_all_types_of_class_in_union(
-                    hint, BaseConfiguration
-                )
+                specs_in_union = get_all_types_of_class_in_union(hint, BaseConfiguration)
         if not current_value:
             if len(specs_in_union) > 1:
                 for idx, alt_spec in enumerate(specs_in_union):
@@ -296,9 +267,7 @@ def _resolve_config_fields(
             unmatched_hint_resolvers.append(field_name)
 
     if unmatched_hint_resolvers:
-        raise UnmatchedConfigHintResolversException(
-            type(config).__name__, unmatched_hint_resolvers
-        )
+        raise UnmatchedConfigHintResolversException(type(config).__name__, unmatched_hint_resolvers)
 
     if unresolved_fields:
         raise ConfigFieldMissingException(type(config).__name__, unresolved_fields)
@@ -322,9 +291,7 @@ def _resolve_config_field(
         traces: List[LookupTrace] = []
     else:
         # resolve key value via active providers passing the original hint ie. to preserve TSecretValue
-        value, traces = _resolve_single_value(
-            key, hint, inner_hint, config_sections, explicit_sections, embedded_sections
-        )
+        value, traces = _resolve_single_value(key, hint, inner_hint, config_sections, explicit_sections, embedded_sections)
         log_traces(config, key, hint, value, default_value, traces)
     # contexts must be resolved as a whole
     if is_context_inner_hint(inner_hint):
@@ -347,9 +314,7 @@ def _resolve_config_field(
             # print(f"{embedded_config} IS RESOLVED with VALUE {value}")
             # injected context will be resolved
             if value is not None:
-                _maybe_parse_native_value(
-                    embedded_config, value, embedded_sections + (key,)
-                )
+                _maybe_parse_native_value(embedded_config, value, embedded_sections + (key,))
             value = embedded_config
         else:
             # only config with sections may look for initial values
@@ -358,15 +323,9 @@ def _resolve_config_field(
                 (
                     initial_key,
                     initial_embedded,
-                ) = _apply_embedded_sections_to_config_sections(
-                    embedded_config.__section__, embedded_sections + (key,)
-                )
+                ) = _apply_embedded_sections_to_config_sections(embedded_config.__section__, embedded_sections + (key,))
                 # it must be a secret value is config is credentials
-                initial_hint = (
-                    TSecretValue
-                    if isinstance(embedded_config, CredentialsConfiguration)
-                    else AnyType
-                )
+                initial_hint = TSecretValue if isinstance(embedded_config, CredentialsConfiguration) else AnyType
                 value, initial_traces = _resolve_single_value(
                     initial_key,
                     initial_hint,
@@ -438,9 +397,7 @@ def _resolve_single_value(
         return value, traces
 
     # resolve a field of the config
-    config_section, embedded_sections = _apply_embedded_sections_to_config_sections(
-        config_section, embedded_sections
-    )
+    config_section, embedded_sections = _apply_embedded_sections_to_config_sections(config_section, embedded_sections)
     providers = providers_context.providers
     # get additional sections to look in from container
     sections_context = container[ConfigSectionContext]
@@ -534,9 +491,7 @@ def resolve_single_provider_value(
     return value, traces
 
 
-def _apply_embedded_sections_to_config_sections(
-    config_section: str, embedded_sections: Tuple[str, ...]
-) -> Tuple[str, Tuple[str, ...]]:
+def _apply_embedded_sections_to_config_sections(config_section: str, embedded_sections: Tuple[str, ...]) -> Tuple[str, Tuple[str, ...]]:
     # for the configurations that have __section__ (config_section) defined and are embedded in other configurations,
     # the innermost embedded section replaces config_section
     if embedded_sections:
@@ -546,6 +501,4 @@ def _apply_embedded_sections_to_config_sections(
         embedded_sections = embedded_sections[:-1]
 
     # remove all embedded ns starting with _
-    return config_section, tuple(
-        ns for ns in embedded_sections if not ns.startswith("_")
-    )
+    return config_section, tuple(ns for ns in embedded_sections if not ns.startswith("_"))

@@ -36,9 +36,7 @@ class DuckDbBaseCredentials(ConnectionStringCredentials):
         # obtain a lock because duck releases the GIL and we have refcount concurrency
         with self._conn_lock:
             if not hasattr(self, "_conn"):
-                self._conn = duckdb.connect(
-                    database=self._conn_str(), read_only=read_only
-                )
+                self._conn = duckdb.connect(database=self._conn_str(), read_only=read_only)
                 self._conn_owner = True
                 self._conn_borrows = 0
 
@@ -76,9 +74,7 @@ class DuckDbBaseCredentials(ConnectionStringCredentials):
         try:
             super().parse_native_representation(native_value)
         except InvalidConnectionString:
-            if native_value == ":pipeline:" or is_valid_filepath(
-                native_value, platform="auto"
-            ):
+            if native_value == ":pipeline:" or is_valid_filepath(native_value, platform="auto"):
                 self.database = native_value
             else:
                 raise
@@ -113,9 +109,7 @@ class DuckDbCredentials(DuckDbBaseCredentials):
             self.database = self._path_in_pipeline(DEFAULT_DUCK_DB_NAME)
         else:
             # maybe get database
-            maybe_database, maybe_is_default_path = self._path_from_pipeline(
-                DEFAULT_DUCK_DB_NAME
-            )
+            maybe_database, maybe_is_default_path = self._path_from_pipeline(DEFAULT_DUCK_DB_NAME)
             # if pipeline context was not present or database was not set
             if not self.database or not maybe_is_default_path:
                 # create database locally
@@ -190,9 +184,7 @@ class DuckDbClientConfiguration(DestinationClientDwhWithStagingConfiguration):
     destination_name: Final[str] = "duckdb"  # type: ignore
     credentials: DuckDbCredentials
 
-    create_indexes: bool = (
-        False  # should unique indexes be created, this slows loading down massively
-    )
+    create_indexes: bool = False  # should unique indexes be created, this slows loading down massively
 
     if TYPE_CHECKING:
         try:

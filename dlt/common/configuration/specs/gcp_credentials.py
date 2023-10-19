@@ -153,19 +153,13 @@ class GcpOAuthCredentialsWithoutDefaults(GcpCredentials, OAuth2Credentials):
     def to_native_representation(self) -> str:
         return json.dumps(self._info_dict())
 
-    def auth(
-        self, scopes: Union[str, List[str]] = None, redirect_url: str = None
-    ) -> None:
+    def auth(self, scopes: Union[str, List[str]] = None, redirect_url: str = None) -> None:
         if not self.refresh_token:
             self.add_scopes(scopes)
             if not self.scopes:
                 raise OAuth2ScopesRequired(self.__class__)
-            assert (
-                sys.stdin.isatty() or is_interactive()
-            ), "Must have a tty or interactive mode for web flow"
-            self.refresh_token, self.token = self._get_refresh_token(
-                redirect_url or "http://localhost"
-            )
+            assert sys.stdin.isatty() or is_interactive(), "Must have a tty or interactive mode for web flow"
+            self.refresh_token, self.token = self._get_refresh_token(redirect_url or "http://localhost")
         else:
             # if scopes or redirect_url:
             #     logger.warning("Please note that scopes and redirect_url are ignored when getting access token")
@@ -184,29 +178,19 @@ class GcpOAuthCredentialsWithoutDefaults(GcpCredentials, OAuth2Credentials):
         try:
             from requests_oauthlib import OAuth2Session
         except ModuleNotFoundError:
-            raise MissingDependencyException(
-                "GcpOAuthCredentials", ["requests_oauthlib"]
-            )
+            raise MissingDependencyException("GcpOAuthCredentials", ["requests_oauthlib"])
 
         google = OAuth2Session(client_id=self.client_id, scope=self.scopes)
         extra = {"client_id": self.client_id, "client_secret": self.client_secret}
-        token = google.refresh_token(
-            token_url=self.token_uri, refresh_token=self.refresh_token, **extra
-        )["access_token"]
+        token = google.refresh_token(token_url=self.token_uri, refresh_token=self.refresh_token, **extra)["access_token"]
         return TSecretValue(token)
 
-    def _get_refresh_token(
-        self, redirect_url: str
-    ) -> Tuple[TSecretValue, TSecretValue]:
+    def _get_refresh_token(self, redirect_url: str) -> Tuple[TSecretValue, TSecretValue]:
         try:
             from google_auth_oauthlib.flow import InstalledAppFlow
         except ModuleNotFoundError:
-            raise MissingDependencyException(
-                "GcpOAuthCredentials", ["google-auth-oauthlib"]
-            )
-        flow = InstalledAppFlow.from_client_config(
-            self._installed_dict(redirect_url), self.scopes
-        )
+            raise MissingDependencyException("GcpOAuthCredentials", ["google-auth-oauthlib"])
+        flow = InstalledAppFlow.from_client_config(self._installed_dict(redirect_url), self.scopes)
         credentials = flow.run_local_server(port=0)
         return TSecretValue(credentials.refresh_token), TSecretValue(credentials.token)
 
@@ -215,9 +199,7 @@ class GcpOAuthCredentialsWithoutDefaults(GcpCredentials, OAuth2Credentials):
         try:
             from google.oauth2.credentials import Credentials as GoogleOAuth2Credentials
         except ModuleNotFoundError:
-            raise MissingDependencyException(
-                "GcpOAuthCredentials", ["google-auth-oauthlib"]
-            )
+            raise MissingDependencyException("GcpOAuthCredentials", ["google-auth-oauthlib"])
 
         credentials = GoogleOAuth2Credentials.from_authorized_user_info(info=dict(self))
         return credentials
@@ -256,9 +238,7 @@ class GcpDefaultCredentials(CredentialsWithDefault, GcpCredentials):
                 return
         except ImportError:
             pass
-        raise NativeValueError(
-            self.__class__, native_value, "Default Google Credentials not present"
-        )
+        raise NativeValueError(self.__class__, native_value, "Default Google Credentials not present")
 
     @staticmethod
     def _get_default_credentials(retry_timeout_s: float = 600.0) -> Tuple[Any, str]:
@@ -299,17 +279,13 @@ class GcpDefaultCredentials(CredentialsWithDefault, GcpCredentials):
 
 
 @configspec
-class GcpServiceAccountCredentials(
-    GcpDefaultCredentials, GcpServiceAccountCredentialsWithoutDefaults
-):
+class GcpServiceAccountCredentials(GcpDefaultCredentials, GcpServiceAccountCredentialsWithoutDefaults):
     def parse_native_representation(self, native_value: Any) -> None:
         try:
             GcpDefaultCredentials.parse_native_representation(self, native_value)
         except NativeValueError:
             pass
-        GcpServiceAccountCredentialsWithoutDefaults.parse_native_representation(
-            self, native_value
-        )
+        GcpServiceAccountCredentialsWithoutDefaults.parse_native_representation(self, native_value)
 
 
 @configspec
@@ -319,6 +295,4 @@ class GcpOAuthCredentials(GcpDefaultCredentials, GcpOAuthCredentialsWithoutDefau
             GcpDefaultCredentials.parse_native_representation(self, native_value)
         except NativeValueError:
             pass
-        GcpOAuthCredentialsWithoutDefaults.parse_native_representation(
-            self, native_value
-        )
+        GcpOAuthCredentialsWithoutDefaults.parse_native_representation(self, native_value)

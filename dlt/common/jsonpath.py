@@ -45,6 +45,4 @@ def resolve_paths(paths: TAnyJsonPath, data: DictStrAny) -> List[str]:
     """
     paths = compile_paths(paths)
     p: JSONPath
-    return list(
-        chain.from_iterable((str(r.full_path) for r in p.find(data)) for p in paths)
-    )
+    return list(chain.from_iterable((str(r.full_path) for r in p.find(data)) for p in paths))

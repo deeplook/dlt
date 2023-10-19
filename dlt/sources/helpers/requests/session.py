@@ -17,11 +17,7 @@ DEFAULT_TIMEOUT = 60
 def _timeout_to_seconds(
     timeout: TRequestTimeout,
 ) -> Optional[Union[Tuple[float, float], float]]:
-    return (
-        (to_seconds(timeout[0]), to_seconds(timeout[1]))
-        if isinstance(timeout, tuple)
-        else to_seconds(timeout)
-    )
+    return (to_seconds(timeout[0]), to_seconds(timeout[1])) if isinstance(timeout, tuple) else to_seconds(timeout)
 
 
 class Session(BaseSession):
@@ -35,9 +31,7 @@ class Session(BaseSession):
 
     def __init__(
         self,
-        timeout: Optional[
-            Union[TimedeltaSeconds, Tuple[TimedeltaSeconds, TimedeltaSeconds]]
-        ] = DEFAULT_TIMEOUT,
+        timeout: Optional[Union[TimedeltaSeconds, Tuple[TimedeltaSeconds, TimedeltaSeconds]]] = DEFAULT_TIMEOUT,
         raise_for_status: bool = True,
     ) -> None:
         super().__init__()

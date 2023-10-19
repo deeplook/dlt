@@ -33,9 +33,7 @@ class DataItemNormalizer(abc.ABC, Generic[TNormalizerConfig]):
         pass
 
     @abc.abstractmethod
-    def normalize_data_item(
-        self, item: TDataItem, load_id: str, table_name: str
-    ) -> TNormalizedRowIterator:
+    def normalize_data_item(self, item: TDataItem, load_id: str, table_name: str) -> TNormalizedRowIterator:
         pass
 
     @abc.abstractmethod
@@ -48,9 +46,7 @@ class DataItemNormalizer(abc.ABC, Generic[TNormalizerConfig]):
 
     @classmethod
     @abc.abstractmethod
-    def update_normalizer_config(
-        cls, schema: Schema, config: TNormalizerConfig
-    ) -> None:
+    def update_normalizer_config(cls, schema: Schema, config: TNormalizerConfig) -> None:
         pass
 
     @classmethod

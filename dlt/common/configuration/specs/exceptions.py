@@ -9,9 +9,7 @@ class SpecException(ConfigurationException):
 class OAuth2ScopesRequired(SpecException):
     def __init__(self, spec: type) -> None:
         self.spec = spec
-        super().__init__(
-            "Scopes are required to retrieve refresh_token. Use 'openid' scope for a token without any permissions to resources."
-        )
+        super().__init__("Scopes are required to retrieve refresh_token. Use 'openid' scope for a token without any permissions to resources.")
 
 
 class NativeValueError(SpecException, ValueError):

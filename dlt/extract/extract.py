@@ -49,15 +49,9 @@ class ExtractorItemStorage(DataItemStorage):
         self.extract_folder = extract_folder
         self.storage = storage
 
-    def _get_data_item_path_template(
-        self, load_id: str, schema_name: str, table_name: str
-    ) -> str:
-        template = NormalizeStorage.build_extracted_file_stem(
-            schema_name, table_name, "%s"
-        )
-        return self.storage.make_full_path(
-            os.path.join(self._get_extract_path(load_id), template)
-        )
+    def _get_data_item_path_template(self, load_id: str, schema_name: str, table_name: str) -> str:
+        template = NormalizeStorage.build_extracted_file_stem(schema_name, table_name, "%s")
+        return self.storage.make_full_path(os.path.join(self._get_extract_path(load_id), template))
 
     def _get_extract_path(self, extract_id: str) -> str:
         return os.path.join(self.extract_folder, extract_id)
@@ -79,12 +73,8 @@ class ExtractorStorage(NormalizeStorage):
     def __init__(self, C: NormalizeStorageConfiguration) -> None:
         super().__init__(True, C)
         self._item_storages: Dict[TLoaderFileFormat, ExtractorItemStorage] = {
-            "puae-jsonl": JsonLExtractorStorage(
-                self.storage, extract_folder=self.EXTRACT_FOLDER
-            ),
-            "arrow": ArrowExtractorStorage(
-                self.storage, extract_folder=self.EXTRACT_FOLDER
-            ),
+            "puae-jsonl": JsonLExtractorStorage(self.storage, extract_folder=self.EXTRACT_FOLDER),
+            "arrow": ArrowExtractorStorage(self.storage, extract_folder=self.EXTRACT_FOLDER),
         }
 
     def _get_extract_path(self, extract_id: str) -> str:
@@ -95,9 +85,7 @@ class ExtractorStorage(NormalizeStorage):
         self.storage.create_folder(self._get_extract_path(extract_id))
         return extract_id
 
-    def get_storage(
-        self, loader_file_format: TLoaderFileFormat
-    ) -> ExtractorItemStorage:
+    def get_storage(self, loader_file_format: TLoaderFileFormat) -> ExtractorItemStorage:
         return self._item_storages[loader_file_format]
 
     def close_writers(self, extract_id: str) -> None:
@@ -126,9 +114,7 @@ class ExtractorStorage(NormalizeStorage):
         item: TDataItems,
         columns: TTableSchemaColumns,
     ) -> None:
-        self.get_storage(file_format).write_data_item(
-            load_id, schema_name, table_name, item, columns
-        )
+        self.get_storage(file_format).write_data_item(load_id, schema_name, table_name, item, columns)
 
 
 class Extractor:
@@ -165,9 +151,7 @@ class Extractor:
         """
         for item in items if isinstance(items, list) else [items]:
             # Assume all items in list are the same type
-            if (pyarrow and pyarrow.is_arrow_item(item)) or (
-                pd and isinstance(item, pd.DataFrame)
-            ):
+            if (pyarrow and pyarrow.is_arrow_item(item)) or (pd and isinstance(item, pd.DataFrame)):
                 return "arrow"
             return "puae-jsonl"
         return None  # Empty list is unknown format
@@ -192,22 +176,16 @@ class Extractor:
 
     def write_empty_file(self, table_name: str) -> None:
         table_name = self.schema.naming.normalize_table_identifier(table_name)
-        self.storage.write_empty_file(
-            self.extract_id, self.schema.name, table_name, None
-        )
+        self.storage.write_empty_file(self.extract_id, self.schema.name, table_name, None)
 
-    def _write_item(
-        self, table_name: str, resource_name: str, items: TDataItems
-    ) -> None:
+    def _write_item(self, table_name: str, resource_name: str, items: TDataItems) -> None:
         # normalize table name before writing so the name match the name in schema
         # note: normalize function should be cached so there's almost no penalty on frequent calling
         # note: column schema is not required for jsonl writer used here
         table_name = self.schema.naming.normalize_identifier(table_name)
         self.collector.update(table_name)
         self.resources_with_items.add(resource_name)
-        self.storage.write_data_item(
-            self.extract_id, self.schema.name, table_name, items, None
-        )
+        self.storage.write_data_item(self.extract_id, self.schema.name, table_name, items, None)
 
     def _write_dynamic_table(self, resource: DltResource, item: TDataItem) -> None:
         table_name = resource._table_name_hint_fun(item)
@@ -226,9 +204,7 @@ class Extractor:
         # write to storage with inferred table name
         self._write_item(table_name, resource.name, item)
 
-    def _write_static_table(
-        self, resource: DltResource, table_name: str, items: TDataItems
-    ) -> None:
+    def _write_static_table(self, resource: DltResource, table_name: str, items: TDataItems) -> None:
         existing_table = self.dynamic_tables.get(table_name)
         if existing_table is None:
             static_table = resource.compute_table_schema()
@@ -244,17 +220,10 @@ class ArrowExtractor(Extractor):
     file_format = "arrow"
 
     def write_table(self, resource: DltResource, items: TDataItems, meta: Any) -> None:
-        items = [
-            pyarrow.pyarrow.Table.from_pandas(item)
-            if (pd and isinstance(item, pd.DataFrame))
-            else item
-            for item in (items if isinstance(items, list) else [items])
-        ]
+        items = [pyarrow.pyarrow.Table.from_pandas(item) if (pd and isinstance(item, pd.DataFrame)) else item for item in (items if isinstance(items, list) else [items])]
         super().write_table(resource, items, meta)
 
-    def _write_static_table(
-        self, resource: DltResource, table_name: str, items: TDataItems
-    ) -> None:
+    def _write_static_table(self, resource: DltResource, table_name: str, items: TDataItems) -> None:
         existing_table = self.dynamic_tables.get(table_name)
         if existing_table is not None:
             return
@@ -326,33 +295,22 @@ def extract(
 
                 resource = source.resources[pipe_item.pipe.name]
                 # Fallback to last item's format or default (puae-jsonl) if the current item is an empty list
-                item_format = (
-                    Extractor.item_format(pipe_item.item)
-                    or last_item_format
-                    or "puae-jsonl"
-                )
-                extractors[item_format].write_table(
-                    resource, pipe_item.item, pipe_item.meta
-                )
+                item_format = Extractor.item_format(pipe_item.item) or last_item_format or "puae-jsonl"
+                extractors[item_format].write_table(resource, pipe_item.item, pipe_item.meta)
                 last_item_format = item_format
 
             # find defined resources that did not yield any pipeitems and create empty jobs for them
             data_tables = {t["name"]: t for t in schema.data_tables()}
             tables_by_resources = utils.group_tables_by_resource(data_tables)
             for resource in source.resources.selected.values():
-                if (
-                    resource.write_disposition != "replace"
-                    or resource.name in resources_with_items
-                ):
+                if resource.write_disposition != "replace" or resource.name in resources_with_items:
                     continue
                 if resource.name not in tables_by_resources:
                     continue
                 for table in tables_by_resources[resource.name]:
                     # we only need to write empty files for the top tables
                     if not table.get("parent", None):
-                        extractors[last_item_format or "puae-jsonl"].write_empty_file(
-                            table["name"]
-                        )
+                        extractors[last_item_format or "puae-jsonl"].write_empty_file(table["name"])
 
             if left_gens > 0:
                 # go to 100%

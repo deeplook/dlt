@@ -27,9 +27,7 @@ class InvalidSchemaName(ValueError, SchemaException):
 class InvalidDatasetName(ValueError, SchemaException):
     def __init__(self, destination_name: str) -> None:
         self.destination_name = destination_name
-        super().__init__(
-            f"Destination {destination_name} does not accept empty datasets. Please pass the dataset name to the destination configuration ie. via dlt pipeline."
-        )
+        super().__init__(f"Destination {destination_name} does not accept empty datasets. Please pass the dataset name to the destination configuration ie. via dlt pipeline.")
 
 
 class CannotCoerceColumnException(SchemaException):
@@ -46,9 +44,7 @@ class CannotCoerceColumnException(SchemaException):
         self.from_type = from_type
         self.to_type = to_type
         self.coerced_value = coerced_value
-        super().__init__(
-            f"Cannot coerce type in table {table_name} column {column_name} existing type {from_type} coerced type {to_type} value: {coerced_value}"
-        )
+        super().__init__(f"Cannot coerce type in table {table_name} column {column_name} existing type {from_type} coerced type {to_type} value: {coerced_value}")
 
 
 class TablePropertiesConflictException(SchemaException):
@@ -57,27 +53,19 @@ class TablePropertiesConflictException(SchemaException):
         self.prop_name = prop_name
         self.val1 = val1
         self.val2 = val2
-        super().__init__(
-            f"Cannot merge partial tables for {table_name} due to property {prop_name}: {val1} != {val2}"
-        )
+        super().__init__(f"Cannot merge partial tables for {table_name} due to property {prop_name}: {val1} != {val2}")
 
 
 class ParentTableNotFoundException(SchemaException):
-    def __init__(
-        self, table_name: str, parent_table_name: str, explanation: str = ""
-    ) -> None:
+    def __init__(self, table_name: str, parent_table_name: str, explanation: str = "") -> None:
         self.table_name = table_name
         self.parent_table_name = parent_table_name
-        super().__init__(
-            f"Parent table {parent_table_name} for {table_name} was not found in the schema.{explanation}"
-        )
+        super().__init__(f"Parent table {parent_table_name} for {table_name} was not found in the schema.{explanation}")
 
 
 class CannotCoerceNullException(SchemaException):
     def __init__(self, table_name: str, column_name: str) -> None:
-        super().__init__(
-            f"Cannot coerce NULL in table {table_name} column {column_name} which is not nullable"
-        )
+        super().__init__(f"Cannot coerce NULL in table {table_name} column {column_name} which is not nullable")
 
 
 class SchemaCorruptedException(SchemaException):
@@ -85,16 +73,12 @@ class SchemaCorruptedException(SchemaException):
 
 
 class SchemaEngineNoUpgradePathException(SchemaException):
-    def __init__(
-        self, schema_name: str, init_engine: int, from_engine: int, to_engine: int
-    ) -> None:
+    def __init__(self, schema_name: str, init_engine: int, from_engine: int, to_engine: int) -> None:
         self.schema_name = schema_name
         self.init_engine = init_engine
         self.from_engine = from_engine
         self.to_engine = to_engine
-        super().__init__(
-            f"No engine upgrade path in schema {schema_name} from {init_engine} to {to_engine}, stopped at {from_engine}"
-        )
+        super().__init__(f"No engine upgrade path in schema {schema_name} from {init_engine} to {to_engine}, stopped at {from_engine}")
 
 
 class UnknownTableException(SchemaException):

@@ -16,9 +16,7 @@ FILE_COMPONENT_INVALID_CHARACTERS = re.compile(r"[.%{}]")
 
 
 class FileStorage:
-    def __init__(
-        self, storage_path: str, file_type: str = "t", makedirs: bool = False
-    ) -> None:
+    def __init__(self, storage_path: str, file_type: str = "t", makedirs: bool = False) -> None:
         # make it absolute path
         self.storage_path = os.path.realpath(storage_path)  # os.path.join(, '')
         self.file_type = file_type
@@ -26,18 +24,12 @@ class FileStorage:
             os.makedirs(storage_path, exist_ok=True)
 
     def save(self, relative_path: str, data: Any) -> str:
-        return self.save_atomic(
-            self.storage_path, relative_path, data, file_type=self.file_type
-        )
+        return self.save_atomic(self.storage_path, relative_path, data, file_type=self.file_type)
 
     @staticmethod
-    def save_atomic(
-        storage_path: str, relative_path: str, data: Any, file_type: str = "t"
-    ) -> str:
+    def save_atomic(storage_path: str, relative_path: str, data: Any, file_type: str = "t") -> str:
         mode = "w" + file_type
-        with tempfile.NamedTemporaryFile(
-            dir=storage_path, mode=mode, delete=False, encoding=encoding_for_mode(mode)
-        ) as f:
+        with tempfile.NamedTemporaryFile(dir=storage_path, mode=mode, delete=False, encoding=encoding_for_mode(mode)) as f:
             tmp_path = f.name
             f.write(data)
         try:
@@ -99,9 +91,7 @@ class FileStorage:
         else:
             raise FileNotFoundError(file_path)
 
-    def delete_folder(
-        self, relative_path: str, recursively: bool = False, delete_ro: bool = False
-    ) -> None:
+    def delete_folder(self, relative_path: str, recursively: bool = False, delete_ro: bool = False) -> None:
         folder_path = self.make_full_path(relative_path)
         if os.path.isdir(folder_path):
             if recursively:
@@ -120,13 +110,9 @@ class FileStorage:
             mode = mode + self.file_type
         if "r" in mode:
             return FileStorage.open_zipsafe_ro(self.make_full_path(relative_path), mode)
-        return open(
-            self.make_full_path(relative_path), mode, encoding=encoding_for_mode(mode)
-        )
+        return open(self.make_full_path(relative_path), mode, encoding=encoding_for_mode(mode))
 
-    def open_temp(
-        self, delete: bool = False, mode: str = "w", file_type: str = None
-    ) -> IO[Any]:
+    def open_temp(self, delete: bool = False, mode: str = "w", file_type: str = None) -> IO[Any]:
         mode = mode + file_type or self.file_type
         return tempfile.NamedTemporaryFile(
             dir=self.storage_path,
@@ -154,11 +140,7 @@ class FileStorage:
         scan_path = self.make_full_path(relative_path)
         if to_root:
             # list files in relative path, returning paths relative to storage root
-            return [
-                os.path.join(relative_path, e.name)
-                for e in os.scandir(scan_path)
-                if e.is_file()
-            ]
+            return [os.path.join(relative_path, e.name) for e in os.scandir(scan_path) if e.is_file()]
         else:
             # or to the folder
             return [e.name for e in os.scandir(scan_path) if e.is_file()]
@@ -168,11 +150,7 @@ class FileStorage:
         scan_path = self.make_full_path(relative_path)
         if to_root:
             # list folders in relative path, returning paths relative to storage root
-            return [
-                os.path.join(relative_path, e.name)
-                for e in os.scandir(scan_path)
-                if e.is_dir()
-            ]
+            return [os.path.join(relative_path, e.name) for e in os.scandir(scan_path) if e.is_dir()]
         else:
             # or to the folder
             return [e.name for e in os.scandir(scan_path) if e.is_dir()]
@@ -268,9 +246,7 @@ class FileStorage:
         """
         new_file_name = new_file_name or os.path.basename(external_file_path)
         dest_file_path = os.path.join(self.make_full_path(to_folder), new_file_name)
-        return self.to_relative_path(
-            FileStorage.move_atomic_to_file(external_file_path, dest_file_path)
-        )
+        return self.to_relative_path(FileStorage.move_atomic_to_file(external_file_path, dest_file_path))
 
     def in_storage(self, path: str) -> bool:
         assert path is not None
@@ -315,9 +291,7 @@ class FileStorage:
         pathvalidate.validate_filename(name, platform="Universal")
         # component cannot contain "."
         if FILE_COMPONENT_INVALID_CHARACTERS.search(name):
-            raise pathvalidate.error.InvalidCharError(
-                description="Component name cannot contain the following characters: . % { }"
-            )
+            raise pathvalidate.error.InvalidCharError(description="Component name cannot contain the following characters: . % { }")
 
     @staticmethod
     def rmtree_del_ro(action: AnyFun, name: str, exc: Any) -> Any:

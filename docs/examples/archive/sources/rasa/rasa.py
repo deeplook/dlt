@@ -47,9 +47,7 @@ def rasa(
             # must be a dict
             assert isinstance(source_event, dict)
             # filter out events
-            if timestamp_within(
-                source_event["timestamp"], start_timestamp, end_timestamp
-            ):
+            if timestamp_within(source_event["timestamp"], start_timestamp, end_timestamp):
                 # yield tracker table with all-event index
                 event_type = source_event["event"]
                 last_timestamp = source_event["timestamp"]

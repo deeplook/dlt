@@ -19,9 +19,7 @@ class Runnable(ABC, Generic[TPool]):
     # use weak reference container, once other references are dropped the referenced object is garbage collected
     RUNNING: TWeakValueDictionary = WeakValueDictionary({})
 
-    def __new__(
-        cls: Type["Runnable[TPool]"], *args: Any, **kwargs: Any
-    ) -> "Runnable[TPool]":
+    def __new__(cls: Type["Runnable[TPool]"], *args: Any, **kwargs: Any) -> "Runnable[TPool]":
         """Registers Runnable instance as running for a time when context is active.
         Used with `~workermethod` decorator to pass a class instance to decorator function that must be static thus avoiding pickling such instance.
 

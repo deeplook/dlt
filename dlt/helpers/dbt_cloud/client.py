@@ -41,15 +41,11 @@ class DBTCloudClientV2:
         self.accounts_url = f"accounts/{self.account_id}"
 
     def get_endpoint(self, endpoint: str) -> Any:
-        response = requests.get(
-            f"{self.base_api_url}/{endpoint}", headers=self._headers
-        )
+        response = requests.get(f"{self.base_api_url}/{endpoint}", headers=self._headers)
         results = response.json()
         return results
 
-    def post_endpoint(
-        self, endpoint: str, json_body: Optional[Dict[Any, Any]] = None
-    ) -> Any:
+    def post_endpoint(self, endpoint: str, json_body: Optional[Dict[Any, Any]] = None) -> Any:
         response = requests.post(
             f"{self.base_api_url}/{endpoint}",
             headers=self._headers,
@@ -58,9 +54,7 @@ class DBTCloudClientV2:
         results = response.json()
         return results
 
-    def trigger_job_run(
-        self, job_id: Union[int, str], data: Optional[Dict[Any, Any]] = None
-    ) -> int:
+    def trigger_job_run(self, job_id: Union[int, str], data: Optional[Dict[Any, Any]] = None) -> int:
         """
          Trigger a job run in dbt Cloud.
 
@@ -104,17 +98,13 @@ class DBTCloudClientV2:
 
         """
         if not (self.account_id and job_id):
-            raise InvalidCredentialsException(
-                f"account_id and job_id are required, got account_id: {self.account_id} and job_id: {job_id}"
-            )
+            raise InvalidCredentialsException(f"account_id and job_id are required, got account_id: {self.account_id} and job_id: {job_id}")
 
         json_body = {}
         if data:
             json_body.update(data)
 
-        response = self.post_endpoint(
-            f"{self.accounts_url}/jobs/{job_id}/run", json_body=json_body
-        )
+        response = self.post_endpoint(f"{self.accounts_url}/jobs/{job_id}/run", json_body=json_body)
         return int(response["data"]["id"])
 
     def get_run_status(self, run_id: Union[int, str]) -> Dict[Any, Any]:
@@ -137,9 +127,7 @@ class DBTCloudClientV2:
 
         """
         if not (self.account_id and run_id):
-            raise InvalidCredentialsException(
-                f"account_id and run_id are required, got account_id: {self.account_id} and run_id: {run_id}."
-            )
+            raise InvalidCredentialsException(f"account_id and run_id are required, got account_id: {self.account_id} and run_id: {run_id}.")
 
         response = self.get_endpoint(f"{self.accounts_url}/runs/{run_id}")
         return dict(response["data"])

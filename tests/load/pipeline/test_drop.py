@@ -22,16 +22,12 @@ def _attach(pipeline: Pipeline) -> Pipeline:
 @dlt.source(section="droppable", name="droppable")
 def droppable_source() -> List[DltResource]:
     @dlt.resource
-    def droppable_a(
-        a: dlt.sources.incremental[int] = dlt.sources.incremental("a", 0)
-    ) -> Iterator[Dict[str, Any]]:
+    def droppable_a(a: dlt.sources.incremental[int] = dlt.sources.incremental("a", 0)) -> Iterator[Dict[str, Any]]:
         yield dict(a=1, b=2, c=3)
         yield dict(a=4, b=23, c=24)
 
     @dlt.resource
-    def droppable_b(
-        asd: dlt.sources.incremental[int] = dlt.sources.incremental("asd", 0)
-    ) -> Iterator[Dict[str, Any]]:
+    def droppable_b(asd: dlt.sources.incremental[int] = dlt.sources.incremental("asd", 0)) -> Iterator[Dict[str, Any]]:
         # Child table
         yield dict(asd=2323, qe=555, items=[dict(m=1, n=2), dict(m=3, n=4)])
 
@@ -103,9 +99,7 @@ def assert_destination_state_loaded(pipeline: Pipeline) -> None:
     """Verify stored destination state matches the local pipeline state"""
     client: SqlJobClientBase
     with pipeline.destination_client() as client:  # type: ignore[assignment]
-        destination_state = state_sync.load_state_from_destination(
-            pipeline.pipeline_name, client
-        )
+        destination_state = state_sync.load_state_from_destination(pipeline.pipeline_name, client)
     pipeline_state = dict(pipeline.state)
     del pipeline_state["_local"]
     assert pipeline_state == destination_state
@@ -122,9 +116,7 @@ def test_drop_command_resources_and_state(
     """Test the drop command with resource and state path options and
     verify correct data is deleted from destination and locally"""
     source = droppable_source()
-    pipeline = destination_config.setup_pipeline(
-        "drop_test_" + uniq_id(), full_refresh=True
-    )
+    pipeline = destination_config.setup_pipeline("drop_test_" + uniq_id(), full_refresh=True)
     pipeline.run(source)
 
     attached = _attach(pipeline)
@@ -156,9 +148,7 @@ def test_drop_command_only_state(
     """Test the drop command with resource and state path options and
     verify correct data is deleted from destination and locally"""
     source = droppable_source()
-    pipeline = destination_config.setup_pipeline(
-        "drop_test_" + uniq_id(), full_refresh=True
-    )
+    pipeline = destination_config.setup_pipeline("drop_test_" + uniq_id(), full_refresh=True)
     pipeline.run(source)
 
     attached = _attach(pipeline)
@@ -185,9 +175,7 @@ def test_drop_destination_tables_fails(
 ) -> None:
     """Fail on drop tables. Command runs again."""
     source = droppable_source()
-    pipeline = destination_config.setup_pipeline(
-        "drop_test_" + uniq_id(), full_refresh=True
-    )
+    pipeline = destination_config.setup_pipeline("drop_test_" + uniq_id(), full_refresh=True)
     pipeline.run(source)
 
     attached = _attach(pipeline)
@@ -217,9 +205,7 @@ def test_fail_after_drop_tables(
 ) -> None:
     """Fail directly after drop tables. Command runs again ignoring destination tables missing."""
     source = droppable_source()
-    pipeline = destination_config.setup_pipeline(
-        "drop_test_" + uniq_id(), full_refresh=True
-    )
+    pipeline = destination_config.setup_pipeline("drop_test_" + uniq_id(), full_refresh=True)
     pipeline.run(source)
 
     attached = _attach(pipeline)
@@ -247,16 +233,12 @@ def test_fail_after_drop_tables(
 def test_load_step_fails(destination_config: DestinationTestConfiguration) -> None:
     """Test idempotency. pipeline.load() fails. Command can be run again successfully"""
     source = droppable_source()
-    pipeline = destination_config.setup_pipeline(
-        "drop_test_" + uniq_id(), full_refresh=True
-    )
+    pipeline = destination_config.setup_pipeline("drop_test_" + uniq_id(), full_refresh=True)
     pipeline.run(source)
 
     attached = _attach(pipeline)
 
-    with mock.patch.object(
-        Load, "run", side_effect=RuntimeError("Something went wrong")
-    ):
+    with mock.patch.object(Load, "run", side_effect=RuntimeError("Something went wrong")):
         with pytest.raises(PipelineStepFailed) as e:
             helpers.drop(attached, resources=("droppable_a", "droppable_b"))
         assert isinstance(e.value.exception, RuntimeError)
@@ -275,9 +257,7 @@ def test_load_step_fails(destination_config: DestinationTestConfiguration) -> No
 )
 def test_resource_regex(destination_config: DestinationTestConfiguration) -> None:
     source = droppable_source()
-    pipeline = destination_config.setup_pipeline(
-        "drop_test_" + uniq_id(), full_refresh=True
-    )
+    pipeline = destination_config.setup_pipeline("drop_test_" + uniq_id(), full_refresh=True)
     pipeline.run(source)
 
     attached = _attach(pipeline)
@@ -298,9 +278,7 @@ def test_resource_regex(destination_config: DestinationTestConfiguration) -> Non
 def test_drop_nothing(destination_config: DestinationTestConfiguration) -> None:
     """No resources, no state keys. Nothing is changed."""
     source = droppable_source()
-    pipeline = destination_config.setup_pipeline(
-        "drop_test_" + uniq_id(), full_refresh=True
-    )
+    pipeline = destination_config.setup_pipeline("drop_test_" + uniq_id(), full_refresh=True)
     pipeline.run(source)
 
     attached = _attach(pipeline)
@@ -320,13 +298,9 @@ def test_drop_nothing(destination_config: DestinationTestConfiguration) -> None:
 def test_drop_all_flag(destination_config: DestinationTestConfiguration) -> None:
     """Using drop_all flag. Destination dataset and all local state is deleted"""
     source = droppable_source()
-    pipeline = destination_config.setup_pipeline(
-        "drop_test_" + uniq_id(), full_refresh=True
-    )
+    pipeline = destination_config.setup_pipeline("drop_test_" + uniq_id(), full_refresh=True)
     pipeline.run(source)
-    dlt_tables = [
-        t["name"] for t in pipeline.default_schema.dlt_tables()
-    ]  # Original _dlt tables to check for
+    dlt_tables = [t["name"] for t in pipeline.default_schema.dlt_tables()]  # Original _dlt tables to check for
 
     attached = _attach(pipeline)
 
@@ -352,9 +326,7 @@ def test_run_pipeline_after_partial_drop(
     destination_config: DestinationTestConfiguration,
 ) -> None:
     """Pipeline can be run again after dropping some resources"""
-    pipeline = destination_config.setup_pipeline(
-        "drop_test_" + uniq_id(), full_refresh=True
-    )
+    pipeline = destination_config.setup_pipeline("drop_test_" + uniq_id(), full_refresh=True)
     pipeline.run(droppable_source())
 
     attached = _attach(pipeline)
@@ -363,9 +335,7 @@ def test_run_pipeline_after_partial_drop(
 
     attached = _attach(pipeline)
 
-    attached.extract(
-        droppable_source()
-    )  # TODO: individual steps cause pipeline.run() never raises
+    attached.extract(droppable_source())  # TODO: individual steps cause pipeline.run() never raises
     attached.normalize()
     attached.load(raise_on_failed_jobs=True)
 
@@ -377,9 +347,7 @@ def test_run_pipeline_after_partial_drop(
 )
 def test_drop_state_only(destination_config: DestinationTestConfiguration) -> None:
     """Pipeline can be run again after dropping some resources"""
-    pipeline = destination_config.setup_pipeline(
-        "drop_test_" + uniq_id(), full_refresh=True
-    )
+    pipeline = destination_config.setup_pipeline("drop_test_" + uniq_id(), full_refresh=True)
     pipeline.run(droppable_source())
 
     attached = _attach(pipeline)

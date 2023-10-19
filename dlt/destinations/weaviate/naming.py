@@ -37,10 +37,7 @@ class NamingConvention(SnakeCaseNamingConvention):
         identifier = BaseNamingConvention.normalize_identifier(self, identifier)
         norm_identifier = self._base_normalize(identifier)
         # norm_identifier = norm_identifier.strip("_")
-        norm_identifier = "".join(
-            s[1:2].upper() + s[2:] if s and s[0] == "_" else s
-            for s in self._SPLIT_UNDERSCORE_NON_CAP.split(norm_identifier)
-        )
+        norm_identifier = "".join(s[1:2].upper() + s[2:] if s and s[0] == "_" else s for s in self._SPLIT_UNDERSCORE_NON_CAP.split(norm_identifier))
         norm_identifier = norm_identifier[0].upper() + norm_identifier[1:]
         if self._STARTS_NON_LETTER.match(norm_identifier):
             norm_identifier = "C" + norm_identifier

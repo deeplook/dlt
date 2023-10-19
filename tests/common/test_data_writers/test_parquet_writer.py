@@ -48,9 +48,7 @@ def test_parquet_writer_schema_evolution_with_big_buffer() -> None:
     c4 = new_column("col4", "text")
 
     with get_writer("parquet") as writer:
-        writer.write_data_item(
-            [{"col1": 1, "col2": 2, "col3": "3"}], {"col1": c1, "col2": c2, "col3": c3}
-        )
+        writer.write_data_item([{"col1": 1, "col2": 2, "col3": "3"}], {"col1": c1, "col2": c2, "col3": c3})
         writer.write_data_item(
             [
                 {
@@ -123,12 +121,8 @@ def test_parquet_writer_json_serialization() -> None:
             [{"col1": 1, "col2": 2, "col3": {"hello": "marcin"}}],
             {"col1": c1, "col2": c2, "col3": c3},
         )
-        writer.write_data_item(
-            [{"col1": 1, "col2": 2, "col3": {}}], {"col1": c1, "col2": c2, "col3": c3}
-        )
-        writer.write_data_item(
-            [{"col1": 1, "col2": 2, "col3": []}], {"col1": c1, "col2": c2, "col3": c3}
-        )
+        writer.write_data_item([{"col1": 1, "col2": 2, "col3": {}}], {"col1": c1, "col2": c2, "col3": c3})
+        writer.write_data_item([{"col1": 1, "col2": 2, "col3": []}], {"col1": c1, "col2": c2, "col3": c3})
 
     with open(writer.closed_files[0], "rb") as f:
         table = pq.read_table(f)
@@ -215,9 +209,7 @@ def test_parquet_writer_config() -> None:
     os.environ["NORMALIZE__DATA_WRITER__DATA_PAGE_SIZE"] = str(1024 * 512)
     os.environ["NORMALIZE__DATA_WRITER__TIMESTAMP_TIMEZONE"] = "America/New York"
 
-    with inject_section(
-        ConfigSectionContext(pipeline_name=None, sections=("normalize",))
-    ):
+    with inject_section(ConfigSectionContext(pipeline_name=None, sections=("normalize",))):
         with get_writer("parquet", file_max_bytes=2**8, buffer_max_items=2) as writer:
             for i in range(0, 5):
                 writer.write_data_item(

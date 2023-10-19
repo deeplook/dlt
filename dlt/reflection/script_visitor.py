@@ -72,9 +72,7 @@ class PipelineScriptVisitor(NodeVisitor):
                 elif isinstance(deco, ast.Call):
                     alias_name = astunparse.unparse(deco.func).strip()
                 else:
-                    raise ValueError(
-                        self.source_segment(deco), type(deco), "Unknown decorator form"
-                    )
+                    raise ValueError(self.source_segment(deco), type(deco), "Unknown decorator form")
                 fn = self.func_aliases.get(alias_name)
                 if fn == n.SOURCE:
                     self.known_sources[str(node.name)] = node
@@ -97,9 +95,7 @@ class PipelineScriptVisitor(NodeVisitor):
                 sig = n.SIGNATURES[fn]
                 try:
                     # bind the signature where the argument values are the corresponding ast nodes
-                    bound_args = sig.bind(
-                        *node.args, **{str(kwd.arg): kwd.value for kwd in node.keywords}
-                    )
+                    bound_args = sig.bind(*node.args, **{str(kwd.arg): kwd.value for kwd in node.keywords})
                     bound_args.apply_defaults()
                     # print(f"ALIAS: {alias_name} of {self.func_aliases.get(alias_name)} with {bound_args}")
                     fun_calls = self.known_calls.setdefault(fn, [])
@@ -109,20 +105,13 @@ class PipelineScriptVisitor(NodeVisitor):
                     pass
             else:
                 # check if this is a call to any known source
-                if (
-                    alias_name in self.known_sources
-                    or alias_name in self.known_resources
-                ):
+                if alias_name in self.known_sources or alias_name in self.known_resources:
                     # set parent to the outer function
                     node.parent = find_outer_func_def(node)  # type: ignore
                     if alias_name in self.known_sources:
-                        decorated_calls = self.known_source_calls.setdefault(
-                            alias_name, []
-                        )
+                        decorated_calls = self.known_source_calls.setdefault(alias_name, [])
                     else:
-                        decorated_calls = self.known_resource_calls.setdefault(
-                            alias_name, []
-                        )
+                        decorated_calls = self.known_resource_calls.setdefault(alias_name, [])
                     decorated_calls.append(node)
         # visit the children
         super().generic_visit(node)

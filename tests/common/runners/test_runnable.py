@@ -83,9 +83,7 @@ def test_configuredworker() -> None:
         p.starmap(_worker_1, [(config, "PX1", "PX2")])
 
 
-def _worker_1(
-    CONFIG: SchemaStorageConfiguration, par1: str, par2: str = "DEFAULT"
-) -> None:
+def _worker_1(CONFIG: SchemaStorageConfiguration, par1: str, par2: str = "DEFAULT") -> None:
     # a correct type was passed
     assert type(CONFIG) is SchemaStorageConfiguration
     # check if config values are restored

@@ -61,9 +61,7 @@ class PipelineStepFailed(PipelineException):
 
 
 class PipelineStateEngineNoUpgradePathException(PipelineException):
-    def __init__(
-        self, pipeline_name: str, init_engine: int, from_engine: int, to_engine: int
-    ) -> None:
+    def __init__(self, pipeline_name: str, init_engine: int, from_engine: int, to_engine: int) -> None:
         self.init_engine = init_engine
         self.from_engine = from_engine
         self.to_engine = to_engine

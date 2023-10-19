@@ -74,10 +74,7 @@ def cn_schema() -> Schema:
 def test_normalize_schema_name(schema: Schema) -> None:
     assert schema.naming.normalize_table_identifier("BAN_ANA") == "ban_ana"
     assert schema.naming.normalize_table_identifier("event-.!:value") == "event_value"
-    assert (
-        schema.naming.normalize_table_identifier("123event-.!:value")
-        == "_123event_value"
-    )
+    assert schema.naming.normalize_table_identifier("123event-.!:value") == "_123event_value"
     with pytest.raises(ValueError):
         assert schema.naming.normalize_table_identifier("")
     with pytest.raises(ValueError):
@@ -97,9 +94,7 @@ def test_new_schema_custom_normalizers(cn_schema: Schema) -> None:
     assert_new_schema_values_custom_normalizers(cn_schema)
 
 
-def test_schema_config_normalizers(
-    schema: Schema, schema_storage_no_import: SchemaStorage
-) -> None:
+def test_schema_config_normalizers(schema: Schema, schema_storage_no_import: SchemaStorage) -> None:
     # save snake case schema
     schema_storage_no_import.save_schema(schema)
     # config direct naming convention
@@ -132,12 +127,7 @@ def test_simple_regex_validator() -> None:
     assert utils.simple_regex_validator(".", "k", "v", TSimpleRegex) is True
 
     # validate regex
-    assert (
-        utils.simple_regex_validator(
-            ".", "k", TSimpleRegex("re:^_record$"), TSimpleRegex
-        )
-        is True
-    )
+    assert utils.simple_regex_validator(".", "k", TSimpleRegex("re:^_record$"), TSimpleRegex) is True
     # invalid regex
     with pytest.raises(DictValidationException) as e:
         utils.simple_regex_validator(".", "k", "re:[[^_record$", TSimpleRegex)
@@ -159,31 +149,16 @@ def test_load_corrupted_schema() -> None:
 
 def test_column_name_validator(schema: Schema) -> None:
     assert utils.column_name_validator(schema.naming)(".", "k", "v", str) is False
-    assert (
-        utils.column_name_validator(schema.naming)(".", "k", "v", TColumnName) is True
-    )
+    assert utils.column_name_validator(schema.naming)(".", "k", "v", TColumnName) is True
 
-    assert (
-        utils.column_name_validator(schema.naming)(".", "k", "snake_case", TColumnName)
-        is True
-    )
+    assert utils.column_name_validator(schema.naming)(".", "k", "snake_case", TColumnName) is True
     # double underscores are accepted
-    assert (
-        utils.column_name_validator(schema.naming)(".", "k", "snake__case", TColumnName)
-        is True
-    )
+    assert utils.column_name_validator(schema.naming)(".", "k", "snake__case", TColumnName) is True
     # triple underscores are accepted
-    assert (
-        utils.column_name_validator(schema.naming)(
-            ".", "k", "snake___case", TColumnName
-        )
-        is True
-    )
+    assert utils.column_name_validator(schema.naming)(".", "k", "snake___case", TColumnName) is True
     # quadruple underscores generate empty identifier
     with pytest.raises(DictValidationException) as e:
-        utils.column_name_validator(schema.naming)(
-            ".", "k", "snake____case", TColumnName
-        )
+        utils.column_name_validator(schema.naming)(".", "k", "snake____case", TColumnName)
     assert "not a valid column name" in str(e.value)
     # this name is invalid
     with pytest.raises(DictValidationException) as e:
@@ -219,10 +194,7 @@ def test_schema_descriptions_and_annotations(schema_storage: SchemaStorage):
     )
     assert schema.tables["blocks"]["description"] == "Ethereum blocks"
     assert schema.tables["blocks"]["x-annotation"] == "this will be preserved on save"  # type: ignore[typeddict-item]
-    assert (
-        schema.tables["blocks"]["columns"]["_dlt_load_id"]["description"]
-        == "load id coming from the extractor"
-    )
+    assert schema.tables["blocks"]["columns"]["_dlt_load_id"]["description"] == "load id coming from the extractor"
     assert schema.tables["blocks"]["columns"]["_dlt_load_id"]["x-column-annotation"] == "column annotation preserved on save"  # type: ignore[typeddict-item]
 
     # mod and save
@@ -235,9 +207,7 @@ def test_schema_descriptions_and_annotations(schema_storage: SchemaStorage):
     loaded_schema = schema_storage.load_schema("event")
     assert loaded_schema.tables["blocks"]["description"].endswith("Saved")
     assert loaded_schema.tables["blocks"]["x-annotation"].endswith("Saved")  # type: ignore[typeddict-item]
-    assert loaded_schema.tables["blocks"]["columns"]["_dlt_load_id"][
-        "description"
-    ].endswith("Saved")
+    assert loaded_schema.tables["blocks"]["columns"]["_dlt_load_id"]["description"].endswith("Saved")
     assert loaded_schema.tables["blocks"]["columns"]["_dlt_load_id"]["x-column-annotation"].endswith("Saved")  # type: ignore[typeddict-item]
 
 
@@ -272,9 +242,7 @@ def test_replace_schema_content() -> None:
         (["_dlt_parent_id"], "foreign_key", True),
     ],
 )
-def test_relational_normalizer_schema_hints(
-    columns: Sequence[str], hint: str, value: bool, schema_storage: SchemaStorage
-) -> None:
+def test_relational_normalizer_schema_hints(columns: Sequence[str], hint: str, value: bool, schema_storage: SchemaStorage) -> None:
     schema = schema_storage.load_schema("event")
     for name in columns:
         # infer column hints
@@ -299,17 +267,13 @@ def test_save_store_schema(schema: Schema, schema_storage: SchemaStorage) -> Non
     assert_new_schema_values(schema_copy)
 
 
-def test_save_store_schema_custom_normalizers(
-    cn_schema: Schema, schema_storage: SchemaStorage
-) -> None:
+def test_save_store_schema_custom_normalizers(cn_schema: Schema, schema_storage: SchemaStorage) -> None:
     schema_storage.save_schema(cn_schema)
     schema_copy = schema_storage.load_schema(cn_schema.name)
     assert_new_schema_values_custom_normalizers(schema_copy)
 
 
-def test_save_load_incomplete_column(
-    schema: Schema, schema_storage_no_import: SchemaStorage
-) -> None:
+def test_save_load_incomplete_column(schema: Schema, schema_storage_no_import: SchemaStorage) -> None:
     # make sure that incomplete column is saved and restored without default hints
     incomplete_col = utils.new_column("I", nullable=False)
     incomplete_col["primary_key"] = True
@@ -368,17 +332,11 @@ def test_unknown_engine_upgrade() -> None:
 
 def test_preserve_column_order(schema: Schema, schema_storage: SchemaStorage) -> None:
     # python dicts are ordered from v3.6, add 50 column with random names
-    update: List[TColumnSchema] = [
-        schema._infer_column(uniq_id(), pendulum.now().timestamp()) for _ in range(50)
-    ]
+    update: List[TColumnSchema] = [schema._infer_column(uniq_id(), pendulum.now().timestamp()) for _ in range(50)]
     schema.update_table(utils.new_table("event_test_order", columns=update))
 
     def verify_items(table, update) -> None:
-        assert (
-            [i[0] for i in table.items()]
-            == list(table.keys())
-            == [u["name"] for u in update]
-        )
+        assert [i[0] for i in table.items()] == list(table.keys()) == [u["name"] for u in update]
         assert [i[1] for i in table.items()] == list(table.values()) == update
 
     table = schema.get_table_columns("event_test_order")
@@ -389,9 +347,7 @@ def test_preserve_column_order(schema: Schema, schema_storage: SchemaStorage) ->
     table = loaded_schema.get_table_columns("event_test_order")
     verify_items(table, update)
     # add more columns
-    update2: List[TColumnSchema] = [
-        schema._infer_column(uniq_id(), pendulum.now().timestamp()) for _ in range(50)
-    ]
+    update2: List[TColumnSchema] = [schema._infer_column(uniq_id(), pendulum.now().timestamp()) for _ in range(50)]
     loaded_schema.update_table(utils.new_table("event_test_order", columns=update2))
     table = loaded_schema.get_table_columns("event_test_order")
     verify_items(table, update + update2)
@@ -433,9 +389,7 @@ def test_get_schema_new_exist(schema_storage: SchemaStorage) -> None:
         (["timestamp", "_timestamp"], "sort", True),
     ],
 )
-def test_rasa_event_hints(
-    columns: Sequence[str], hint: str, value: bool, schema_storage: SchemaStorage
-) -> None:
+def test_rasa_event_hints(columns: Sequence[str], hint: str, value: bool, schema_storage: SchemaStorage) -> None:
     schema = schema_storage.load_schema("event")
     for name in columns:
         # infer column hints
@@ -555,15 +509,11 @@ def test_default_table_resource() -> None:
 def test_data_tables(schema: Schema, schema_storage: SchemaStorage) -> None:
     assert schema.data_tables() == []
     dlt_tables = schema.dlt_tables()
-    assert set([t["name"] for t in dlt_tables]) == set(
-        [LOADS_TABLE_NAME, VERSION_TABLE_NAME]
-    )
+    assert set([t["name"] for t in dlt_tables]) == set([LOADS_TABLE_NAME, VERSION_TABLE_NAME])
     # with tables
     schema = schema_storage.load_schema("event")
     # some of them are incomplete
-    assert set(schema.tables.keys()) == set(
-        [LOADS_TABLE_NAME, VERSION_TABLE_NAME, "event_slot", "event_user", "event_bot"]
-    )
+    assert set(schema.tables.keys()) == set([LOADS_TABLE_NAME, VERSION_TABLE_NAME, "event_slot", "event_user", "event_bot"])
     assert [t["name"] for t in schema.data_tables()] == ["event_slot"]
 
 
@@ -576,9 +526,7 @@ def test_write_disposition(schema_storage: SchemaStorage) -> None:
     schema.get_table("event_user")["write_disposition"] = "replace"
     schema.update_table(utils.new_table("event_user__intents", "event_user"))
     assert schema.get_table("event_user__intents").get("write_disposition") is None
-    assert (
-        utils.get_write_disposition(schema.tables, "event_user__intents") == "replace"
-    )
+    assert utils.get_write_disposition(schema.tables, "event_user__intents") == "replace"
     schema.get_table("event_user__intents")["write_disposition"] = "append"
     assert utils.get_write_disposition(schema.tables, "event_user__intents") == "append"
 
@@ -600,42 +548,20 @@ def test_compare_columns() -> None:
             {"name": "col4", "data_type": "timestamp", "nullable": True},
         ],
     )
-    table2 = utils.new_table(
-        "test_table", columns=[{"name": "col1", "data_type": "text", "nullable": False}]
-    )
+    table2 = utils.new_table("test_table", columns=[{"name": "col1", "data_type": "text", "nullable": False}])
     # columns identical with self
     for c in table["columns"].values():
         assert utils.compare_complete_columns(c, c) is True
-    assert (
-        utils.compare_complete_columns(
-            table["columns"]["col3"], table["columns"]["col4"]
-        )
-        is False
-    )
+    assert utils.compare_complete_columns(table["columns"]["col3"], table["columns"]["col4"]) is False
     # data type may not differ
-    assert (
-        utils.compare_complete_columns(
-            table["columns"]["col1"], table["columns"]["col3"]
-        )
-        is False
-    )
+    assert utils.compare_complete_columns(table["columns"]["col1"], table["columns"]["col3"]) is False
     # nullability may differ
-    assert (
-        utils.compare_complete_columns(
-            table["columns"]["col1"], table2["columns"]["col1"]
-        )
-        is True
-    )
+    assert utils.compare_complete_columns(table["columns"]["col1"], table2["columns"]["col1"]) is True
     # any of the hints may differ
     for hint in COLUMN_HINTS:
         table["columns"]["col3"][hint] = True  # type: ignore[typeddict-unknown-key]
     # name may not differ
-    assert (
-        utils.compare_complete_columns(
-            table["columns"]["col3"], table["columns"]["col4"]
-        )
-        is False
-    )
+    assert utils.compare_complete_columns(table["columns"]["col3"], table["columns"]["col4"]) is False
 
 
 def test_normalize_table_identifiers() -> None:
@@ -646,9 +572,7 @@ def test_normalize_table_identifiers() -> None:
     issues_table = deepcopy(schema.tables["issues"])
     # this schema is already normalized so normalization is idempotent
     assert schema.tables["issues"] == schema.normalize_table_identifiers(issues_table)
-    assert schema.tables["issues"] == schema.normalize_table_identifiers(
-        schema.normalize_table_identifiers(issues_table)
-    )
+    assert schema.tables["issues"] == schema.normalize_table_identifiers(schema.normalize_table_identifiers(issues_table))
 
 
 def test_normalize_table_identifiers_merge_columns() -> None:
@@ -678,14 +602,8 @@ def test_normalize_table_identifiers_merge_columns() -> None:
 
 def assert_new_schema_values_custom_normalizers(schema: Schema) -> None:
     # check normalizers config
-    assert (
-        schema._normalizers_config["names"]
-        == "tests.common.normalizers.custom_normalizers"
-    )
-    assert (
-        schema._normalizers_config["json"]["module"]
-        == "tests.common.normalizers.custom_normalizers"
-    )
+    assert schema._normalizers_config["names"] == "tests.common.normalizers.custom_normalizers"
+    assert schema._normalizers_config["json"]["module"] == "tests.common.normalizers.custom_normalizers"
     # check if schema was extended by json normalizer
     assert ["fake_id"] == schema.settings["default_hints"]["not_null"]
     # call normalizers
@@ -707,22 +625,13 @@ def assert_new_schema_values(schema: Schema) -> None:
     assert schema.ENGINE_VERSION == 6
     assert len(schema.settings["default_hints"]) > 0
     # check settings
-    assert (
-        utils.standard_type_detections()
-        == schema.settings["detections"]
-        == schema._type_detections
-    )
+    assert utils.standard_type_detections() == schema.settings["detections"] == schema._type_detections
     # check normalizers config
     assert schema._normalizers_config["names"] == "snake_case"
-    assert (
-        schema._normalizers_config["json"]["module"]
-        == "dlt.common.normalizers.json.relational"
-    )
+    assert schema._normalizers_config["json"]["module"] == "dlt.common.normalizers.json.relational"
     assert isinstance(schema.naming, snake_case.NamingConvention)
     # check if schema was extended by json normalizer
-    assert set(
-        ["_dlt_id", "_dlt_root_id", "_dlt_parent_id", "_dlt_list_idx", "_dlt_load_id"]
-    ).issubset(schema.settings["default_hints"]["not_null"])
+    assert set(["_dlt_id", "_dlt_root_id", "_dlt_parent_id", "_dlt_list_idx", "_dlt_load_id"]).issubset(schema.settings["default_hints"]["not_null"])
     # call normalizers
     assert schema.naming.normalize_identifier("A") == "a"
     assert schema.naming.normalize_path("A__B") == "a__b"
@@ -744,15 +653,9 @@ def test_group_tables_by_resource(schema: Schema) -> None:
     schema.update_table(utils.new_table("a_events", columns=[]))
     schema.update_table(utils.new_table("b_events", columns=[]))
     schema.update_table(utils.new_table("c_products", columns=[], resource="products"))
-    schema.update_table(
-        utils.new_table("a_events__1", columns=[], parent_table_name="a_events")
-    )
-    schema.update_table(
-        utils.new_table("a_events__1__2", columns=[], parent_table_name="a_events__1")
-    )
-    schema.update_table(
-        utils.new_table("b_events__1", columns=[], parent_table_name="b_events")
-    )
+    schema.update_table(utils.new_table("a_events__1", columns=[], parent_table_name="a_events"))
+    schema.update_table(utils.new_table("a_events__1__2", columns=[], parent_table_name="a_events__1"))
+    schema.update_table(utils.new_table("b_events__1", columns=[], parent_table_name="b_events"))
 
     # All resources without filter
     expected_tables = {
@@ -785,12 +688,8 @@ def test_group_tables_by_resource(schema: Schema) -> None:
 
     # With resources that has many top level tables
     schema.update_table(utils.new_table("mc_products", columns=[], resource="products"))
-    schema.update_table(
-        utils.new_table("mc_products__sub", columns=[], parent_table_name="mc_products")
-    )
-    result = utils.group_tables_by_resource(
-        schema.tables, pattern=utils.compile_simple_regex(TSimpleRegex("products"))
-    )
+    schema.update_table(utils.new_table("mc_products__sub", columns=[], parent_table_name="mc_products"))
+    result = utils.group_tables_by_resource(schema.tables, pattern=utils.compile_simple_regex(TSimpleRegex("products")))
     # both tables with resource "products" must be here
     assert result == {
         "products": [

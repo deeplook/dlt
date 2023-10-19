@@ -73,9 +73,7 @@ def test_load_non_existing(storage: SchemaStorage) -> None:
 
 def test_load_schema_with_upgrade() -> None:
     # point the storage root to v4 schema google_spreadsheet_v3.schema
-    storage = LiveSchemaStorage(
-        SchemaStorageConfiguration(COMMON_TEST_CASES_PATH + "schemas/sheets")
-    )
+    storage = LiveSchemaStorage(SchemaStorageConfiguration(COMMON_TEST_CASES_PATH + "schemas/sheets"))
     # the hash when computed on the schema does not match the version_hash in the file so it should raise InStorageSchemaModified
     # but because the version upgrade is required, the check is skipped and the load succeeds
     storage.load_schema("google_spreadsheet_v4")
@@ -90,18 +88,14 @@ def test_import_initial(synced_storage: SchemaStorage, storage: SchemaStorage) -
     assert_schema_imported(synced_storage, storage)
 
 
-def test_import_overwrites_existing_if_modified(
-    synced_storage: SchemaStorage, storage: SchemaStorage
-) -> None:
+def test_import_overwrites_existing_if_modified(synced_storage: SchemaStorage, storage: SchemaStorage) -> None:
     schema = Schema("ethereum")
     storage.save_schema(schema)
     # now import schema that wil overwrite schema in storage as it is not linked to external schema
     assert_schema_imported(synced_storage, storage)
 
 
-def test_skip_import_if_not_modified(
-    synced_storage: SchemaStorage, storage: SchemaStorage
-) -> None:
+def test_skip_import_if_not_modified(synced_storage: SchemaStorage, storage: SchemaStorage) -> None:
     storage_schema = assert_schema_imported(synced_storage, storage)
     # stored_version = storage_schema.stored_version
     # stored_version_hash = storage_schema.stored_version_hash
@@ -116,15 +110,11 @@ def test_skip_import_if_not_modified(
     assert "event_user" in reloaded_schema.tables
     assert storage_schema.version == reloaded_schema.stored_version
     assert storage_schema.version_hash == reloaded_schema.stored_version_hash
-    assert (
-        storage_schema._imported_version_hash == reloaded_schema._imported_version_hash
-    )
+    assert storage_schema._imported_version_hash == reloaded_schema._imported_version_hash
     # the import schema gets modified
     storage_schema.tables["_dlt_loads"]["write_disposition"] = "append"
     storage_schema.tables.pop("event_user")
-    synced_storage._export_schema(
-        storage_schema, synced_storage.config.export_schema_path
-    )
+    synced_storage._export_schema(storage_schema, synced_storage.config.export_schema_path)
     # now load will import again
     reloaded_schema = synced_storage.load_schema("ethereum")
     # we have overwritten storage schema
@@ -135,9 +125,7 @@ def test_skip_import_if_not_modified(
     assert reloaded_schema.stored_version == storage_schema.version + 1
 
 
-def test_store_schema_tampered(
-    synced_storage: SchemaStorage, storage: SchemaStorage
-) -> None:
+def test_store_schema_tampered(synced_storage: SchemaStorage, storage: SchemaStorage) -> None:
     storage_schema = assert_schema_imported(synced_storage, storage)
     # break hash
     stored_schema = storage_schema.to_dict()
@@ -271,23 +259,16 @@ def test_save_store_schema(storage: SchemaStorage) -> None:
     d_n["names"] = "tests.common.normalizers.custom_normalizers"
     schema = Schema("column_event", normalizers=d_n)
     storage.save_schema(schema)
-    assert storage.storage.has_file(
-        SchemaStorage.NAMED_SCHEMA_FILE_PATTERN % ("column_event", "json")
-    )
+    assert storage.storage.has_file(SchemaStorage.NAMED_SCHEMA_FILE_PATTERN % ("column_event", "json"))
     loaded_schema = storage.load_schema("column_event")
     # also tables gets normalized inside so custom_ is added
-    assert (
-        loaded_schema.to_dict()["tables"]["column__dlt_loads"]
-        == schema.to_dict()["tables"]["column__dlt_loads"]
-    )
+    assert loaded_schema.to_dict()["tables"]["column__dlt_loads"] == schema.to_dict()["tables"]["column__dlt_loads"]
     assert loaded_schema.to_dict() == schema.to_dict()
 
 
 def test_schema_from_file() -> None:
     # json has precedence
-    schema = SchemaStorage.load_schema_file(
-        os.path.join(COMMON_TEST_CASES_PATH, "schemas/local"), "event"
-    )
+    schema = SchemaStorage.load_schema_file(os.path.join(COMMON_TEST_CASES_PATH, "schemas/local"), "event")
     assert schema.name == "event"
 
     schema = SchemaStorage.load_schema_file(
@@ -330,9 +311,7 @@ def prepare_import_folder(storage: SchemaStorage) -> None:
     )
 
 
-def assert_schema_imported(
-    synced_storage: SchemaStorage, storage: SchemaStorage
-) -> Schema:
+def assert_schema_imported(synced_storage: SchemaStorage, storage: SchemaStorage) -> Schema:
     prepare_import_folder(synced_storage)
     eth_v6: TStoredSchema = load_yml_case("schemas/eth/ethereum_schema_v6")
     schema = synced_storage.load_schema("ethereum")

@@ -161,10 +161,7 @@ def test_airflow_secrets_toml_provider_is_loaded():
 
         providers_context = Container()[ConfigProvidersContext]
 
-        astp_is_loaded = any(
-            isinstance(provider, AirflowSecretsTomlProvider)
-            for provider in providers_context.providers
-        )
+        astp_is_loaded = any(isinstance(provider, AirflowSecretsTomlProvider) for provider in providers_context.providers)
 
         # insert provider into context, in tests this will not happen automatically
         # providers_context = Container()[ConfigProvidersContext]
@@ -216,11 +213,7 @@ def test_airflow_secrets_toml_provider_missing_variable():
         # Make sure the variable is not set
         Variable.delete(SECRETS_TOML_KEY)
         providers = config_providers_context._extra_providers()
-        provider = next(
-            provider
-            for provider in providers
-            if isinstance(provider, AirflowSecretsTomlProvider)
-        )
+        provider = next(provider for provider in providers if isinstance(provider, AirflowSecretsTomlProvider))
         return {
             "airflow_secrets_toml": provider._toml.as_string(),
         }

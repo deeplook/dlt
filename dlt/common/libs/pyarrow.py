@@ -22,9 +22,7 @@ except ModuleNotFoundError:
 TAnyArrowItem = Union[pyarrow.Table, pyarrow.RecordBatch]
 
 
-def get_py_arrow_datatype(
-    column: TColumnType, caps: DestinationCapabilitiesContext, tz: str
-) -> Any:
+def get_py_arrow_datatype(column: TColumnType, caps: DestinationCapabilitiesContext, tz: str) -> Any:
     column_type = column["data_type"]
     if column_type == "text":
         return pyarrow.string()
@@ -33,9 +31,7 @@ def get_py_arrow_datatype(
     elif column_type == "bool":
         return pyarrow.bool_()
     elif column_type == "timestamp":
-        return get_py_arrow_timestamp(
-            column.get("precision") or caps.timestamp_precision, tz
-        )
+        return get_py_arrow_timestamp(column.get("precision") or caps.timestamp_precision, tz)
     elif column_type == "bigint":
         return get_pyarrow_int(column.get("precision"))
     elif column_type == "binary":
@@ -45,11 +41,7 @@ def get_py_arrow_datatype(
         return pyarrow.string()
     elif column_type == "decimal":
         precision, scale = column.get("precision"), column.get("scale")
-        precision_tuple = (
-            (precision, scale)
-            if precision is not None and scale is not None
-            else caps.decimal_precision
-        )
+        precision_tuple = (precision, scale) if precision is not None and scale is not None else caps.decimal_precision
         return get_py_arrow_numeric(precision_tuple)
     elif column_type == "wei":
         return get_py_arrow_numeric(caps.wei_precision)

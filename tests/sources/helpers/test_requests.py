@@ -113,9 +113,7 @@ def test_retry_on_status_without_raise_for_status(mock_sleep: mock.MagicMock) ->
         requests.exceptions.ChunkedEncodingError,
     ],
 )
-def test_retry_on_exception_all_fails(
-    exception_class: Type[Exception], mock_sleep: mock.MagicMock
-) -> None:
+def test_retry_on_exception_all_fails(exception_class: Type[Exception], mock_sleep: mock.MagicMock) -> None:
     session = Client().session
     url = "https://example.com/data"
 

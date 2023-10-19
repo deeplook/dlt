@@ -37,9 +37,7 @@ def test_aws_credentials_resolved_from_default(environment: Dict[str, str]) -> N
     # assert config.profile_name == "default"
 
 
-@pytest.mark.skipif(
-    "s3" not in ALL_FILESYSTEM_DRIVERS, reason="s3 filesystem driver not configured"
-)
+@pytest.mark.skipif("s3" not in ALL_FILESYSTEM_DRIVERS, reason="s3 filesystem driver not configured")
 def test_aws_credentials_from_botocore(environment: Dict[str, str]) -> None:
     set_aws_credentials_env(environment)
 
@@ -65,9 +63,7 @@ def test_aws_credentials_from_botocore(environment: Dict[str, str]) -> None:
         c.parse_native_representation("boto3")
 
 
-@pytest.mark.skipif(
-    "s3" not in ALL_FILESYSTEM_DRIVERS, reason="s3 filesystem driver not configured"
-)
+@pytest.mark.skipif("s3" not in ALL_FILESYSTEM_DRIVERS, reason="s3 filesystem driver not configured")
 def test_aws_credentials_from_boto3(environment: Dict[str, str]) -> None:
     try:
         import boto3
@@ -93,9 +89,7 @@ def test_aws_credentials_from_boto3(environment: Dict[str, str]) -> None:
     assert c.aws_access_key_id == "fake_access_key"
 
 
-@pytest.mark.skipif(
-    "s3" not in ALL_FILESYSTEM_DRIVERS, reason="s3 filesystem driver not configured"
-)
+@pytest.mark.skipif("s3" not in ALL_FILESYSTEM_DRIVERS, reason="s3 filesystem driver not configured")
 def test_aws_credentials_for_profile(environment: Dict[str, str]) -> None:
     import botocore.exceptions
 

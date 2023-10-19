@@ -132,9 +132,7 @@ def test_regular_run() -> None:
 
     tasks_list: List[PythonOperator] = None
 
-    @dag(
-        schedule=None, start_date=DEFAULT_DATE, catchup=False, default_args=default_args
-    )
+    @dag(schedule=None, start_date=DEFAULT_DATE, catchup=False, default_args=default_args)
     def dag_regular():
         nonlocal tasks_list
         tasks = PipelineTasksGroup(
@@ -161,10 +159,7 @@ def test_regular_run() -> None:
     dag_def: DAG = dag_regular()
     assert len(tasks_list) == 1
     # composite task name
-    assert (
-        tasks_list[0].task_id
-        == "pipeline_dag_regular.mock_data_source__r_init-_t_init_post-_t1-_t2-2-more"
-    )
+    assert tasks_list[0].task_id == "pipeline_dag_regular.mock_data_source__r_init-_t_init_post-_t1-_t2-2-more"
 
     dag_def.test()
     # we should be able to attach to pipeline state created within Airflow
@@ -179,9 +174,7 @@ def test_regular_run() -> None:
 
     quackdb_path = os.path.join(TEST_STORAGE_ROOT, "pipeline_dag_decomposed.duckdb")
 
-    @dag(
-        schedule=None, start_date=DEFAULT_DATE, catchup=False, default_args=default_args
-    )
+    @dag(schedule=None, start_date=DEFAULT_DATE, catchup=False, default_args=default_args)
     def dag_decomposed():
         nonlocal tasks_list
         tasks = PipelineTasksGroup(
@@ -209,13 +202,8 @@ def test_regular_run() -> None:
     dag_def = dag_decomposed()
     assert len(tasks_list) == 3
     # task one by one
-    assert (
-        tasks_list[0].task_id
-        == "pipeline_dag_decomposed.mock_data_source__r_init-_t_init_post"
-    )
-    assert (
-        tasks_list[1].task_id == "pipeline_dag_decomposed.mock_data_source__t1-_t2-_t3"
-    )
+    assert tasks_list[0].task_id == "pipeline_dag_decomposed.mock_data_source__r_init-_t_init_post"
+    assert tasks_list[1].task_id == "pipeline_dag_decomposed.mock_data_source__t1-_t2-_t3"
     assert tasks_list[2].task_id == "pipeline_dag_decomposed.mock_data_source__r_isolee"
     dag_def.test()
     pipeline_dag_decomposed = dlt.attach(pipeline_name="pipeline_dag_decomposed")
@@ -256,9 +244,7 @@ def test_run_with_retry() -> None:
             raise Exception(f"Failed on retry #{retries}")
         yield from "ABC"
 
-    @dag(
-        schedule=None, start_date=DEFAULT_DATE, catchup=False, default_args=default_args
-    )
+    @dag(schedule=None, start_date=DEFAULT_DATE, catchup=False, default_args=default_args)
     def dag_fail_3():
         # by default we do not retry so this will fail
         tasks = PipelineTasksGroup(
@@ -288,9 +274,7 @@ def test_run_with_retry() -> None:
         ti._run_raw_task()
     assert pip_ex.value.step == "extract"
 
-    @dag(
-        schedule=None, start_date=DEFAULT_DATE, catchup=False, default_args=default_args
-    )
+    @dag(schedule=None, start_date=DEFAULT_DATE, catchup=False, default_args=default_args)
     def dag_fail_4():
         # by default we do not retry extract so we fail
         tasks = PipelineTasksGroup(
@@ -322,9 +306,7 @@ def test_run_with_retry() -> None:
         ti._run_raw_task()
     assert pip_ex.value.step == "extract"
 
-    @dag(
-        schedule=None, start_date=DEFAULT_DATE, catchup=False, default_args=default_args
-    )
+    @dag(schedule=None, start_date=DEFAULT_DATE, catchup=False, default_args=default_args)
     def dag_fail_5():
         # this will retry
         tasks = PipelineTasksGroup(
@@ -360,9 +342,7 @@ def test_run_decomposed_with_state_wipe() -> None:
     dataset_name = "mock_data_" + uniq_id()
     pipeline_name = "pipeline_dag_regular_" + uniq_id()
 
-    @dag(
-        schedule=None, start_date=DEFAULT_DATE, catchup=False, default_args=default_args
-    )
+    @dag(schedule=None, start_date=DEFAULT_DATE, catchup=False, default_args=default_args)
     def dag_regular():
         tasks = PipelineTasksGroup(
             pipeline_name,
@@ -372,9 +352,7 @@ def test_run_decomposed_with_state_wipe() -> None:
             save_trace_info=True,
         )
 
-        pipeline_dag_regular = dlt.pipeline(
-            pipeline_name=pipeline_name, dataset_name=dataset_name, destination="duckdb"
-        )
+        pipeline_dag_regular = dlt.pipeline(pipeline_name=pipeline_name, dataset_name=dataset_name, destination="duckdb")
         tasks.add_run(
             pipeline_dag_regular,
             mock_data_source_state(),
@@ -391,9 +369,7 @@ def test_run_decomposed_with_state_wipe() -> None:
     with pytest.raises(CannotRestorePipelineException):
         dlt.attach(pipeline_name=pipeline_name)
 
-    pipeline_dag_regular = dlt.pipeline(
-        pipeline_name=pipeline_name, dataset_name=dataset_name, destination="duckdb"
-    )
+    pipeline_dag_regular = dlt.pipeline(pipeline_name=pipeline_name, dataset_name=dataset_name, destination="duckdb")
     pipeline_dag_regular.sync_destination()
     # print(pipeline_dag_regular.state)
     # now source can attach to state in the pipeline
@@ -415,17 +391,11 @@ def test_run_multiple_sources() -> None:
     dataset_name = "mock_data_" + uniq_id()
     pipeline_name = "pipeline_dag_regular_" + uniq_id()
 
-    @dag(
-        schedule=None, start_date=DEFAULT_DATE, catchup=False, default_args=default_args
-    )
+    @dag(schedule=None, start_date=DEFAULT_DATE, catchup=False, default_args=default_args)
     def dag_serialize():
-        tasks = PipelineTasksGroup(
-            pipeline_name, local_data_folder=TEST_STORAGE_ROOT, wipe_local_data=True
-        )
+        tasks = PipelineTasksGroup(pipeline_name, local_data_folder=TEST_STORAGE_ROOT, wipe_local_data=True)
 
-        pipeline_dag_regular = dlt.pipeline(
-            pipeline_name=pipeline_name, dataset_name=dataset_name, destination="duckdb"
-        )
+        pipeline_dag_regular = dlt.pipeline(pipeline_name=pipeline_name, dataset_name=dataset_name, destination="duckdb")
         st_tasks = tasks.add_run(
             pipeline_dag_regular,
             mock_data_source_state(),
@@ -448,9 +418,7 @@ def test_run_multiple_sources() -> None:
     dag_def: DAG = dag_serialize()
     dag_def.test()
 
-    pipeline_dag_serial = dlt.pipeline(
-        pipeline_name=pipeline_name, dataset_name=dataset_name, destination="duckdb"
-    )
+    pipeline_dag_serial = dlt.pipeline(pipeline_name=pipeline_name, dataset_name=dataset_name, destination="duckdb")
     pipeline_dag_serial.sync_destination()
     # we should have two schemas
     assert set(pipeline_dag_serial.schema_names) == {
@@ -459,17 +427,11 @@ def test_run_multiple_sources() -> None:
     }
     counters_st_tasks = load_table_counts(
         pipeline_dag_serial,
-        *[
-            t["name"]
-            for t in pipeline_dag_serial.schemas["mock_data_source_state"].data_tables()
-        ],
+        *[t["name"] for t in pipeline_dag_serial.schemas["mock_data_source_state"].data_tables()],
     )
     counters_nst_tasks = load_table_counts(
         pipeline_dag_serial,
-        *[
-            t["name"]
-            for t in pipeline_dag_serial.schemas["mock_data_source"].data_tables()
-        ],
+        *[t["name"] for t in pipeline_dag_serial.schemas["mock_data_source"].data_tables()],
     )
     # print(counters_st_tasks)
     # print(counters_nst_tasks)
@@ -490,17 +452,11 @@ def test_run_multiple_sources() -> None:
     dataset_name = "mock_data_" + uniq_id()
     pipeline_name = "pipeline_dag_regular_" + uniq_id()
 
-    @dag(
-        schedule=None, start_date=DEFAULT_DATE, catchup=False, default_args=default_args
-    )
+    @dag(schedule=None, start_date=DEFAULT_DATE, catchup=False, default_args=default_args)
     def dag_parallel():
-        tasks = PipelineTasksGroup(
-            pipeline_name, local_data_folder=TEST_STORAGE_ROOT, wipe_local_data=True
-        )
+        tasks = PipelineTasksGroup(pipeline_name, local_data_folder=TEST_STORAGE_ROOT, wipe_local_data=True)
 
-        pipeline_dag_regular = dlt.pipeline(
-            pipeline_name=pipeline_name, dataset_name=dataset_name, destination="duckdb"
-        )
+        pipeline_dag_regular = dlt.pipeline(pipeline_name=pipeline_name, dataset_name=dataset_name, destination="duckdb")
         tasks.add_run(
             pipeline_dag_regular,
             mock_data_source_state(),
@@ -522,9 +478,7 @@ def test_run_multiple_sources() -> None:
     dag_def = dag_parallel()
     dag_def.test()
 
-    pipeline_dag_parallel = dlt.pipeline(
-        pipeline_name=pipeline_name, dataset_name=dataset_name, destination="duckdb"
-    )
+    pipeline_dag_parallel = dlt.pipeline(pipeline_name=pipeline_name, dataset_name=dataset_name, destination="duckdb")
     pipeline_dag_parallel.sync_destination()
     # we should have two schemas
     assert set(pipeline_dag_parallel.schema_names) == {
@@ -533,42 +487,26 @@ def test_run_multiple_sources() -> None:
     }
     counters_st_tasks_par = load_table_counts(
         pipeline_dag_parallel,
-        *[
-            t["name"]
-            for t in pipeline_dag_parallel.schemas[
-                "mock_data_source_state"
-            ].data_tables()
-        ],
+        *[t["name"] for t in pipeline_dag_parallel.schemas["mock_data_source_state"].data_tables()],
     )
     counters_nst_tasks_par = load_table_counts(
         pipeline_dag_parallel,
-        *[
-            t["name"]
-            for t in pipeline_dag_parallel.schemas["mock_data_source"].data_tables()
-        ],
+        *[t["name"] for t in pipeline_dag_parallel.schemas["mock_data_source"].data_tables()],
     )
     assert counters_st_tasks == counters_st_tasks_par
     assert counters_nst_tasks == counters_nst_tasks_par
-    assert (
-        pipeline_dag_serial.state["sources"] == pipeline_dag_parallel.state["sources"]
-    )
+    assert pipeline_dag_serial.state["sources"] == pipeline_dag_parallel.state["sources"]
 
     # here two runs are mixed together
 
     dataset_name = "mock_data_" + uniq_id()
     pipeline_name = "pipeline_dag_regular_" + uniq_id()
 
-    @dag(
-        schedule=None, start_date=DEFAULT_DATE, catchup=False, default_args=default_args
-    )
+    @dag(schedule=None, start_date=DEFAULT_DATE, catchup=False, default_args=default_args)
     def dag_mixed():
-        tasks = PipelineTasksGroup(
-            pipeline_name, local_data_folder=TEST_STORAGE_ROOT, wipe_local_data=True
-        )
+        tasks = PipelineTasksGroup(pipeline_name, local_data_folder=TEST_STORAGE_ROOT, wipe_local_data=True)
 
-        pipeline_dag_regular = dlt.pipeline(
-            pipeline_name=pipeline_name, dataset_name=dataset_name, destination="duckdb"
-        )
+        pipeline_dag_regular = dlt.pipeline(pipeline_name=pipeline_name, dataset_name=dataset_name, destination="duckdb")
         pd_tasks = tasks.add_run(
             pipeline_dag_regular,
             mock_data_source_state(),
@@ -592,9 +530,7 @@ def test_run_multiple_sources() -> None:
     dag_def = dag_mixed()
     dag_def.test()
 
-    pipeline_dag_mixed = dlt.pipeline(
-        pipeline_name=pipeline_name, dataset_name=dataset_name, destination="duckdb"
-    )
+    pipeline_dag_mixed = dlt.pipeline(pipeline_name=pipeline_name, dataset_name=dataset_name, destination="duckdb")
     pipeline_dag_mixed.sync_destination()
     # we should have two schemas
     assert set(pipeline_dag_mixed.schema_names) == {
@@ -603,17 +539,11 @@ def test_run_multiple_sources() -> None:
     }
     counters_st_tasks_par = load_table_counts(
         pipeline_dag_mixed,
-        *[
-            t["name"]
-            for t in pipeline_dag_mixed.schemas["mock_data_source_state"].data_tables()
-        ],
+        *[t["name"] for t in pipeline_dag_mixed.schemas["mock_data_source_state"].data_tables()],
     )
     counters_nst_tasks_par = load_table_counts(
         pipeline_dag_mixed,
-        *[
-            t["name"]
-            for t in pipeline_dag_mixed.schemas["mock_data_source"].data_tables()
-        ],
+        *[t["name"] for t in pipeline_dag_mixed.schemas["mock_data_source"].data_tables()],
     )
     assert counters_st_tasks == counters_st_tasks_par
     assert counters_nst_tasks == counters_nst_tasks_par

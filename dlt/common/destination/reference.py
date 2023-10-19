@@ -44,9 +44,7 @@ from dlt.common.storages.load_storage import ParsedLoadJobFileName
 from dlt.common.utils import get_module_name
 from dlt.common.configuration.specs import GcpCredentials, AwsCredentialsWithoutDefaults
 
-TLoaderReplaceStrategy = Literal[
-    "truncate-and-insert", "insert-from-staging", "staging-optimized"
-]
+TLoaderReplaceStrategy = Literal["truncate-and-insert", "insert-from-staging", "staging-optimized"]
 
 
 class StorageSchemaInfo(NamedTuple):
@@ -110,20 +108,11 @@ class DestinationClientDwhConfiguration(DestinationClientConfiguration):
             raise ValueError("schema_name is None or empty")
 
         # if default schema is None then suffix is not added
-        if (
-            self.default_schema_name is not None
-            and schema.name != self.default_schema_name
-        ):
+        if self.default_schema_name is not None and schema.name != self.default_schema_name:
             # also normalize schema name. schema name is Python identifier and here convention may be different
-            return schema.naming.normalize_table_identifier(
-                (self.dataset_name or "") + "_" + schema.name
-            )
+            return schema.naming.normalize_table_identifier((self.dataset_name or "") + "_" + schema.name)
 
-        return (
-            self.dataset_name
-            if not self.dataset_name
-            else schema.naming.normalize_table_identifier(self.dataset_name)
-        )
+        return self.dataset_name if not self.dataset_name else schema.naming.normalize_table_identifier(self.dataset_name)
 
     if TYPE_CHECKING:
 
@@ -267,9 +256,7 @@ class JobClientBase(ABC):
         """Brings storage back into not initialized state. Typically data in storage is destroyed."""
         pass
 
-    def update_stored_schema(
-        self, only_tables: Iterable[str] = None, expected_update: TSchemaTables = None
-    ) -> Optional[TSchemaTables]:
+    def update_stored_schema(self, only_tables: Iterable[str] = None, expected_update: TSchemaTables = None) -> Optional[TSchemaTables]:
         """Updates storage to the current schema.
 
         Implementations should not assume that `expected_update` is the exact difference between destination state and the self.schema. This is only the case if
@@ -285,9 +272,7 @@ class JobClientBase(ABC):
         return expected_update
 
     @abstractmethod
-    def start_file_load(
-        self, table: TTableSchema, file_path: str, load_id: str
-    ) -> LoadJob:
+    def start_file_load(self, table: TTableSchema, file_path: str, load_id: str) -> LoadJob:
         """Creates and starts a load job for a particular `table` with content in `file_path`"""
         pass
 
@@ -299,9 +284,7 @@ class JobClientBase(ABC):
     def should_truncate_table_before_load(self, table: TTableSchema) -> bool:
         return table["write_disposition"] == "replace"
 
-    def create_table_chain_completed_followup_jobs(
-        self, table_chain: Sequence[TTableSchema]
-    ) -> List[NewLoadJob]:
+    def create_table_chain_completed_followup_jobs(self, table_chain: Sequence[TTableSchema]) -> List[NewLoadJob]:
         """Creates a list of followup jobs that should be executed after a table chain is completed"""
         return []
 
@@ -352,9 +335,7 @@ class JobClientBase(ABC):
                         f"A column {column_name} in table {table_name} in schema {self.schema.name} is incomplete. It was not bound to the data during normalizations stage and its data type is unknown. Did you add this column manually in code ie. as a merge key?"
                     )
 
-    def get_load_table(
-        self, table_name: str, prepare_for_staging: bool = False
-    ) -> TTableSchema:
+    def get_load_table(self, table_name: str, prepare_for_staging: bool = False) -> TTableSchema:
         if table_name not in self.schema.tables:
             return None
         try:
@@ -362,9 +343,7 @@ class JobClientBase(ABC):
             table = deepcopy(self.schema.tables[table_name])
             # add write disposition if not specified - in child tables
             if "write_disposition" not in table:
-                table["write_disposition"] = get_write_disposition(
-                    self.schema.tables, table_name
-                )
+                table["write_disposition"] = get_write_disposition(self.schema.tables, table_name)
             if "table_format" not in table:
                 table["table_format"] = get_table_format(self.schema.tables, table_name)
             return table
@@ -404,14 +383,10 @@ class WithStagingDataset(ABC):
 class SupportsStagingDestination:
     """Adds capability to support a staging destination for the load"""
 
-    def should_load_data_to_staging_dataset_on_staging_destination(
-        self, table: TTableSchema
-    ) -> bool:
+    def should_load_data_to_staging_dataset_on_staging_destination(self, table: TTableSchema) -> bool:
         return False
 
-    def should_truncate_table_before_load_on_staging_destination(
-        self, table: TTableSchema
-    ) -> bool:
+    def should_truncate_table_before_load_on_staging_destination(self, table: TTableSchema) -> bool:
         # the default is to truncate the tables on the staging destination...
         return True
 
@@ -446,9 +421,7 @@ class DestinationReference(Protocol):
             try:
                 if "." in destination:
                     # this is full module name
-                    destination_ref = cast(
-                        DestinationReference, import_module(destination)
-                    )
+                    destination_ref = cast(DestinationReference, import_module(destination))
                 else:
                     # from known location
                     destination_ref = cast(
@@ -461,9 +434,7 @@ class DestinationReference(Protocol):
                 else:
                     # allow local external module imported without dot
                     try:
-                        destination_ref = cast(
-                            DestinationReference, import_module(destination)
-                        )
+                        destination_ref = cast(DestinationReference, import_module(destination))
                     except ImportError:
                         raise UnknownDestinationModule(destination)
         else:

@@ -41,16 +41,12 @@ ALL_LAYOUTS = (
 
 def test_filesystem_destination_configuration() -> None:
     assert FilesystemDestinationClientConfiguration().fingerprint() == ""
-    assert FilesystemDestinationClientConfiguration(
-        bucket_url="s3://cool"
-    ).fingerprint() == digest128("s3://cool")
+    assert FilesystemDestinationClientConfiguration(bucket_url="s3://cool").fingerprint() == digest128("s3://cool")
 
 
 @pytest.mark.parametrize("write_disposition", ("replace", "append", "merge"))
 @pytest.mark.parametrize("layout", ALL_LAYOUTS)
-def test_successful_load(
-    write_disposition: str, layout: str, all_buckets_env: str
-) -> None:
+def test_successful_load(write_disposition: str, layout: str, all_buckets_env: str) -> None:
     """Test load is successful with an empty destination dataset"""
     if layout:
         os.environ["DESTINATION__FILESYSTEM__LAYOUT"] = layout
@@ -59,9 +55,7 @@ def test_successful_load(
 
     dataset_name = "test_" + uniq_id()
 
-    with perform_load(
-        dataset_name, NORMALIZED_FILES, write_disposition=write_disposition
-    ) as load_info:
+    with perform_load(dataset_name, NORMALIZED_FILES, write_disposition=write_disposition) as load_info:
         client, jobs, _, load_id = load_info
         layout = client.config.layout
         dataset_path = posixpath.join(client.fs_path, client.config.dataset_name)
@@ -97,39 +91,29 @@ def test_replace_write_disposition(layout: str, all_buckets_env: str) -> None:
         os.environ.pop("DESTINATION__FILESYSTEM__LAYOUT", None)
     dataset_name = "test_" + uniq_id()
     # NOTE: context manager will delete the dataset at the end so keep it open until the end
-    with perform_load(
-        dataset_name, NORMALIZED_FILES, write_disposition="replace"
-    ) as load_info:
+    with perform_load(dataset_name, NORMALIZED_FILES, write_disposition="replace") as load_info:
         client, _, root_path, load_id1 = load_info
         layout = client.config.layout
 
         # this path will be kept after replace
         job_2_load_1_path = posixpath.join(
             root_path,
-            LoadFilesystemJob.make_destination_filename(
-                layout, NORMALIZED_FILES[1], client.schema.name, load_id1
-            ),
+            LoadFilesystemJob.make_destination_filename(layout, NORMALIZED_FILES[1], client.schema.name, load_id1),
         )
 
-        with perform_load(
-            dataset_name, [NORMALIZED_FILES[0]], write_disposition="replace"
-        ) as load_info:
+        with perform_load(dataset_name, [NORMALIZED_FILES[0]], write_disposition="replace") as load_info:
             client, _, root_path, load_id2 = load_info
 
             # this one we expect to be replaced with
             job_1_load_2_path = posixpath.join(
                 root_path,
-                LoadFilesystemJob.make_destination_filename(
-                    layout, NORMALIZED_FILES[0], client.schema.name, load_id2
-                ),
+                LoadFilesystemJob.make_destination_filename(layout, NORMALIZED_FILES[0], client.schema.name, load_id2),
             )
 
             # First file from load1 remains, second file is replaced by load2
             # assert that only these two files are in the destination folder
             paths = []
-            for basedir, _dirs, files in client.fs_client.walk(
-                client.dataset_path, detail=False, refresh=True
-            ):
+            for basedir, _dirs, files in client.fs_client.walk(client.dataset_path, detail=False, refresh=True):
                 for f in files:
                     paths.append(posixpath.join(basedir, f))
             ls = set(paths)
@@ -145,34 +129,18 @@ def test_append_write_disposition(layout: str, all_buckets_env: str) -> None:
         os.environ.pop("DESTINATION__FILESYSTEM__LAYOUT", None)
     dataset_name = "test_" + uniq_id()
     # NOTE: context manager will delete the dataset at the end so keep it open until the end
-    with perform_load(
-        dataset_name, NORMALIZED_FILES, write_disposition="append"
-    ) as load_info:
+    with perform_load(dataset_name, NORMALIZED_FILES, write_disposition="append") as load_info:
         client, jobs1, root_path, load_id1 = load_info
-        with perform_load(
-            dataset_name, NORMALIZED_FILES, write_disposition="append"
-        ) as load_info:
+        with perform_load(dataset_name, NORMALIZED_FILES, write_disposition="append") as load_info:
             client, jobs2, root_path, load_id2 = load_info
             layout = client.config.layout
-            expected_files = [
-                LoadFilesystemJob.make_destination_filename(
-                    layout, job.file_name(), client.schema.name, load_id1
-                )
-                for job in jobs1
-            ] + [
-                LoadFilesystemJob.make_destination_filename(
-                    layout, job.file_name(), client.schema.name, load_id2
-                )
-                for job in jobs2
+            expected_files = [LoadFilesystemJob.make_destination_filename(layout, job.file_name(), client.schema.name, load_id1) for job in jobs1] + [
+                LoadFilesystemJob.make_destination_filename(layout, job.file_name(), client.schema.name, load_id2) for job in jobs2
             ]
-            expected_files = sorted(
-                [posixpath.join(root_path, fn) for fn in expected_files]
-            )
+            expected_files = sorted([posixpath.join(root_path, fn) for fn in expected_files])
 
             paths = []
-            for basedir, _dirs, files in client.fs_client.walk(
-                client.dataset_path, detail=False, refresh=True
-            ):
+            for basedir, _dirs, files in client.fs_client.walk(client.dataset_path, detail=False, refresh=True):
                 for f in files:
                     paths.append(posixpath.join(basedir, f))
             assert list(sorted(paths)) == expected_files

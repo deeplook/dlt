@@ -36,16 +36,10 @@ SchemaFileExtensions = get_args(TSchemaFileFormat)
 @configspec
 class SchemaStorageConfiguration(BaseConfiguration):
     schema_volume_path: str = None  # path to volume with default schemas
-    import_schema_path: Optional[
-        str
-    ] = None  # path from which to import a schema into storage
+    import_schema_path: Optional[str] = None  # path from which to import a schema into storage
     export_schema_path: Optional[str] = None  # path to which export schema from storage
-    external_schema_format: TSchemaFileFormat = (
-        "yaml"  # format in which to expect external schema
-    )
-    external_schema_format_remove_defaults: bool = (
-        True  # remove default values when exporting schema
-    )
+    external_schema_format: TSchemaFileFormat = "yaml"  # format in which to expect external schema
+    external_schema_format_remove_defaults: bool = True  # remove default values when exporting schema
 
     if TYPE_CHECKING:
 
@@ -60,9 +54,7 @@ class SchemaStorageConfiguration(BaseConfiguration):
 
 @configspec
 class NormalizeStorageConfiguration(BaseConfiguration):
-    normalize_volume_path: str = (
-        None  # path to volume where normalized loader files will be stored
-    )
+    normalize_volume_path: str = None  # path to volume where normalized loader files will be stored
 
     if TYPE_CHECKING:
 
@@ -72,24 +64,16 @@ class NormalizeStorageConfiguration(BaseConfiguration):
 
 @configspec
 class LoadStorageConfiguration(BaseConfiguration):
-    load_volume_path: str = (
-        None  # path to volume where files to be loaded to analytical storage are stored
-    )
-    delete_completed_jobs: bool = (
-        False  # if set to true the folder with completed jobs will be deleted
-    )
+    load_volume_path: str = None  # path to volume where files to be loaded to analytical storage are stored
+    delete_completed_jobs: bool = False  # if set to true the folder with completed jobs will be deleted
 
     if TYPE_CHECKING:
 
-        def __init__(
-            self, load_volume_path: str = None, delete_completed_jobs: bool = None
-        ) -> None:
+        def __init__(self, load_volume_path: str = None, delete_completed_jobs: bool = None) -> None:
             ...
 
 
-FileSystemCredentials = Union[
-    AwsCredentials, GcpServiceAccountCredentials, AzureCredentials, GcpOAuthCredentials
-]
+FileSystemCredentials = Union[AwsCredentials, GcpServiceAccountCredentials, AzureCredentials, GcpOAuthCredentials]
 
 
 @configspec
@@ -123,9 +107,7 @@ class FilesystemConfiguration(BaseConfiguration):
         """`bucket_url` protocol"""
         url = urlparse(self.bucket_url)
         # this prevents windows absolute paths to be recognized as schemas
-        if not url.scheme or (
-            os.path.isabs(self.bucket_url) and "\\" in self.bucket_url
-        ):
+        if not url.scheme or (os.path.isabs(self.bucket_url) and "\\" in self.bucket_url):
             return "file"
         else:
             return url.scheme
@@ -133,9 +115,7 @@ class FilesystemConfiguration(BaseConfiguration):
     def on_resolved(self) -> None:
         url = urlparse(self.bucket_url)
         if not url.path and not url.netloc:
-            raise ConfigurationValueError(
-                "File path or netloc missing. Field bucket_url of FilesystemClientConfiguration must contain valid url with a path or host:password component."
-            )
+            raise ConfigurationValueError("File path or netloc missing. Field bucket_url of FilesystemClientConfiguration must contain valid url with a path or host:password component.")
         # this is just a path in local file system
         if url.path == self.bucket_url:
             url = url._replace(scheme="file")
@@ -165,7 +145,5 @@ class FilesystemConfiguration(BaseConfiguration):
 
     if TYPE_CHECKING:
 
-        def __init__(
-            self, bucket_url: str, credentials: FileSystemCredentials = None
-        ) -> None:
+        def __init__(self, bucket_url: str, credentials: FileSystemCredentials = None) -> None:
             ...

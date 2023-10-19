@@ -34,9 +34,7 @@ def _default_profile_name(credentials: DestinationClientDwhConfiguration) -> str
     return profile_name
 
 
-def _create_dbt_deps(
-    destination_names: List[str], dbt_version: str = DEFAULT_DBT_VERSION
-) -> List[str]:
+def _create_dbt_deps(destination_names: List[str], dbt_version: str = DEFAULT_DBT_VERSION) -> List[str]:
     if dbt_version:
         # if parses as version use "==" operator
         with contextlib.suppress(ValueError):
@@ -65,17 +63,13 @@ def _create_dbt_deps(
     return all_packages + additional_deps + [dlt_requirement]
 
 
-def restore_venv(
-    venv_dir: str, destination_names: List[str], dbt_version: str = DEFAULT_DBT_VERSION
-) -> Venv:
+def restore_venv(venv_dir: str, destination_names: List[str], dbt_version: str = DEFAULT_DBT_VERSION) -> Venv:
     venv = Venv.restore(venv_dir)
     venv.add_dependencies(_create_dbt_deps(destination_names, dbt_version))
     return venv
 
 
-def create_venv(
-    venv_dir: str, destination_names: List[str], dbt_version: str = DEFAULT_DBT_VERSION
-) -> Venv:
+def create_venv(venv_dir: str, destination_names: List[str], dbt_version: str = DEFAULT_DBT_VERSION) -> Venv:
     return Venv.create(venv_dir, _create_dbt_deps(destination_names, dbt_version))
 
 

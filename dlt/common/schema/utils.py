@@ -72,11 +72,7 @@ DEFAULT_WRITE_DISPOSITION: TWriteDisposition = "append"
 
 def is_valid_schema_name(name: str) -> bool:
     """Schema name must be a valid python identifier and have max len of 64"""
-    return (
-        name is not None
-        and name.isidentifier()
-        and len(name) <= InvalidSchemaName.MAXIMUM_SCHEMA_NAME_LENGTH
-    )
+    return name is not None and name.isidentifier() and len(name) <= InvalidSchemaName.MAXIMUM_SCHEMA_NAME_LENGTH
 
 
 def normalize_schema_name(name: str) -> str:
@@ -215,9 +211,7 @@ def generate_version_hash(stored_schema: TStoredSchema) -> str:
     return base64.b64encode(h.digest()).decode("ascii")
 
 
-def verify_schema_hash(
-    loaded_schema_dict: DictStrAny, verifies_if_not_migrated: bool = False
-) -> bool:
+def verify_schema_hash(loaded_schema_dict: DictStrAny, verifies_if_not_migrated: bool = False) -> bool:
     # generates content hash and compares with existing
     engine_version: str = loaded_schema_dict.get("engine_version")
     # if upgrade is needed, the hash cannot be compared
@@ -333,9 +327,7 @@ def validate_stored_schema(stored_schema: TStoredSchema) -> None:
                 raise ParentTableNotFoundException(table_name, parent_table_name)
 
 
-def migrate_schema(
-    schema_dict: DictStrAny, from_engine: int, to_engine: int
-) -> TStoredSchema:
+def migrate_schema(schema_dict: DictStrAny, from_engine: int, to_engine: int) -> TStoredSchema:
     if from_engine == to_engine:
         return cast(TStoredSchema, schema_dict)
 
@@ -348,9 +340,7 @@ def migrate_schema(
         current = cast(TStoredSchema, schema_dict)
         # add default normalizers and root hash propagation
         current["normalizers"], _, _ = import_normalizers(explicit_normalizers())
-        current["normalizers"]["json"]["config"] = {
-            "propagation": {"root": {"_dlt_id": "_dlt_root_id"}}
-        }
+        current["normalizers"]["json"]["config"] = {"propagation": {"root": {"_dlt_id": "_dlt_root_id"}}}
         # move settings, convert strings to simple regexes
         d_h: Dict[TColumnHint, List[TSimpleRegex]] = schema_dict.pop("hints", {})
         for h_k, h_l in d_h.items():
@@ -419,16 +409,12 @@ def migrate_schema(
 
     schema_dict["engine_version"] = from_engine
     if from_engine != to_engine:
-        raise SchemaEngineNoUpgradePathException(
-            schema_dict["name"], schema_dict["engine_version"], from_engine, to_engine
-        )
+        raise SchemaEngineNoUpgradePathException(schema_dict["name"], schema_dict["engine_version"], from_engine, to_engine)
 
     return cast(TStoredSchema, schema_dict)
 
 
-def autodetect_sc_type(
-    detection_fs: Sequence[TTypeDetections], t: Type[Any], v: Any
-) -> TDataType:
+def autodetect_sc_type(detection_fs: Sequence[TTypeDetections], t: Type[Any], v: Any) -> TDataType:
     if detection_fs:
         for detection_fn in detection_fs:
             # the method must exist in the module
@@ -451,9 +437,7 @@ def compare_complete_columns(a: TColumnSchema, b: TColumnSchema) -> bool:
     return a["data_type"] == b["data_type"] and a["name"] == b["name"]
 
 
-def merge_columns(
-    col_a: TColumnSchema, col_b: TColumnSchema, merge_defaults: bool = True
-) -> TColumnSchema:
+def merge_columns(col_a: TColumnSchema, col_b: TColumnSchema, merge_defaults: bool = True) -> TColumnSchema:
     """Merges `col_b` into `col_a`. if `merge_defaults` is True, only hints from `col_b` that are not default in `col_a` will be set.
 
     Modifies col_a in place and returns it
@@ -478,9 +462,7 @@ def diff_tables(tab_a: TTableSchema, tab_b: TPartialTableSchema) -> TPartialTabl
     table_name = tab_a["name"]
     # check if table properties can be merged
     if tab_a.get("parent") != tab_b.get("parent"):
-        raise TablePropertiesConflictException(
-            table_name, "parent", tab_a.get("parent"), tab_b.get("parent")
-        )
+        raise TablePropertiesConflictException(table_name, "parent", tab_a.get("parent"), tab_b.get("parent"))
 
     # get new columns, changes in the column data type or other properties are not allowed
     tab_a_columns = tab_a["columns"]
@@ -521,9 +503,7 @@ def diff_tables(tab_a: TTableSchema, tab_b: TPartialTableSchema) -> TPartialTabl
 
     # this should not really happen
     if tab_a.get("parent") is not None and (resource := tab_b.get("resource")):
-        raise TablePropertiesConflictException(
-            table_name, "resource", resource, tab_a.get("parent")
-        )
+        raise TablePropertiesConflictException(table_name, "resource", resource, tab_a.get("parent"))
 
     return partial_table
 
@@ -540,9 +520,7 @@ def diff_tables(tab_a: TTableSchema, tab_b: TPartialTableSchema) -> TPartialTabl
 #         return False
 
 
-def merge_tables(
-    table: TTableSchema, partial_table: TPartialTableSchema
-) -> TPartialTableSchema:
+def merge_tables(table: TTableSchema, partial_table: TPartialTableSchema) -> TPartialTableSchema:
     """Merges "partial_table" into "table". `table` is merged in place. Returns the diff partial table.
 
     `table` and `partial_table` names must be identical. A table diff is generated and applied to `table`:
@@ -552,9 +530,7 @@ def merge_tables(
     """
 
     if table["name"] != partial_table["name"]:
-        raise TablePropertiesConflictException(
-            table["name"], "name", table["name"], partial_table["name"]
-        )
+        raise TablePropertiesConflictException(table["name"], "name", table["name"], partial_table["name"])
     diff_table = diff_tables(table, partial_table)
     # add new columns when all checks passed
     table["columns"].update(diff_table["columns"])
@@ -578,12 +554,7 @@ def get_columns_names_with_prop(
 ) -> List[str]:
     # column_prop: TColumnProp = hint_to_column_prop(hint_type)
     # default = column_prop != "nullable"  # default is true, only for nullable false
-    return [
-        c["name"]
-        for c in table["columns"].values()
-        if bool(c.get(column_prop, False)) is True
-        and (include_incomplete or is_complete_column(c))
-    ]
+    return [c["name"] for c in table["columns"].values() if bool(c.get(column_prop, False)) is True and (include_incomplete or is_complete_column(c))]
 
 
 def merge_schema_updates(schema_updates: Sequence[TSchemaUpdate]) -> TSchemaTables:
@@ -592,9 +563,7 @@ def merge_schema_updates(schema_updates: Sequence[TSchemaUpdate]) -> TSchemaTabl
         for table_name, table_updates in schema_update.items():
             for partial_table in table_updates:
                 # aggregate schema updates
-                aggregated_table = aggregated_update.setdefault(
-                    table_name, partial_table
-                )
+                aggregated_table = aggregated_update.setdefault(table_name, partial_table)
                 aggregated_table["columns"].update(partial_table["columns"])
     return aggregated_update
 
@@ -617,18 +586,14 @@ def get_inherited_table_hint(
     if allow_none:
         return None
 
-    raise ValueError(
-        f"No table hint '{table_hint_name} found in the chain of tables for '{table_name}'."
-    )
+    raise ValueError(f"No table hint '{table_hint_name} found in the chain of tables for '{table_name}'.")
 
 
 def get_write_disposition(tables: TSchemaTables, table_name: str) -> TWriteDisposition:
     """Returns table hint of a table if present. If not, looks up into parent table"""
     return cast(
         TWriteDisposition,
-        get_inherited_table_hint(
-            tables, table_name, "write_disposition", allow_none=False
-        ),
+        get_inherited_table_hint(tables, table_name, "write_disposition", allow_none=False),
     )
 
 
@@ -646,10 +611,7 @@ def table_schema_has_type(table: TTableSchema, _typ: TDataType) -> bool:
 
 def table_schema_has_type_with_precision(table: TTableSchema, _typ: TDataType) -> bool:
     """Checks if `table` schema contains column with type _typ and precision set"""
-    return any(
-        c.get("data_type") == _typ and c.get("precision") is not None
-        for c in table["columns"].values()
-    )
+    return any(c.get("data_type") == _typ and c.get("precision") is not None for c in table["columns"].values())
 
 
 def get_top_level_table(tables: TSchemaTables, table_name: str) -> TTableSchema:
@@ -676,9 +638,7 @@ def get_child_tables(tables: TSchemaTables, table_name: str) -> List[TTableSchem
     return chain
 
 
-def group_tables_by_resource(
-    tables: TSchemaTables, pattern: Optional[REPattern] = None
-) -> Dict[str, List[TTableSchema]]:
+def group_tables_by_resource(tables: TSchemaTables, pattern: Optional[REPattern] = None) -> Dict[str, List[TTableSchema]]:
     """Create a dict of resources and their associated tables and descendant tables
     If `pattern` is supplied, the result is filtered to only resource names matching the pattern.
     """

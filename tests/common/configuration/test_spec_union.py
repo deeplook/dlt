@@ -150,11 +150,7 @@ def test_unresolved_union() -> None:
         resolve_configuration(ZenConfig())
     assert cfm_ex.value.fields == ["credentials"]
     # all the missing fields from all the union elements are present
-    checked_keys = set(
-        t.key
-        for t in itertools.chain(*cfm_ex.value.traces.values())
-        if t.provider == EnvironProvider().name
-    )
+    checked_keys = set(t.key for t in itertools.chain(*cfm_ex.value.traces.values()) if t.provider == EnvironProvider().name)
     assert checked_keys == {
         "CREDENTIALS__EMAIL",
         "CREDENTIALS__PASSWORD",
@@ -169,9 +165,7 @@ def test_union_decorator() -> None:
     # this will generate equivalent of ZenConfig
     @dlt.source
     def zen_source(
-        credentials: Union[
-            ZenApiKeyCredentials, ZenEmailCredentials, str
-        ] = dlt.secrets.value,
+        credentials: Union[ZenApiKeyCredentials, ZenEmailCredentials, str] = dlt.secrets.value,
         some_option: bool = False,
     ):
         # depending on what the user provides in config, ZenApiKeyCredentials or ZenEmailCredentials will be injected in credentials
@@ -216,11 +210,7 @@ class GoogleAnalyticsCredentialsOAuth(GoogleAnalyticsCredentialsBase):
 
 
 @dlt.source(max_table_nesting=2)
-def google_analytics(
-    credentials: Union[
-        GoogleAnalyticsCredentialsOAuth, GcpServiceAccountCredentials
-    ] = dlt.secrets.value
-):
+def google_analytics(credentials: Union[GoogleAnalyticsCredentialsOAuth, GcpServiceAccountCredentials] = dlt.secrets.value):
     yield dlt.resource([credentials], name="creds")
 
 
@@ -244,9 +234,7 @@ def test_google_auth_union(environment: Any) -> None:
 
 
 @dlt.source
-def sql_database(
-    credentials: Union[ConnectionStringCredentials, Engine, str] = dlt.secrets.value
-):
+def sql_database(credentials: Union[ConnectionStringCredentials, Engine, str] = dlt.secrets.value):
     yield dlt.resource([credentials], name="creds")
 
 
@@ -280,9 +268,7 @@ def test_initialize_credentials(environment: Any) -> None:
     assert not zen_cred.is_resolved()
     zen_cred = initialize_credentials(ZenEmailCredentials, "email:rfix:pass")
     assert zen_cred.is_resolved()
-    zen_cred = initialize_credentials(
-        ZenEmailCredentials, {"email": "rfix", "password": "pass"}
-    )
+    zen_cred = initialize_credentials(ZenEmailCredentials, {"email": "rfix", "password": "pass"})
     assert zen_cred.is_resolved()
     with pytest.raises(NativeValueError):
         initialize_credentials(ZenEmailCredentials, "email")
@@ -296,9 +282,7 @@ def test_initialize_credentials(environment: Any) -> None:
     assert isinstance(zen_cred, ZenEmailCredentials)
     assert zen_cred.is_resolved()
     # resolve from dict
-    zen_cred = initialize_credentials(
-        ZenUnion, {"api_key": "key", "api_secret": "secret"}
-    )
+    zen_cred = initialize_credentials(ZenUnion, {"api_key": "key", "api_secret": "secret"})
     assert isinstance(zen_cred, ZenApiKeyCredentials)
     assert zen_cred.is_resolved()
     # does not fit any native format

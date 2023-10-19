@@ -18,9 +18,7 @@ class EnvironProvider(ConfigProvider):
     def name(self) -> str:
         return "Environment Variables"
 
-    def get_value(
-        self, key: str, hint: Type[Any], pipeline_name: str, *sections: str
-    ) -> Tuple[Optional[Any], str]:
+    def get_value(self, key: str, hint: Type[Any], pipeline_name: str, *sections: str) -> Tuple[Optional[Any], str]:
         # apply section to the key
         key = self.get_key_name(key, pipeline_name, *sections)
         if hint is TSecretValue:

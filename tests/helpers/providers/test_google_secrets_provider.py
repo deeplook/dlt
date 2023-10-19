@@ -55,13 +55,9 @@ def test_regular_keys() -> None:
     )
 
     # load source test_source which should also load "sources", "pipeline-sources", "sources-test_source" and "pipeline-sources-test_source"
-    assert provider.get_value(
-        "only_pipeline", AnyType, "pipeline", "sources", "test_source"
-    ) == ("ONLY", "pipeline-sources-test_source-only_pipeline")
+    assert provider.get_value("only_pipeline", AnyType, "pipeline", "sources", "test_source") == ("ONLY", "pipeline-sources-test_source-only_pipeline")
     # we set sources.test_source.secret_prop_1="OVR_A" in pipeline-sources to override value in sources
-    assert provider.get_value(
-        "secret_prop_1", AnyType, None, "sources", "test_source"
-    ) == ("OVR_A", "sources-test_source-secret_prop_1")
+    assert provider.get_value("secret_prop_1", AnyType, None, "sources", "test_source") == ("OVR_A", "sources-test_source-secret_prop_1")
     # get element unique to pipeline-sources
     assert provider.get_value("only_pipeline_top", AnyType, "pipeline", "sources") == (
         "TOP",
@@ -73,14 +69,10 @@ def test_regular_keys() -> None:
         "sources-all_sources_present",
     )
     # get element unique to sources-test_source
-    assert provider.get_value(
-        "secret_prop_2", AnyType, None, "sources", "test_source"
-    ) == ("B", "sources-test_source-secret_prop_2")
+    assert provider.get_value("secret_prop_2", AnyType, None, "sources", "test_source") == ("B", "sources-test_source-secret_prop_2")
 
     # this destination will not be found
-    assert provider.get_value(
-        "url", AnyType, "pipeline", "destination", "filesystem"
-    ) == (None, "pipeline-destination-filesystem-url")
+    assert provider.get_value("url", AnyType, "pipeline", "destination", "filesystem") == (None, "pipeline-destination-filesystem-url")
 
     # try a single secret value
     assert provider.get_value("secret", TSecretValue, "pipeline") == (

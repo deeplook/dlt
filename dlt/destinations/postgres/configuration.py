@@ -23,9 +23,7 @@ class PostgresCredentials(ConnectionStringCredentials):
 
     def parse_native_representation(self, native_value: Any) -> None:
         super().parse_native_representation(native_value)
-        self.connect_timeout = int(
-            self.query.get("connect_timeout", self.connect_timeout)
-        )
+        self.connect_timeout = int(self.query.get("connect_timeout", self.connect_timeout))
         if not self.is_partial():
             self.resolve()
 

@@ -43,11 +43,7 @@ class SerializableResolvedValueTrace(NamedTuple):
 
     def asdict(self) -> StrAny:
         """A dictionary representation that is safe to load."""
-        return {
-            k: v
-            for k, v in self._asdict().items()
-            if k not in ("value", "default_value")
-        }
+        return {k: v for k, v in self._asdict().items() if k not in ("value", "default_value")}
 
     def asstr(self, verbosity: int = 0) -> str:
         return f"{self.key}->{self.value} in {'.'.join(self.sections)} by {self.provider_name}"
@@ -163,14 +159,10 @@ class PipelineTrace:
 
 
 class SupportsTracking(Protocol):
-    def on_start_trace(
-        self, trace: PipelineTrace, step: TPipelineStep, pipeline: SupportsPipeline
-    ) -> None:
+    def on_start_trace(self, trace: PipelineTrace, step: TPipelineStep, pipeline: SupportsPipeline) -> None:
         ...
 
-    def on_start_trace_step(
-        self, trace: PipelineTrace, step: TPipelineStep, pipeline: SupportsPipeline
-    ) -> None:
+    def on_start_trace_step(self, trace: PipelineTrace, step: TPipelineStep, pipeline: SupportsPipeline) -> None:
         ...
 
     def on_end_trace_step(
@@ -198,9 +190,7 @@ def start_trace(step: TPipelineStep, pipeline: SupportsPipeline) -> PipelineTrac
     return trace
 
 
-def start_trace_step(
-    trace: PipelineTrace, step: TPipelineStep, pipeline: SupportsPipeline
-) -> PipelineStepTrace:
+def start_trace_step(trace: PipelineTrace, step: TPipelineStep, pipeline: SupportsPipeline) -> PipelineStepTrace:
     trace_step = PipelineStepTrace(uniq_id(), step, pendulum.now())
     with suppress_and_warn():
         TRACKING_MODULE.on_start_trace_step(trace, step, pipeline)
@@ -249,9 +239,7 @@ def end_trace_step(
         TRACKING_MODULE.on_end_trace_step(trace, step, pipeline, step_info)
 
 
-def end_trace(
-    trace: PipelineTrace, pipeline: SupportsPipeline, trace_path: str
-) -> None:
+def end_trace(trace: PipelineTrace, pipeline: SupportsPipeline, trace_path: str) -> None:
     trace.finished_at = pendulum.now()
     if trace_path:
         save_trace(trace_path, trace)
@@ -298,9 +286,7 @@ def describe_extract_data(data: Any) -> List[ExtractDataInfo]:
             data_info.append(
                 {
                     "name": item.name,
-                    "data_type": "resource"
-                    if isinstance(item, DltResource)
-                    else "source",
+                    "data_type": "resource" if isinstance(item, DltResource) else "source",
                 }
             )
             return False

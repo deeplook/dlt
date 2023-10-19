@@ -81,9 +81,7 @@ class BigQuerySqlClient(SqlClientBase[bigquery.Client], DBTransaction):
         super().__init__(credentials.project_id, dataset_name)
 
         self._default_retry = bigquery.DEFAULT_RETRY.with_deadline(retry_deadline)
-        self._default_query = bigquery.QueryJobConfig(
-            default_dataset=self.fully_qualified_dataset_name(escape=False)
-        )
+        self._default_query = bigquery.QueryJobConfig(default_dataset=self.fully_qualified_dataset_name(escape=False))
         self._session_query: bigquery.QueryJobConfig = None
 
     @raise_open_connection_error
@@ -131,11 +129,7 @@ class BigQuerySqlClient(SqlClientBase[bigquery.Client], DBTransaction):
                 self._session_query = bigquery.QueryJobConfig(
                     create_session=False,
                     default_dataset=self.fully_qualified_dataset_name(escape=False),
-                    connection_properties=[
-                        bigquery.query.ConnectionProperty(
-                            key="session_id", value=job.session_info.session_id
-                        )
-                    ],
+                    connection_properties=[bigquery.query.ConnectionProperty(key="session_id", value=job.session_info.session_id)],
                 )
                 try:
                     job.result()
@@ -144,9 +138,7 @@ class BigQuerySqlClient(SqlClientBase[bigquery.Client], DBTransaction):
                     self._session_query = None
                     raise
             else:
-                raise dbapi_exceptions.ProgrammingError(
-                    "Nested transactions not supported on BigQuery"
-                )
+                raise dbapi_exceptions.ProgrammingError("Nested transactions not supported on BigQuery")
             yield self
             self.commit_transaction()
         except Exception:
@@ -198,9 +190,7 @@ class BigQuerySqlClient(SqlClientBase[bigquery.Client], DBTransaction):
             timeout=self.http_timeout,
         )
 
-    def execute_sql(
-        self, sql: AnyStr, *args: Any, **kwargs: Any
-    ) -> Optional[Sequence[Sequence[Any]]]:
+    def execute_sql(self, sql: AnyStr, *args: Any, **kwargs: Any) -> Optional[Sequence[Sequence[Any]]]:
         with self.execute_query(sql, *args, **kwargs) as curr:
             if not curr.description:
                 return None
@@ -215,9 +205,7 @@ class BigQuerySqlClient(SqlClientBase[bigquery.Client], DBTransaction):
 
     @contextmanager
     @raise_database_error
-    def execute_query(
-        self, query: AnyStr, *args: Any, **kwargs: Any
-    ) -> Iterator[DBApiCursor]:
+    def execute_query(self, query: AnyStr, *args: Any, **kwargs: Any) -> Iterator[DBApiCursor]:
         conn: DbApiConnection = None
         curr: DBApiCursor = None
         db_args = args if args else kwargs if kwargs else None
@@ -225,9 +213,7 @@ class BigQuerySqlClient(SqlClientBase[bigquery.Client], DBTransaction):
             conn = DbApiConnection(client=self._client)
             curr = conn.cursor()
             # if session exists give it a preference
-            curr.execute(
-                query, db_args, job_config=self._session_query or self._default_query
-            )
+            curr.execute(query, db_args, job_config=self._session_query or self._default_query)
             yield BigQueryDBApiCursorImpl(curr)  # type: ignore
         finally:
             if conn:
@@ -236,9 +222,7 @@ class BigQuerySqlClient(SqlClientBase[bigquery.Client], DBTransaction):
 
     def fully_qualified_dataset_name(self, escape: bool = True) -> str:
         if escape:
-            project_id = self.capabilities.escape_identifier(
-                self.credentials.project_id
-            )
+            project_id = self.capabilities.escape_identifier(self.credentials.project_id)
             dataset_name = self.capabilities.escape_identifier(self.dataset_name)
         else:
             project_id = self.credentials.project_id
@@ -252,35 +236,19 @@ class BigQuerySqlClient(SqlClientBase[bigquery.Client], DBTransaction):
             cloud_ex = ex.args[0]
             reason = cls._get_reason_from_errors(cloud_ex)
             if reason is None:
-                if isinstance(
-                    ex, (dbapi_exceptions.DataError, dbapi_exceptions.IntegrityError)
-                ):
+                if isinstance(ex, (dbapi_exceptions.DataError, dbapi_exceptions.IntegrityError)):
                     return DatabaseTerminalException(ex)
                 elif isinstance(ex, dbapi_exceptions.ProgrammingError):
                     return DatabaseTransientException(ex)
             if reason == "notFound":
                 return DatabaseUndefinedRelation(ex)
-            if (
-                reason == "invalidQuery"
-                and "was not found" in str(ex)
-                and "Dataset" in str(ex)
-            ):
+            if reason == "invalidQuery" and "was not found" in str(ex) and "Dataset" in str(ex):
                 return DatabaseUndefinedRelation(ex)
-            if (
-                reason == "invalidQuery"
-                and "Not found" in str(ex)
-                and ("Dataset" in str(ex) or "Table" in str(ex))
-            ):
+            if reason == "invalidQuery" and "Not found" in str(ex) and ("Dataset" in str(ex) or "Table" in str(ex)):
                 return DatabaseUndefinedRelation(ex)
-            if (
-                reason == "accessDenied"
-                and "Dataset" in str(ex)
-                and "not exist" in str(ex)
-            ):
+            if reason == "accessDenied" and "Dataset" in str(ex) and "not exist" in str(ex):
                 return DatabaseUndefinedRelation(ex)
-            if reason == "invalidQuery" and (
-                "Unrecognized name" in str(ex) or "cannot be null" in str(ex)
-            ):
+            if reason == "invalidQuery" and ("Unrecognized name" in str(ex) or "cannot be null" in str(ex)):
                 # unknown column, inserting NULL into required field
                 return DatabaseTerminalException(ex)
             if reason in BQ_TERMINAL_REASONS:
@@ -305,6 +273,4 @@ class BigQuerySqlClient(SqlClientBase[bigquery.Client], DBTransaction):
 
 class TransactionsNotImplementedError(NotImplementedError):
     def __init__(self) -> None:
-        super().__init__(
-            "BigQuery does not support transaction management. Instead you may wrap your SQL script in BEGIN TRANSACTION; ... COMMIT TRANSACTION;"
-        )
+        super().__init__("BigQuery does not support transaction management. Instead you may wrap your SQL script in BEGIN TRANSACTION; ... COMMIT TRANSACTION;")

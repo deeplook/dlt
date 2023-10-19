@@ -239,20 +239,13 @@ def test_columns_argument() -> None:
 
 
 def test_apply_hints_columns() -> None:
-    @dlt.resource(
-        name="user", columns={"tags": {"data_type": "complex", "primary_key": True}}
-    )
+    @dlt.resource(name="user", columns={"tags": {"data_type": "complex", "primary_key": True}})
     def get_users():
         yield {"u": "u", "tags": [1, 2, 3]}
 
     users = get_users()
-    assert users.columns == {
-        "tags": {"data_type": "complex", "name": "tags", "primary_key": True}
-    }
-    assert (
-        cast(TTableSchemaColumns, users.columns)["tags"]
-        == users.compute_table_schema()["columns"]["tags"]
-    )
+    assert users.columns == {"tags": {"data_type": "complex", "name": "tags", "primary_key": True}}
+    assert cast(TTableSchemaColumns, users.columns)["tags"] == users.compute_table_schema()["columns"]["tags"]
 
     # columns property can be changed in place
     cast(TTableSchemaColumns, users.columns)["tags"]["data_type"] = "text"
@@ -358,34 +351,22 @@ def test_source_sections() -> None:
     assert list(resource_f_2()) == ["SOURCES LEVEL"]
 
     # values in module section
-    os.environ[
-        f"{known_sections.SOURCES.upper()}__SECTION_SOURCE__VAL"
-    ] = "SECTION SOURCE LEVEL"
+    os.environ[f"{known_sections.SOURCES.upper()}__SECTION_SOURCE__VAL"] = "SECTION SOURCE LEVEL"
     assert list(init_source_f_1()) == ["SECTION SOURCE LEVEL"]
     assert list(init_resource_f_2()) == ["SECTION SOURCE LEVEL"]
     # here overridden by __source_name__
-    os.environ[
-        f"{known_sections.SOURCES.upper()}__NAME_OVERRIDDEN__VAL"
-    ] = "NAME OVERRIDDEN LEVEL"
+    os.environ[f"{known_sections.SOURCES.upper()}__NAME_OVERRIDDEN__VAL"] = "NAME OVERRIDDEN LEVEL"
     assert list(source_f_1()) == ["NAME OVERRIDDEN LEVEL"]
     assert list(resource_f_2()) == ["NAME OVERRIDDEN LEVEL"]
 
     # values in function name section
-    os.environ[
-        f"{known_sections.SOURCES.upper()}__SECTION_SOURCE__INIT_SOURCE_F_1__VAL"
-    ] = "SECTION INIT_SOURCE_F_1 LEVEL"
+    os.environ[f"{known_sections.SOURCES.upper()}__SECTION_SOURCE__INIT_SOURCE_F_1__VAL"] = "SECTION INIT_SOURCE_F_1 LEVEL"
     assert list(init_source_f_1()) == ["SECTION INIT_SOURCE_F_1 LEVEL"]
-    os.environ[
-        f"{known_sections.SOURCES.upper()}__SECTION_SOURCE__INIT_RESOURCE_F_2__VAL"
-    ] = "SECTION INIT_RESOURCE_F_2 LEVEL"
+    os.environ[f"{known_sections.SOURCES.upper()}__SECTION_SOURCE__INIT_RESOURCE_F_2__VAL"] = "SECTION INIT_RESOURCE_F_2 LEVEL"
     assert list(init_resource_f_2()) == ["SECTION INIT_RESOURCE_F_2 LEVEL"]
-    os.environ[
-        f"{known_sections.SOURCES.upper()}__NAME_OVERRIDDEN__SOURCE_F_1__VAL"
-    ] = "NAME SOURCE_F_1 LEVEL"
+    os.environ[f"{known_sections.SOURCES.upper()}__NAME_OVERRIDDEN__SOURCE_F_1__VAL"] = "NAME SOURCE_F_1 LEVEL"
     assert list(source_f_1()) == ["NAME SOURCE_F_1 LEVEL"]
-    os.environ[
-        f"{known_sections.SOURCES.upper()}__NAME_OVERRIDDEN__RESOURCE_F_2__VAL"
-    ] = "NAME RESOURCE_F_2 LEVEL"
+    os.environ[f"{known_sections.SOURCES.upper()}__NAME_OVERRIDDEN__RESOURCE_F_2__VAL"] = "NAME RESOURCE_F_2 LEVEL"
     assert list(resource_f_2()) == ["NAME RESOURCE_F_2 LEVEL"]
 
 
@@ -434,9 +415,7 @@ def test_resources_injected_sections() -> None:
     )
 
     # standalone resources must accept the injected sections for lookups
-    os.environ[
-        "SOURCES__EXTERNAL_RESOURCES__SOURCE_VAL"
-    ] = "SOURCES__EXTERNAL_RESOURCES__SOURCE_VAL"
+    os.environ["SOURCES__EXTERNAL_RESOURCES__SOURCE_VAL"] = "SOURCES__EXTERNAL_RESOURCES__SOURCE_VAL"
     os.environ["SOURCES__EXTERNAL_RESOURCES__VAL"] = "SOURCES__EXTERNAL_RESOURCES__VAL"
     os.environ["SOURCES__SECTION_SOURCE__VAL"] = "SOURCES__SECTION_SOURCE__VAL"
     os.environ["SOURCES__NAME_OVERRIDDEN__VAL"] = "SOURCES__NAME_OVERRIDDEN__VAL"
@@ -469,11 +448,7 @@ def test_resources_injected_sections() -> None:
     s = with_external()
     assert s.name == "with_external"
     assert s.section == "external_resources"  # from module name hosting the function
-    with inject_section(
-        ConfigSectionContext(
-            pipeline_name="injected_external", sections=("sources", s.section, s.name)
-        )
-    ):
+    with inject_section(ConfigSectionContext(pipeline_name="injected_external", sections=("sources", s.section, s.name))):
         # now the external sources must adopt the injected namespace
         assert (list(s)) == [
             "SOURCES__EXTERNAL_RESOURCES__SOURCE_VAL",
@@ -483,18 +458,10 @@ def test_resources_injected_sections() -> None:
         ]
 
     # now with environ values that specify source/resource name: the module of the source, the name of the resource
-    os.environ[
-        "SOURCES__EXTERNAL_RESOURCES__INIT_RESOURCE_F_2__VAL"
-    ] = "SOURCES__EXTERNAL_RESOURCES__INIT_RESOURCE_F_2__VAL"
-    os.environ[
-        "SOURCES__EXTERNAL_RESOURCES__RESOURCE_F_2__VAL"
-    ] = "SOURCES__EXTERNAL_RESOURCES__RESOURCE_F_2__VAL"
+    os.environ["SOURCES__EXTERNAL_RESOURCES__INIT_RESOURCE_F_2__VAL"] = "SOURCES__EXTERNAL_RESOURCES__INIT_RESOURCE_F_2__VAL"
+    os.environ["SOURCES__EXTERNAL_RESOURCES__RESOURCE_F_2__VAL"] = "SOURCES__EXTERNAL_RESOURCES__RESOURCE_F_2__VAL"
     s = with_external()
-    with inject_section(
-        ConfigSectionContext(
-            pipeline_name="injected_external", sections=("sources", s.section, s.name)
-        )
-    ):
+    with inject_section(ConfigSectionContext(pipeline_name="injected_external", sections=("sources", s.section, s.name))):
         # now the external sources must adopt the injected namespace
         assert (list(s)) == [
             "SOURCES__EXTERNAL_RESOURCES__SOURCE_VAL",
@@ -596,9 +563,7 @@ def test_source_schema_modified() -> None:
 
 
 @dlt.resource
-def standalone_resource(
-    secret=dlt.secrets.value, config=dlt.config.value, opt: str = "A"
-):
+def standalone_resource(secret=dlt.secrets.value, config=dlt.config.value, opt: str = "A"):
     yield 1
 
 
@@ -747,9 +712,7 @@ def test_standalone_resource() -> None:
 
 
 @dlt.transformer(standalone=True)
-def standalone_transformer(
-    item: TDataItem, init: int, secret_end: int = dlt.secrets.value
-):
+def standalone_transformer(item: TDataItem, init: int, secret_end: int = dlt.secrets.value):
     """Has fine transformer docstring"""
     yield from range(item + init, secret_end)
 
@@ -794,9 +757,7 @@ def test_standalone_transformer() -> None:
 
 
 @dlt.transformer(standalone=True, name=lambda args: args["res_name"])
-def standalone_tx_with_name(
-    item: TDataItem, res_name: str, init: int = dlt.config.value
-):
+def standalone_tx_with_name(item: TDataItem, res_name: str, init: int = dlt.config.value):
     return res_name * item * init
 
 

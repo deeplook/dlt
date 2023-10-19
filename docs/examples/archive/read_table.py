@@ -23,16 +23,12 @@ for i in items:
         print(f"{k}:{v} ({type(v)}:{py_type_to_sc_type(type(v))})")
 
 # get data from query
-items = query_sql(
-    "select *  from mainnet_2_ethereum.blocks__transactions limit 10", source_dsn
-)
+items = query_sql("select *  from mainnet_2_ethereum.blocks__transactions limit 10", source_dsn)
 
 # and load it into a local postgres instance
 # the connection string does not have the password part. provide it in DESTINATION__CREDENTIALS__PASSWORD
 # you can find a docker compose file that spins up required instance in tests/load/postgres
 # note: run the script without required env variables to see info on possible secret configurations that were tried
 
-info = dlt.pipeline().run(
-    items, destination=postgres, dataset_name="ethereum", table_name="transactions"
-)
+info = dlt.pipeline().run(items, destination=postgres, dataset_name="ethereum", table_name="transactions")
 print(info)

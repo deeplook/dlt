@@ -32,10 +32,7 @@ def test_coerce_type_to_text() -> None:
     # bytes to text (base64)
     assert coerce_value("text", "binary", b"binary string") == "YmluYXJ5IHN0cmluZw=="
     # HexBytes to text (hex with prefix)
-    assert (
-        coerce_value("text", "binary", HexBytes(b"binary string"))
-        == "0x62696e61727920737472696e67"
-    )
+    assert coerce_value("text", "binary", HexBytes(b"binary string")) == "0x62696e61727920737472696e67"
 
     # Str enum value
     class StrEnum(Enum):
@@ -164,38 +161,20 @@ def test_coerce_type_from_hex_text() -> None:
 
 def test_coerce_type_to_timestamp() -> None:
     # timestamp cases
-    assert coerce_value("timestamp", "text", " 1580405246 ") == pendulum.parse(
-        "2020-01-30T17:27:26+00:00"
-    )
+    assert coerce_value("timestamp", "text", " 1580405246 ") == pendulum.parse("2020-01-30T17:27:26+00:00")
     # the tenths of microseconds will be ignored
-    assert coerce_value("timestamp", "double", 1633344898.7415245) == pendulum.parse(
-        "2021-10-04T10:54:58.741524+00:00"
-    )
+    assert coerce_value("timestamp", "double", 1633344898.7415245) == pendulum.parse("2021-10-04T10:54:58.741524+00:00")
     # if text is ISO string it will be coerced
-    assert coerce_value(
-        "timestamp", "text", "2022-05-10T03:41:31.466000+00:00"
-    ) == pendulum.parse("2022-05-10T03:41:31.466000+00:00")
-    assert coerce_value(
-        "timestamp", "text", "2022-05-10T03:41:31.466+02:00"
-    ) == pendulum.parse("2022-05-10T01:41:31.466Z")
-    assert coerce_value(
-        "timestamp", "text", "2022-05-10T03:41:31.466+0200"
-    ) == pendulum.parse("2022-05-10T01:41:31.466Z")
+    assert coerce_value("timestamp", "text", "2022-05-10T03:41:31.466000+00:00") == pendulum.parse("2022-05-10T03:41:31.466000+00:00")
+    assert coerce_value("timestamp", "text", "2022-05-10T03:41:31.466+02:00") == pendulum.parse("2022-05-10T01:41:31.466Z")
+    assert coerce_value("timestamp", "text", "2022-05-10T03:41:31.466+0200") == pendulum.parse("2022-05-10T01:41:31.466Z")
     # parse almost ISO compliant string
-    assert coerce_value("timestamp", "text", "2022-04-26 10:36+02") == pendulum.parse(
-        "2022-04-26T10:36:00+02:00"
-    )
-    assert coerce_value("timestamp", "text", "2022-04-26 10:36") == pendulum.parse(
-        "2022-04-26T10:36:00+00:00"
-    )
+    assert coerce_value("timestamp", "text", "2022-04-26 10:36+02") == pendulum.parse("2022-04-26T10:36:00+02:00")
+    assert coerce_value("timestamp", "text", "2022-04-26 10:36") == pendulum.parse("2022-04-26T10:36:00+00:00")
     # parse date string
-    assert coerce_value("timestamp", "text", "2021-04-25") == pendulum.parse(
-        "2021-04-25"
-    )
+    assert coerce_value("timestamp", "text", "2021-04-25") == pendulum.parse("2021-04-25")
     # from date type
-    assert coerce_value(
-        "timestamp", "date", datetime.date(2023, 2, 27)
-    ) == pendulum.parse("2023-02-27")
+    assert coerce_value("timestamp", "date", datetime.date(2023, 2, 27)) == pendulum.parse("2023-02-27")
 
     # fails on "now" - yes pendulum by default parses "now" as .now()
     with pytest.raises(ValueError):
@@ -242,37 +221,19 @@ def test_coerce_type_to_timestamp() -> None:
 
 def test_coerce_type_to_date() -> None:
     # from datetime object
-    assert coerce_value(
-        "date", "timestamp", pendulum.datetime(1995, 5, 6, 00, 1, 1, tz=UTC)
-    ) == pendulum.parse("1995-05-06", exact=True)
+    assert coerce_value("date", "timestamp", pendulum.datetime(1995, 5, 6, 00, 1, 1, tz=UTC)) == pendulum.parse("1995-05-06", exact=True)
     # from unix timestamp
-    assert coerce_value("date", "double", 1677546399.494264) == pendulum.parse(
-        "2023-02-28", exact=True
-    )
-    assert coerce_value("date", "text", " 1677546399 ") == pendulum.parse(
-        "2023-02-28", exact=True
-    )
+    assert coerce_value("date", "double", 1677546399.494264) == pendulum.parse("2023-02-28", exact=True)
+    assert coerce_value("date", "text", " 1677546399 ") == pendulum.parse("2023-02-28", exact=True)
     # ISO date string
-    assert coerce_value("date", "text", "2023-02-27") == pendulum.parse(
-        "2023-02-27", exact=True
-    )
+    assert coerce_value("date", "text", "2023-02-27") == pendulum.parse("2023-02-27", exact=True)
     # ISO datetime string
-    assert coerce_value(
-        "date", "text", "2022-05-10T03:41:31.466000+00:00"
-    ) == pendulum.parse("2022-05-10", exact=True)
-    assert coerce_value(
-        "date", "text", "2022-05-10T03:41:31.466+02:00"
-    ) == pendulum.parse("2022-05-10", exact=True)
-    assert coerce_value(
-        "date", "text", "2022-05-10T03:41:31.466+0200"
-    ) == pendulum.parse("2022-05-10", exact=True)
+    assert coerce_value("date", "text", "2022-05-10T03:41:31.466000+00:00") == pendulum.parse("2022-05-10", exact=True)
+    assert coerce_value("date", "text", "2022-05-10T03:41:31.466+02:00") == pendulum.parse("2022-05-10", exact=True)
+    assert coerce_value("date", "text", "2022-05-10T03:41:31.466+0200") == pendulum.parse("2022-05-10", exact=True)
     # almost ISO compliant string
-    assert coerce_value("date", "text", "2022-04-26 10:36+02") == pendulum.parse(
-        "2022-04-26", exact=True
-    )
-    assert coerce_value("date", "text", "2022-04-26 10:36") == pendulum.parse(
-        "2022-04-26", exact=True
-    )
+    assert coerce_value("date", "text", "2022-04-26 10:36+02") == pendulum.parse("2022-04-26", exact=True)
+    assert coerce_value("date", "text", "2022-04-26 10:36") == pendulum.parse("2022-04-26", exact=True)
 
     # iso time string fails
     with pytest.raises(ValueError):
@@ -285,33 +246,21 @@ def test_coerce_type_to_date() -> None:
 
 def test_coerce_type_to_time() -> None:
     # from ISO time string
-    assert coerce_value("time", "text", "03:41:31.466000") == pendulum.parse(
-        "03:41:31.466000", exact=True
-    )
+    assert coerce_value("time", "text", "03:41:31.466000") == pendulum.parse("03:41:31.466000", exact=True)
     # time object returns same value
-    assert coerce_value(
-        "time", "time", pendulum.time(3, 41, 31, 466000)
-    ) == pendulum.time(3, 41, 31, 466000)
+    assert coerce_value("time", "time", pendulum.time(3, 41, 31, 466000)) == pendulum.time(3, 41, 31, 466000)
     # from datetime object fails
     with pytest.raises(TypeError):
-        coerce_value(
-            "time", "timestamp", pendulum.datetime(1995, 5, 6, 00, 1, 1, tz=UTC)
-        )
+        coerce_value("time", "timestamp", pendulum.datetime(1995, 5, 6, 00, 1, 1, tz=UTC))
 
     # from unix timestamp fails
     with pytest.raises(TypeError):
-        assert coerce_value("time", "double", 1677546399.494264) == pendulum.parse(
-            "01:06:39.494264", exact=True
-        )
+        assert coerce_value("time", "double", 1677546399.494264) == pendulum.parse("01:06:39.494264", exact=True)
     with pytest.raises(ValueError):
-        assert coerce_value("time", "text", " 1677546399 ") == pendulum.parse(
-            "01:06:39", exact=True
-        )
+        assert coerce_value("time", "text", " 1677546399 ") == pendulum.parse("01:06:39", exact=True)
     # ISO date string fails
     with pytest.raises(ValueError):
-        assert coerce_value("time", "text", "2023-02-27") == pendulum.parse(
-            "00:00:00", exact=True
-        )
+        assert coerce_value("time", "text", "2023-02-27") == pendulum.parse("00:00:00", exact=True)
     # ISO datetime string fails
     with pytest.raises(ValueError):
         assert coerce_value("time", "text", "2022-05-10T03:41:31.466000+00:00")

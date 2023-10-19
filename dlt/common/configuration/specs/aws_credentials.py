@@ -46,20 +46,14 @@ class AwsCredentials(AwsCredentialsWithoutDefaults, CredentialsWithDefault):
         try:
             import botocore.session
         except ModuleNotFoundError:
-            raise MissingDependencyException(
-                self.__class__.__name__, [f"{version.DLT_PKG_NAME}[s3]"]
-            )
+            raise MissingDependencyException(self.__class__.__name__, [f"{version.DLT_PKG_NAME}[s3]"])
 
         # taken from boto3 Session
         session = botocore.session.get_session()
         if self.profile_name is not None:
             session.set_config_variable("profile", self.profile_name)
 
-        if (
-            self.aws_access_key_id
-            or self.aws_secret_access_key
-            or self.aws_session_token
-        ):
+        if self.aws_access_key_id or self.aws_secret_access_key or self.aws_session_token:
             session.set_credentials(
                 self.aws_access_key_id,
                 self.aws_secret_access_key,

@@ -35,9 +35,7 @@ def test_accessor_singletons() -> None:
     assert dlt.secrets.value is None
 
 
-def test_getter_accessor(
-    toml_providers: ConfigProvidersContext, environment: Any
-) -> None:
+def test_getter_accessor(toml_providers: ConfigProvidersContext, environment: Any) -> None:
     with pytest.raises(KeyError) as py_ex:
         dlt.config["_unknown"]
     with pytest.raises(ConfigFieldMissingException) as py_ex:
@@ -50,13 +48,9 @@ def test_getter_accessor(
 
     environment["VALUE"] = "{SET"
     assert dlt.config["value"] == "{SET"
-    assert RESOLVED_TRACES[".value"] == ResolvedValueTrace(
-        "value", "{SET", None, AnyType, [], EnvironProvider().name, None
-    )
+    assert RESOLVED_TRACES[".value"] == ResolvedValueTrace("value", "{SET", None, AnyType, [], EnvironProvider().name, None)
     assert dlt.secrets["value"] == "{SET"
-    assert RESOLVED_TRACES[".value"] == ResolvedValueTrace(
-        "value", "{SET", None, TSecretValue, [], EnvironProvider().name, None
-    )
+    assert RESOLVED_TRACES[".value"] == ResolvedValueTrace("value", "{SET", None, TSecretValue, [], EnvironProvider().name, None)
 
     # get sectioned values
     assert dlt.config["typecheck.str_val"] == "test string"
@@ -93,9 +87,7 @@ def test_getter_accessor(
     )
 
 
-def test_getter_auto_cast(
-    toml_providers: ConfigProvidersContext, environment: Any
-) -> None:
+def test_getter_auto_cast(toml_providers: ConfigProvidersContext, environment: Any) -> None:
     environment["VALUE"] = "{SET}"
     assert dlt.config["value"] == "{SET}"
     # bool
@@ -132,10 +124,7 @@ def test_getter_auto_cast(
 
     # access dict from toml
     services_json_dict = dlt.secrets["destination.bigquery"]
-    assert (
-        dlt.secrets["destination.bigquery"]["client_email"]
-        == "loader@a7513.iam.gserviceaccount.com"
-    )
+    assert dlt.secrets["destination.bigquery"]["client_email"] == "loader@a7513.iam.gserviceaccount.com"
     assert RESOLVED_TRACES["destination.bigquery"] == ResolvedValueTrace(
         "bigquery",
         services_json_dict,
@@ -146,10 +135,7 @@ def test_getter_auto_cast(
         None,
     )
     # equivalent
-    assert (
-        dlt.secrets["destination.bigquery.client_email"]
-        == "loader@a7513.iam.gserviceaccount.com"
-    )
+    assert dlt.secrets["destination.bigquery.client_email"] == "loader@a7513.iam.gserviceaccount.com"
     assert RESOLVED_TRACES["destination.bigquery.client_email"] == ResolvedValueTrace(
         "client_email",
         "loader@a7513.iam.gserviceaccount.com",
@@ -161,13 +147,9 @@ def test_getter_auto_cast(
     )
 
 
-def test_getter_accessor_typed(
-    toml_providers: ConfigProvidersContext, environment: Any
-) -> None:
+def test_getter_accessor_typed(toml_providers: ConfigProvidersContext, environment: Any) -> None:
     # get a dict as str
-    credentials_str = (
-        '{"secret_value":"2137","project_id":"mock-project-id-credentials"}'
-    )
+    credentials_str = '{"secret_value":"2137","project_id":"mock-project-id-credentials"}'
     # the typed version coerces the value into desired type, in this case "dict" -> "str"
     assert dlt.secrets.get("credentials", str) == credentials_str
     # note that trace keeps original value of "credentials" which was of dictionary type
@@ -196,9 +178,7 @@ def test_getter_accessor_typed(
         "credentials", credentials_str, None, ConnectionStringCredentials, ["databricks"], SecretsTomlProvider().name, ConnectionStringCredentials  # type: ignore[arg-type]
     )
     assert c.drivername == "databricks+connector"
-    c2 = dlt.secrets.get(
-        "destination.credentials", GcpServiceAccountCredentialsWithoutDefaults
-    )
+    c2 = dlt.secrets.get("destination.credentials", GcpServiceAccountCredentialsWithoutDefaults)
     assert c2.client_email == "loader@a7513.iam.gserviceaccount.com"
 
 

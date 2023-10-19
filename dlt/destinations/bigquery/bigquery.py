@@ -73,9 +73,7 @@ class BigQueryTypeMapper(TypeMapper):
         "TIME": "time",
     }
 
-    def from_db_type(
-        self, db_type: str, precision: Optional[int], scale: Optional[int]
-    ) -> TColumnType:
+    def from_db_type(self, db_type: str, precision: Optional[int], scale: Optional[int]) -> TColumnType:
         if db_type == "BIGNUMERIC":
             if precision is None:  # biggest numeric possible
                 return dict(data_type="wei")
@@ -97,15 +95,10 @@ class BigQueryLoadJob(LoadJob, FollowupJob):
 
     def state(self) -> TLoadJobState:
         # check server if done
-        done = self.bq_load_job.done(
-            retry=self.default_retry, timeout=self.http_timeout
-        )
+        done = self.bq_load_job.done(retry=self.default_retry, timeout=self.http_timeout)
         if done:
             # rows processed
-            if (
-                self.bq_load_job.output_rows is not None
-                and self.bq_load_job.error_result is None
-            ):
+            if self.bq_load_job.output_rows is not None and self.bq_load_job.error_result is None:
                 return "completed"
             else:
                 reason = self.bq_load_job.error_result.get("reason")
@@ -113,9 +106,7 @@ class BigQueryLoadJob(LoadJob, FollowupJob):
                     # the job permanently failed for the reason above
                     return "failed"
                 elif reason in ["internalError"]:
-                    logger.warning(
-                        f"Got reason {reason} for job {self.file_name}, job considered still running. ({self.bq_load_job.error_result})"
-                    )
+                    logger.warning(f"Got reason {reason} for job {self.file_name}, job considered still running. ({self.bq_load_job.error_result})")
                     # status of the job could not be obtained, job still running
                     return "running"
                 else:
@@ -156,9 +147,7 @@ class BigQueryMergeJob(SqlMergeJob):
         # generate several clauses: BigQuery does not support OR nor unions
         sql: List[str] = []
         for clause in key_clauses:
-            sql.append(
-                f"FROM {root_table_name} AS d WHERE EXISTS (SELECT 1 FROM {staging_root_table_name} AS s WHERE {clause.format(d='d', s='s')})"
-            )
+            sql.append(f"FROM {root_table_name} AS d WHERE EXISTS (SELECT 1 FROM {staging_root_table_name} AS s WHERE {clause.format(d='d', s='s')})")
         return sql
 
 
@@ -198,18 +187,12 @@ class BigQueryClient(SqlJobClientWithStaging, SupportsStagingDestination):
         self.sql_client: BigQuerySqlClient = sql_client  # type: ignore
         self.type_mapper = BigQueryTypeMapper(self.capabilities)
 
-    def _create_merge_followup_jobs(
-        self, table_chain: Sequence[TTableSchema]
-    ) -> List[NewLoadJob]:
+    def _create_merge_followup_jobs(self, table_chain: Sequence[TTableSchema]) -> List[NewLoadJob]:
         return [BigQueryMergeJob.from_table_chain(table_chain, self.sql_client)]
 
-    def _create_replace_followup_jobs(
-        self, table_chain: Sequence[TTableSchema]
-    ) -> List[NewLoadJob]:
+    def _create_replace_followup_jobs(self, table_chain: Sequence[TTableSchema]) -> List[NewLoadJob]:
         if self.config.replace_strategy == "staging-optimized":
-            return [
-                BigqueryStagingCopyJob.from_table_chain(table_chain, self.sql_client)
-            ]
+            return [BigqueryStagingCopyJob.from_table_chain(table_chain, self.sql_client)]
         return super()._create_replace_followup_jobs(table_chain)
 
     def restore_file_load(self, file_path: str) -> LoadJob:
@@ -237,16 +220,12 @@ class BigQueryClient(SqlJobClientWithStaging, SupportsStagingDestination):
                 if reason == "notFound":
                     raise LoadJobNotExistsException(file_path)
                 elif reason in BQ_TERMINAL_REASONS:
-                    raise LoadJobTerminalException(
-                        file_path, f"The server reason was: {reason}"
-                    )
+                    raise LoadJobTerminalException(file_path, f"The server reason was: {reason}")
                 else:
                     raise DestinationTransientException(gace)
         return job
 
-    def start_file_load(
-        self, table: TTableSchema, file_path: str, load_id: str
-    ) -> LoadJob:
+    def start_file_load(self, table: TTableSchema, file_path: str, load_id: str) -> LoadJob:
         job = super().start_file_load(table, file_path, load_id)
 
         if not job:
@@ -267,9 +246,7 @@ class BigQueryClient(SqlJobClientWithStaging, SupportsStagingDestination):
                     return self.restore_file_load(file_path)
                 elif reason in BQ_TERMINAL_REASONS:
                     # google.api_core.exceptions.BadRequest - will not be processed ie bad job name
-                    raise LoadJobTerminalException(
-                        file_path, f"The server reason was: {reason}"
-                    )
+                    raise LoadJobTerminalException(file_path, f"The server reason was: {reason}")
                 else:
                     raise DestinationTransientException(gace)
         return job
@@ -284,16 +261,8 @@ class BigQueryClient(SqlJobClientWithStaging, SupportsStagingDestination):
         sql = super()._get_table_update_sql(table_name, new_columns, generate_alter)
         canonical_name = self.sql_client.make_qualified_table_name(table_name)
 
-        cluster_list = [
-            self.capabilities.escape_identifier(c["name"])
-            for c in new_columns
-            if c.get("cluster")
-        ]
-        partition_list = [
-            self.capabilities.escape_identifier(c["name"])
-            for c in new_columns
-            if c.get("partition")
-        ]
+        cluster_list = [self.capabilities.escape_identifier(c["name"]) for c in new_columns if c.get("cluster")]
+        partition_list = [self.capabilities.escape_identifier(c["name"]) for c in new_columns if c.get("partition")]
 
         # partition by must be added first
         if len(partition_list) > 0:
@@ -310,9 +279,7 @@ class BigQueryClient(SqlJobClientWithStaging, SupportsStagingDestination):
 
         return sql
 
-    def _get_column_def_sql(
-        self, c: TColumnSchema, table_format: TTableFormat = None
-    ) -> str:
+    def _get_column_def_sql(self, c: TColumnSchema, table_format: TTableFormat = None) -> str:
         name = self.capabilities.escape_identifier(c["name"])
         return f"{name} {self.type_mapper.to_db_type(c, table_format)} {self._gen_not_null(c.get('nullable', True))}"
 
@@ -324,9 +291,7 @@ class BigQueryClient(SqlJobClientWithStaging, SupportsStagingDestination):
                 retry=self.sql_client._default_retry,
                 timeout=self.config.http_timeout,
             )
-            partition_field = (
-                table.time_partitioning.field if table.time_partitioning else None
-            )
+            partition_field = table.time_partitioning.field if table.time_partitioning else None
             for c in table.schema:
                 schema_c: TColumnSchema = {
                     "name": c.name,
@@ -402,7 +367,5 @@ class BigQueryClient(SqlJobClientWithStaging, SupportsStagingDestination):
         job_id = BigQueryLoadJob.get_job_id_from_file_path(file_path)
         return cast(bigquery.LoadJob, self.sql_client.native_connection.get_job(job_id))
 
-    def _from_db_type(
-        self, bq_t: str, precision: Optional[int], scale: Optional[int]
-    ) -> TColumnType:
+    def _from_db_type(self, bq_t: str, precision: Optional[int], scale: Optional[int]) -> TColumnType:
         return self.type_mapper.from_db_type(bq_t, precision, scale)

@@ -80,9 +80,7 @@ def test_get_module_name() -> None:
     assert get_module_name(m) == "uniq_mod_121"
 
     # use exec to get __main__ exception
-    mod_name = Venv.restore_current().run_script(
-        "tests/common/cases/modules/uniq_mod_121.py"
-    )
+    mod_name = Venv.restore_current().run_script("tests/common/cases/modules/uniq_mod_121.py")
     assert mod_name.strip() == "uniq_mod_121"
 
 
@@ -90,9 +88,7 @@ def test_concat_strings_with_limit() -> None:
     assert list(concat_strings_with_limit([], " ", 15)) == []
 
     philosopher = ["Bertrand Russell"]
-    assert list(concat_strings_with_limit(philosopher, ";\n", 15)) == [
-        "Bertrand Russell"
-    ]
+    assert list(concat_strings_with_limit(philosopher, ";\n", 15)) == ["Bertrand Russell"]
 
     # only two strings will be merged (22 chars total)
     philosophers = [
@@ -120,9 +116,7 @@ def test_concat_strings_with_limit() -> None:
     # again 1
     assert list(concat_strings_with_limit(philosophers, ";\n", 23)) == moore_merged_2
     # all merged
-    assert list(concat_strings_with_limit(philosophers, ";\n", 1024)) == [
-        ";\n".join(philosophers)
-    ]
+    assert list(concat_strings_with_limit(philosophers, ";\n", 1024)) == [";\n".join(philosophers)]
     # none will be merged, all below limit
     assert list(concat_strings_with_limit(philosophers, ";\n", 1)) == philosophers
 
@@ -225,15 +219,9 @@ def test_merge_row_counts() -> None:
 
 
 def test_extend_list_deduplicated() -> None:
-    assert extend_list_deduplicated(
-        ["one", "two", "three"], ["four", "five", "six"]
-    ) == ["one", "two", "three", "four", "five", "six"]
-    assert extend_list_deduplicated(
-        ["one", "two", "three", "six"], ["two", "four", "five", "six"]
-    ) == ["one", "two", "three", "six", "four", "five"]
-    assert extend_list_deduplicated(
-        ["one", "two", "three"], ["one", "two", "three"]
-    ) == ["one", "two", "three"]
+    assert extend_list_deduplicated(["one", "two", "three"], ["four", "five", "six"]) == ["one", "two", "three", "four", "five", "six"]
+    assert extend_list_deduplicated(["one", "two", "three", "six"], ["two", "four", "five", "six"]) == ["one", "two", "three", "six", "four", "five"]
+    assert extend_list_deduplicated(["one", "two", "three"], ["one", "two", "three"]) == ["one", "two", "three"]
     assert extend_list_deduplicated([], ["one", "two", "three"]) == [
         "one",
         "two",

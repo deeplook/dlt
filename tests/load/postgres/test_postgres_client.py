@@ -45,22 +45,16 @@ def test_postgres_credentials_defaults() -> None:
     assert pg_cred.connect_timeout == 15
     assert PostgresCredentials.__config_gen_annotations__ == ["port", "connect_timeout"]
     # port should be optional
-    resolve_configuration(
-        pg_cred, explicit_value="postgres://loader:loader@localhost/dlt_data"
-    )
+    resolve_configuration(pg_cred, explicit_value="postgres://loader:loader@localhost/dlt_data")
     assert pg_cred.port == 5432
 
 
 def test_postgres_credentials_native_value(environment) -> None:
     with pytest.raises(ConfigFieldMissingException):
-        resolve_configuration(
-            PostgresCredentials(), explicit_value="postgres://loader@localhost/dlt_data"
-        )
+        resolve_configuration(PostgresCredentials(), explicit_value="postgres://loader@localhost/dlt_data")
     # set password via env
     os.environ["CREDENTIALS__PASSWORD"] = "pass"
-    c = resolve_configuration(
-        PostgresCredentials(), explicit_value="postgres://loader@localhost/dlt_data"
-    )
+    c = resolve_configuration(PostgresCredentials(), explicit_value="postgres://loader@localhost/dlt_data")
     assert c.is_resolved()
     assert c.password == "pass"
     # but if password is specified - it is final

@@ -17,9 +17,7 @@ DEFAULT_NAMING_MODULE = "dlt.common.normalizers.naming.snake_case"
 
 
 @with_config(spec=NormalizersConfiguration)
-def explicit_normalizers(
-    naming: str = dlt.config.value, json_normalizer: TJSONNormalizer = dlt.config.value
-) -> TNormalizersConfig:
+def explicit_normalizers(naming: str = dlt.config.value, json_normalizer: TJSONNormalizer = dlt.config.value) -> TNormalizersConfig:
     """Gets explicitly configured normalizers - via config or destination caps. May return None as naming or normalizer"""
     return {"names": naming, "json": json_normalizer}
 
@@ -35,9 +33,7 @@ def import_normalizers(
     """
     # add defaults to normalizer_config
     normalizers_config["names"] = names = normalizers_config["names"] or "snake_case"
-    normalizers_config["json"] = item_normalizer = normalizers_config["json"] or {
-        "module": "dlt.common.normalizers.json.relational"
-    }
+    normalizers_config["json"] = item_normalizer = normalizers_config["json"] or {"module": "dlt.common.normalizers.json.relational"}
     try:
         if "." in names:
             # TODO: bump schema engine version and migrate schema. also change the name in  TNormalizersConfig from names to naming
@@ -63,9 +59,7 @@ def import_normalizers(
         )
     else:
         max_length = None
-    json_module = cast(
-        SupportsDataItemNormalizer, import_module(item_normalizer["module"])
-    )
+    json_module = cast(SupportsDataItemNormalizer, import_module(item_normalizer["module"]))
 
     return (
         normalizers_config,

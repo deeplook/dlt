@@ -176,9 +176,7 @@ def test_pipeline_replace() -> None:
         write_disposition="replace",
     )
     assert_load_info(info)
-    assert (
-        info.dataset_name == "TestPipelineReplaceDataset" + uid
-    )  # normalized internally
+    assert info.dataset_name == "TestPipelineReplaceDataset" + uid  # normalized internally
 
     data = next(generator_instance2)
     assert_class(pipeline, "SomeData", items=data)
@@ -198,26 +196,17 @@ def test_pipeline_merge() -> None:
         {
             "doc_id": 1,
             "title": "The Shawshank Redemption",
-            "description": (
-                "Two imprisoned men find redemption through acts "
-                "of decency over the years."
-            ),
+            "description": ("Two imprisoned men find redemption through acts " "of decency over the years."),
         },
         {
             "doc_id": 2,
             "title": "The Godfather",
-            "description": (
-                "A crime dynasty's aging patriarch transfers "
-                "control to his reluctant son."
-            ),
+            "description": ("A crime dynasty's aging patriarch transfers " "control to his reluctant son."),
         },
         {
             "doc_id": 3,
             "title": "The Dark Knight",
-            "description": (
-                "The Joker wreaks havoc on Gotham, challenging "
-                "The Dark Knight's ability to fight injustice."
-            ),
+            "description": ("The Joker wreaks havoc on Gotham, challenging " "The Dark Knight's ability to fight injustice."),
         },
     ]
 
@@ -370,9 +359,7 @@ def test_empty_dataset_allowed() -> None:
         pytest.skip("skip to avoid race condition with other tests")
 
     assert p.dataset_name is None
-    info = p.run(
-        weaviate_adapter(["context", "created", "not a stop word"], vectorize=["value"])
-    )
+    info = p.run(weaviate_adapter(["context", "created", "not a stop word"], vectorize=["value"]))
     # dataset in load info is empty
     assert info.dataset_name is None
     client = p.destination_client()  # type: ignore[assignment]

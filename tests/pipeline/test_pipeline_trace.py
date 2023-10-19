@@ -65,9 +65,7 @@ def test_create_trace(toml_providers: ConfigProvidersContext) -> None:
     assert isinstance(step.started_at, datetime.datetime)
     assert isinstance(step.finished_at, datetime.datetime)
     assert isinstance(step.step_info, ExtractInfo)
-    assert step.step_info.extract_data_info == [
-        {"name": "inject_tomls", "data_type": "source"}
-    ]
+    assert step.step_info.extract_data_info == [{"name": "inject_tomls", "data_type": "source"}]
     # check infos
     assert isinstance(p.last_trace.last_extract_info, ExtractInfo)
 
@@ -85,9 +83,7 @@ def test_create_trace(toml_providers: ConfigProvidersContext) -> None:
     assert resolved.is_secret_hint is True
     assert resolved.value == "2137"
     assert resolved.default_value == "123"
-    resolved = _find_resolved_value(
-        trace.resolved_config_values, "credentials", ["databricks"]
-    )
+    resolved = _find_resolved_value(trace.resolved_config_values, "credentials", ["databricks"])
     assert resolved.is_secret_hint is True
     assert resolved.value == databricks_creds
     assert_trace_printable(trace)
@@ -117,9 +113,7 @@ def test_create_trace(toml_providers: ConfigProvidersContext) -> None:
     assert step.step == "extract"
     assert isinstance(step.step_exception, str)
     assert isinstance(step.step_info, ExtractInfo)
-    assert step.step_info.extract_data_info == [
-        {"name": "async_exception", "data_type": "source"}
-    ]
+    assert step.step_info.extract_data_info == [{"name": "async_exception", "data_type": "source"}]
     assert_trace_printable(trace)
 
     # normalize
@@ -259,9 +253,7 @@ def test_load_none_trace() -> None:
 
 
 def test_trace_telemetry() -> None:
-    with patch(
-        "dlt.common.runtime.sentry.before_send", _mock_sentry_before_send
-    ), patch("dlt.common.runtime.segment.before_send", _mock_segment_before_send):
+    with patch("dlt.common.runtime.sentry.before_send", _mock_sentry_before_send), patch("dlt.common.runtime.segment.before_send", _mock_segment_before_send):
         start_test_telemetry()
 
         SEGMENT_SENT_ITEMS.clear()
@@ -279,9 +271,7 @@ def test_trace_telemetry() -> None:
             assert isinstance(event["properties"]["transaction_id"], str)
             # check extract info
             if step == "extract":
-                assert event["properties"]["extract_data"] == [
-                    {"name": "", "data_type": "int"}
-                ]
+                assert event["properties"]["extract_data"] == [{"name": "", "data_type": "int"}]
             if step == "load":
                 # dummy has empty fingerprint
                 assert event["properties"]["destination_fingerprint"] == ""
@@ -306,27 +296,17 @@ def test_trace_telemetry() -> None:
         assert isinstance(event["properties"]["elapsed"], float)
         # check extract info
         if step == "extract":
-            assert event["properties"]["extract_data"] == [
-                {"name": "data", "data_type": "resource"}
-            ]
+            assert event["properties"]["extract_data"] == [{"name": "data", "data_type": "resource"}]
         # we didn't log any errors
         assert len(SENTRY_SENT_ITEMS) == 0
 
 
 def test_extract_data_describe() -> None:
     schema = Schema("test")
-    assert describe_extract_data(DltSource("sss_extract", "sect", schema)) == [
-        {"name": "sss_extract", "data_type": "source"}
-    ]
-    assert describe_extract_data(DltResource(Pipe("rrr_extract"), None, False)) == [
-        {"name": "rrr_extract", "data_type": "resource"}
-    ]
-    assert describe_extract_data([DltSource("sss_extract", "sect", schema)]) == [
-        {"name": "sss_extract", "data_type": "source"}
-    ]
-    assert describe_extract_data([DltResource(Pipe("rrr_extract"), None, False)]) == [
-        {"name": "rrr_extract", "data_type": "resource"}
-    ]
+    assert describe_extract_data(DltSource("sss_extract", "sect", schema)) == [{"name": "sss_extract", "data_type": "source"}]
+    assert describe_extract_data(DltResource(Pipe("rrr_extract"), None, False)) == [{"name": "rrr_extract", "data_type": "resource"}]
+    assert describe_extract_data([DltSource("sss_extract", "sect", schema)]) == [{"name": "sss_extract", "data_type": "source"}]
+    assert describe_extract_data([DltResource(Pipe("rrr_extract"), None, False)]) == [{"name": "rrr_extract", "data_type": "resource"}]
     assert describe_extract_data(
         [
             DltResource(Pipe("rrr_extract"), None, False),
@@ -340,9 +320,7 @@ def test_extract_data_describe() -> None:
     from pandas import DataFrame
 
     # we assume that List content has same type
-    assert describe_extract_data([DataFrame(), {"a": "b"}]) == [
-        {"name": "", "data_type": "DataFrame"}
-    ]
+    assert describe_extract_data([DataFrame(), {"a": "b"}]) == [{"name": "", "data_type": "DataFrame"}]
     # first unnamed element in the list breaks checking info
     assert describe_extract_data(
         [
@@ -365,9 +343,7 @@ def test_slack_hook(environment: DictStrStr) -> None:
     environment["RUNTIME__SLACK_INCOMING_HOOK"] = hook_url
     with requests_mock.mock() as m:
         m.post(hook_url, json={})
-        load_info = dlt.pipeline().run(
-            [1, 2, 3], table_name="data", destination="dummy"
-        )
+        load_info = dlt.pipeline().run([1, 2, 3], table_name="data", destination="dummy")
         assert slack_notify_load_success(load_info.pipeline.runtime_config.slack_incoming_hook, load_info, load_info.pipeline.last_trace) == 200  # type: ignore[attr-defined]
     assert m.called
     message = m.last_request.json()
@@ -391,9 +367,7 @@ def test_broken_slack_hook(environment: DictStrStr) -> None:
     # assert run_step.step_exception is None
 
 
-def _find_resolved_value(
-    resolved: List[SerializableResolvedValueTrace], key: str, sections: List[str]
-) -> SerializableResolvedValueTrace:
+def _find_resolved_value(resolved: List[SerializableResolvedValueTrace], key: str, sections: List[str]) -> SerializableResolvedValueTrace:
     return next((v for v in resolved if v.key == key and v.sections == sections), None)
 
 

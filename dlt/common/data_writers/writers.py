@@ -37,9 +37,7 @@ class DataWriter(abc.ABC):
     def write_footer(self) -> None:
         pass
 
-    def write_all(
-        self, columns_schema: TTableSchemaColumns, rows: Sequence[Any]
-    ) -> None:
+    def write_all(self, columns_schema: TTableSchemaColumns, rows: Sequence[Any]) -> None:
         self.write_header(columns_schema)
         self.write_data(rows)
         self.write_footer()
@@ -59,15 +57,11 @@ class DataWriter(abc.ABC):
         return cls.class_factory(file_format)(f, caps)
 
     @classmethod
-    def from_destination_capabilities(
-        cls, caps: DestinationCapabilitiesContext, f: IO[Any]
-    ) -> "DataWriter":
+    def from_destination_capabilities(cls, caps: DestinationCapabilitiesContext, f: IO[Any]) -> "DataWriter":
         return cls.class_factory(caps.preferred_loader_file_format)(f, caps)
 
     @classmethod
-    def data_format_from_file_format(
-        cls, file_format: TLoaderFileFormat
-    ) -> TFileFormatSpec:
+    def data_format_from_file_format(cls, file_format: TLoaderFileFormat) -> TFileFormatSpec:
         return cls.class_factory(file_format).data_format()
 
     @staticmethod
@@ -229,18 +223,14 @@ class ParquetDataWriter(DataWriter):
             [
                 pyarrow.field(
                     name,
-                    get_py_arrow_datatype(
-                        schema_item, self._caps, self.timestamp_timezone
-                    ),
+                    get_py_arrow_datatype(schema_item, self._caps, self.timestamp_timezone),
                     nullable=schema_item.get("nullable", True),
                 )
                 for name, schema_item in columns_schema.items()
             ]
         )
         # find row items that are of the complex type (could be abstracted out for use in other writers?)
-        self.complex_indices = [
-            i for i, field in columns_schema.items() if field["data_type"] == "complex"
-        ]
+        self.complex_indices = [i for i, field in columns_schema.items() if field["data_type"] == "complex"]
         self.writer = pyarrow.parquet.ParquetWriter(
             self._f,
             self.schema,

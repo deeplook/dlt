@@ -57,15 +57,11 @@ def validate_dict(
     # check missing props
     missing = set(required_props.keys()).difference(props.keys())
     if len(missing):
-        raise DictValidationException(
-            f"In {path}: following required fields are missing {missing}", path
-        )
+        raise DictValidationException(f"In {path}: following required fields are missing {missing}", path)
     # check unknown props
     unexpected = set(props.keys()).difference(allowed_props.keys())
     if len(unexpected):
-        raise DictValidationException(
-            f"In {path}: following fields are unexpected {unexpected}", path
-        )
+        raise DictValidationException(f"In {path}: following fields are unexpected {unexpected}", path)
 
     def verify_prop(pk: str, pv: Any, t: Any) -> None:
         if is_optional_type(t):
@@ -144,6 +140,4 @@ def validate_dict(
         verify_prop(pk, pv, allowed_props[pk])
 
 
-validate_dict_ignoring_xkeys = functools.partial(
-    validate_dict, filter_f=lambda k: not k.startswith("x-")
-)
+validate_dict_ignoring_xkeys = functools.partial(validate_dict, filter_f=lambda k: not k.startswith("x-"))

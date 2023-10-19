@@ -16,9 +16,7 @@ class DictionaryProvider(ConfigProvider):
     def name(self) -> str:
         return self.NAME
 
-    def get_value(
-        self, key: str, hint: Type[Any], pipeline_name: str, *sections: str
-    ) -> Tuple[Optional[Any], str]:
+    def get_value(self, key: str, hint: Type[Any], pipeline_name: str, *sections: str) -> Tuple[Optional[Any], str]:
         full_path = sections + (key,)
         if pipeline_name:
             full_path = (pipeline_name,) + full_path

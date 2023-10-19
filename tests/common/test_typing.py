@@ -100,9 +100,4 @@ def test_get_config_if_union() -> None:
     assert get_config_if_union_hint(Union[BaseException, str, StrAny]) is None  # type: ignore[arg-type]
     assert get_config_if_union_hint(Union[BaseConfiguration, str, StrAny]) is BaseConfiguration  # type: ignore[arg-type]
     assert get_config_if_union_hint(Union[str, BaseConfiguration, StrAny]) is BaseConfiguration  # type: ignore[arg-type]
-    assert (
-        get_config_if_union_hint(
-            Union[GcpServiceAccountCredentialsWithoutDefaults, StrAny, str]  # type: ignore[arg-type]
-        )
-        is GcpServiceAccountCredentialsWithoutDefaults
-    )
+    assert get_config_if_union_hint(Union[GcpServiceAccountCredentialsWithoutDefaults, StrAny, str]) is GcpServiceAccountCredentialsWithoutDefaults  # type: ignore[arg-type]

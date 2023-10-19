@@ -24,15 +24,9 @@ def test_duck_case_names(destination_config: DestinationTestConfiguration) -> No
     os.environ["SCHEMA__NAMING"] = "duck_case"
     pipeline = destination_config.setup_pipeline("test_duck_case_names")
     # create tables and columns with emojis and other special characters
-    pipeline.run(
-        airtable_emojis().with_resources("📆 Schedule", "🦚Peacock", "🦚WidePeacock")
-    )
-    pipeline.run(
-        [{"🐾Feet": 2, "1+1": "two", "\nhey": "value"}], table_name="🦚Peacocks🦚"
-    )
-    table_counts = load_table_counts(
-        pipeline, *[t["name"] for t in pipeline.default_schema.data_tables()]
-    )
+    pipeline.run(airtable_emojis().with_resources("📆 Schedule", "🦚Peacock", "🦚WidePeacock"))
+    pipeline.run([{"🐾Feet": 2, "1+1": "two", "\nhey": "value"}], table_name="🦚Peacocks🦚")
+    table_counts = load_table_counts(pipeline, *[t["name"] for t in pipeline.default_schema.data_tables()])
     assert table_counts == {
         "📆 Schedule": 3,
         "🦚Peacock": 1,
@@ -44,9 +38,7 @@ def test_duck_case_names(destination_config: DestinationTestConfiguration) -> No
 
     # this will fail - duckdb preserves case but is case insensitive when comparing identifiers
     with pytest.raises(PipelineStepFailed) as pip_ex:
-        pipeline.run(
-            [{"🐾Feet": 2, "1+1": "two", "🐾feet": "value"}], table_name="🦚peacocks🦚"
-        )
+        pipeline.run([{"🐾Feet": 2, "1+1": "two", "🐾feet": "value"}], table_name="🦚peacocks🦚")
     assert isinstance(pip_ex.value.__context__, DatabaseTerminalException)
 
     # show tables and columns

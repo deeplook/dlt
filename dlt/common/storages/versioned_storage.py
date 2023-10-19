@@ -47,20 +47,14 @@ class VersionedStorage:
                         )
                 else:
                     # we cannot use storage and we must wait for owner to upgrade it
-                    raise WrongStorageVersionException(
-                        storage.storage_path, existing_version, version
-                    )
+                    raise WrongStorageVersionException(storage.storage_path, existing_version, version)
         else:
             if is_owner:
                 self._save_version(version)
             else:
-                raise WrongStorageVersionException(
-                    storage.storage_path, semver.VersionInfo.parse("0.0.0"), version
-                )
+                raise WrongStorageVersionException(storage.storage_path, semver.VersionInfo.parse("0.0.0"), version)
 
-    def migrate_storage(
-        self, from_version: semver.VersionInfo, to_version: semver.VersionInfo
-    ) -> None:
+    def migrate_storage(self, from_version: semver.VersionInfo, to_version: semver.VersionInfo) -> None:
         # migration example:
         # # semver lib supports comparing both to string and other semvers
         # if from_version == "1.0.0" and from_version < to_version:

@@ -2,9 +2,7 @@ import dlt
 
 
 def test_schema_updates() -> None:
-    p = dlt.pipeline(
-        pipeline_name="test_schema_updates", full_refresh=True, destination="dummy"
-    )
+    p = dlt.pipeline(pipeline_name="test_schema_updates", full_refresh=True, destination="dummy")
 
     @dlt.source()
     def source():
@@ -22,9 +20,7 @@ def test_schema_updates() -> None:
     # add table propagation
     s = source()
     p.run(s, table_name="items", write_disposition="merge")
-    assert p.default_schema._normalizers_config["json"]["config"] == {
-        "propagation": {"tables": {"items": {"_dlt_id": "_dlt_root_id"}}}
-    }
+    assert p.default_schema._normalizers_config["json"]["config"] == {"propagation": {"tables": {"items": {"_dlt_id": "_dlt_root_id"}}}}
 
     # set root key
     s = source()

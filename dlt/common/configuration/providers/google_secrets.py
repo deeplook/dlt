@@ -38,20 +38,10 @@ class GoogleSecretsProvider(VaultTomlProvider):
             )
         from dlt.common import logger
 
-        resource_name = (
-            f"projects/{self.credentials.project_id}/secrets/{full_key}/versions/latest"
-        )
-        client = build(
-            "secretmanager", "v1", credentials=self.credentials.to_native_credentials()
-        )
+        resource_name = f"projects/{self.credentials.project_id}/secrets/{full_key}/versions/latest"
+        client = build("secretmanager", "v1", credentials=self.credentials.to_native_credentials())
         try:
-            response = (
-                client.projects()
-                .secrets()
-                .versions()
-                .access(name=resource_name)
-                .execute()
-            )
+            response = client.projects().secrets().versions().access(name=resource_name).execute()
             secret_value = response["payload"]["data"]
             decoded_value = base64.b64decode(secret_value).decode("utf-8")
             return decoded_value
@@ -66,9 +56,7 @@ class GoogleSecretsProvider(VaultTomlProvider):
                 )
                 return None
             elif error.resp.status == 400:
-                logger.warning(
-                    f"Unable to read {full_key} : {error_doc['message']}[{error_doc['status']}]"
-                )
+                logger.warning(f"Unable to read {full_key} : {error_doc['message']}[{error_doc['status']}]")
                 return None
             raise
 

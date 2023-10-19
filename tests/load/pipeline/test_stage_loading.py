@@ -63,71 +63,32 @@ def test_staging_load(destination_config: DestinationTestConfiguration) -> None:
     # we have 4 parquet and 4 reference jobs plus one merge job
     num_jobs = 4 + 4 + 1 if destination_config.supports_merge else 4 + 4
     assert len(package_info.jobs["completed_jobs"]) == num_jobs
-    assert (
-        len(
-            [
-                x
-                for x in package_info.jobs["completed_jobs"]
-                if x.job_file_info.file_format == "reference"
-            ]
-        )
-        == 4
-    )
-    assert (
-        len(
-            [
-                x
-                for x in package_info.jobs["completed_jobs"]
-                if x.job_file_info.file_format == destination_config.file_format
-            ]
-        )
-        == 4
-    )
+    assert len([x for x in package_info.jobs["completed_jobs"] if x.job_file_info.file_format == "reference"]) == 4
+    assert len([x for x in package_info.jobs["completed_jobs"] if x.job_file_info.file_format == destination_config.file_format]) == 4
     if destination_config.supports_merge:
-        assert (
-            len(
-                [
-                    x
-                    for x in package_info.jobs["completed_jobs"]
-                    if x.job_file_info.file_format == "sql"
-                ]
-            )
-            == 1
-        )
+        assert len([x for x in package_info.jobs["completed_jobs"] if x.job_file_info.file_format == "sql"]) == 1
 
-    initial_counts = load_table_counts(
-        pipeline, *[t["name"] for t in pipeline.default_schema.data_tables()]
-    )
+    initial_counts = load_table_counts(pipeline, *[t["name"] for t in pipeline.default_schema.data_tables()])
     assert initial_counts["issues"] == 100
 
     # check item of first row in db
     with pipeline.sql_client() as sql_client:
-        rows = sql_client.execute_sql(
-            "SELECT url FROM issues WHERE id = 388089021 LIMIT 1"
-        )
+        rows = sql_client.execute_sql("SELECT url FROM issues WHERE id = 388089021 LIMIT 1")
         assert rows[0][0] == "https://api.github.com/repos/duckdb/duckdb/issues/71"
 
     if destination_config.supports_merge:
         # test merging in some changed values
-        info = pipeline.run(
-            load_modified_issues, loader_file_format=destination_config.file_format
-        )
+        info = pipeline.run(load_modified_issues, loader_file_format=destination_config.file_format)
         assert_load_info(info)
         assert pipeline.default_schema.tables["issues"]["write_disposition"] == "merge"
-        merge_counts = load_table_counts(
-            pipeline, *[t["name"] for t in pipeline.default_schema.data_tables()]
-        )
+        merge_counts = load_table_counts(pipeline, *[t["name"] for t in pipeline.default_schema.data_tables()])
         assert merge_counts == initial_counts
 
         # check changes where merged in
         with pipeline.sql_client() as sql_client:
-            rows = sql_client.execute_sql(
-                "SELECT number FROM issues WHERE id = 1232152492 LIMIT 1"
-            )
+            rows = sql_client.execute_sql("SELECT number FROM issues WHERE id = 1232152492 LIMIT 1")
             assert rows[0][0] == 105
-            rows = sql_client.execute_sql(
-                "SELECT number FROM issues WHERE id = 1142699354 LIMIT 1"
-            )
+            rows = sql_client.execute_sql("SELECT number FROM issues WHERE id = 1142699354 LIMIT 1")
             assert rows[0][0] == 300
 
     # test append
@@ -139,9 +100,7 @@ def test_staging_load(destination_config: DestinationTestConfiguration) -> None:
     assert_load_info(info)
     assert pipeline.default_schema.tables["issues"]["write_disposition"] == "append"
     # the counts of all tables must be double
-    append_counts = load_table_counts(
-        pipeline, *[t["name"] for t in pipeline.default_schema.data_tables()]
-    )
+    append_counts = load_table_counts(pipeline, *[t["name"] for t in pipeline.default_schema.data_tables()])
     assert {k: v * 2 for k, v in initial_counts.items()} == append_counts
 
     # test replace
@@ -153,9 +112,7 @@ def test_staging_load(destination_config: DestinationTestConfiguration) -> None:
     assert_load_info(info)
     assert pipeline.default_schema.tables["issues"]["write_disposition"] == "replace"
     # the counts of all tables must be double
-    replace_counts = load_table_counts(
-        pipeline, *[t["name"] for t in pipeline.default_schema.data_tables()]
-    )
+    replace_counts = load_table_counts(pipeline, *[t["name"] for t in pipeline.default_schema.data_tables()])
     assert replace_counts == initial_counts
 
 
@@ -165,9 +122,7 @@ def test_staging_load(destination_config: DestinationTestConfiguration) -> None:
     ids=lambda x: x.name,
 )
 def test_all_data_types(destination_config: DestinationTestConfiguration) -> None:
-    pipeline = destination_config.setup_pipeline(
-        "test_stage_loading", dataset_name="test_all_data_types" + uniq_id()
-    )
+    pipeline = destination_config.setup_pipeline("test_stage_loading", dataset_name="test_all_data_types" + uniq_id())
 
     # Redshift parquet -> exclude col7_precision
     # redshift and athena, parquet and jsonl, exclude time types
@@ -179,24 +134,17 @@ def test_all_data_types(destination_config: DestinationTestConfiguration) -> Non
     ) and destination_config.file_format in ("parquet", "jsonl"):
         # Redshift copy doesn't support TIME column
         exclude_types.append("time")
-    if (
-        destination_config.destination == "redshift"
-        and destination_config.file_format in ("parquet", "jsonl")
-    ):
+    if destination_config.destination == "redshift" and destination_config.file_format in ("parquet", "jsonl"):
         # Redshift can't load fixed width binary columns from parquet
         exclude_columns.append("col7_precision")
 
-    column_schemas, data_types = table_update_and_row(
-        exclude_types=exclude_types, exclude_columns=exclude_columns
-    )
+    column_schemas, data_types = table_update_and_row(exclude_types=exclude_types, exclude_columns=exclude_columns)
 
     # bigquery cannot load into JSON fields from parquet
     if destination_config.file_format == "parquet":
         if destination_config.destination == "bigquery":
             # change datatype to text and then allow for it in the assert (parse_complex_strings)
-            column_schemas["col9_null"]["data_type"] = column_schemas["col9"][
-                "data_type"
-            ] = "text"
+            column_schemas["col9_null"]["data_type"] = column_schemas["col9"]["data_type"] = "text"
     # redshift cannot load from json into VARBYTE
     if destination_config.file_format == "jsonl":
         if destination_config.destination == "redshift":
@@ -206,9 +154,7 @@ def test_all_data_types(destination_config: DestinationTestConfiguration) -> Non
                 column_schemas[col]["data_type"] = "text"
 
     # apply the exact columns definitions so we process complex and wei types correctly!
-    @dlt.resource(
-        table_name="data_types", write_disposition="merge", columns=column_schemas
-    )
+    @dlt.resource(table_name="data_types", write_disposition="merge", columns=column_schemas)
     def my_resource():
         nonlocal data_types
         yield [data_types] * 10
@@ -225,14 +171,8 @@ def test_all_data_types(destination_config: DestinationTestConfiguration) -> Non
         assert len(db_rows) == 10
         db_row = list(db_rows[0])
         # parquet is not really good at inserting json, best we get are strings in JSON columns
-        parse_complex_strings = (
-            destination_config.file_format == "parquet"
-            and destination_config.destination in ["redshift", "bigquery", "snowflake"]
-        )
-        allow_base64_binary = (
-            destination_config.file_format == "jsonl"
-            and destination_config.destination in ["redshift"]
-        )
+        parse_complex_strings = destination_config.file_format == "parquet" and destination_config.destination in ["redshift", "bigquery", "snowflake"]
+        allow_base64_binary = destination_config.file_format == "jsonl" and destination_config.destination in ["redshift"]
         # content must equal
         assert_all_data_types_row(
             db_row[:-2],

@@ -29,9 +29,7 @@ class SnowflakeCursorImpl(DBApiCursorImpl):
         return super().df(chunk_size=chunk_size, **kwargs)
 
 
-class SnowflakeSqlClient(
-    SqlClientBase[snowflake_lib.SnowflakeConnection], DBTransaction
-):
+class SnowflakeSqlClient(SqlClientBase[snowflake_lib.SnowflakeConnection], DBTransaction):
     dbapi: ClassVar[DBApi] = snowflake_lib
     capabilities: ClassVar[DestinationCapabilitiesContext] = capabilities()
 
@@ -46,9 +44,7 @@ class SnowflakeSqlClient(
         # we get dlt expected UTC
         if "timezone" not in conn_params:
             conn_params["timezone"] = "UTC"
-        self._conn = snowflake_lib.connect(
-            schema=self.fully_qualified_dataset_name(), **conn_params
-        )
+        self._conn = snowflake_lib.connect(schema=self.fully_qualified_dataset_name(), **conn_params)
         return self._conn
 
     @raise_open_connection_error
@@ -87,9 +83,7 @@ class SnowflakeSqlClient(
         with suppress(DatabaseUndefinedRelation):
             super().drop_tables(*tables)
 
-    def execute_sql(
-        self, sql: AnyStr, *args: Any, **kwargs: Any
-    ) -> Optional[Sequence[Sequence[Any]]]:
+    def execute_sql(self, sql: AnyStr, *args: Any, **kwargs: Any) -> Optional[Sequence[Sequence[Any]]]:
         with self.execute_query(sql, *args, **kwargs) as curr:
             if curr.description is None:
                 return None
@@ -99,9 +93,7 @@ class SnowflakeSqlClient(
 
     @contextmanager
     @raise_database_error
-    def execute_query(
-        self, query: AnyStr, *args: Any, **kwargs: Any
-    ) -> Iterator[DBApiCursor]:
+    def execute_query(self, query: AnyStr, *args: Any, **kwargs: Any) -> Iterator[DBApiCursor]:
         curr: DBApiCursor = None
         db_args = args if args else kwargs if kwargs else None
         with self._conn.cursor() as curr:  # type: ignore[assignment]
@@ -159,9 +151,7 @@ class SnowflakeSqlClient(
                 return DatabaseTransientException(ex)
         elif isinstance(ex, TypeError):
             # snowflake raises TypeError on malformed query parameters
-            return DatabaseTransientException(
-                snowflake_lib.errors.ProgrammingError(str(ex))
-            )
+            return DatabaseTransientException(snowflake_lib.errors.ProgrammingError(str(ex)))
         elif cls.is_dbapi_exception(ex):
             return DatabaseTransientException(ex)
         else:

@@ -40,23 +40,17 @@ class LoadFilesystemJob(LoadJob):
         file_name = FileStorage.get_file_name_from_file_path(local_path)
         self.config = config
         self.dataset_path = dataset_path
-        self.destination_file_name = LoadFilesystemJob.make_destination_filename(
-            config.layout, file_name, schema_name, load_id
-        )
+        self.destination_file_name = LoadFilesystemJob.make_destination_filename(config.layout, file_name, schema_name, load_id)
 
         super().__init__(file_name)
         fs_client, _ = fsspec_from_config(config)
-        self.destination_file_name = LoadFilesystemJob.make_destination_filename(
-            config.layout, file_name, schema_name, load_id
-        )
+        self.destination_file_name = LoadFilesystemJob.make_destination_filename(config.layout, file_name, schema_name, load_id)
         item = self.make_remote_path()
         logger.info("PUT file {item}")
         fs_client.put_file(local_path, item)
 
     @staticmethod
-    def make_destination_filename(
-        layout: str, file_name: str, schema_name: str, load_id: str
-    ) -> str:
+    def make_destination_filename(layout: str, file_name: str, schema_name: str, load_id: str) -> str:
         job_info = LoadStorage.parse_job_file_name(file_name)
         return path_utils.create_path(
             layout,
@@ -97,9 +91,7 @@ class FilesystemClient(JobClientBase, WithStagingDataset):
     fs_client: AbstractFileSystem
     fs_path: str
 
-    def __init__(
-        self, schema: Schema, config: FilesystemDestinationClientConfiguration
-    ) -> None:
+    def __init__(self, schema: Schema, config: FilesystemDestinationClientConfiguration) -> None:
         super().__init__(schema, config)
         self.fs_client, self.fs_path = fsspec_from_config(config)
         self.config: FilesystemDestinationClientConfiguration = config
@@ -120,9 +112,7 @@ class FilesystemClient(JobClientBase, WithStagingDataset):
     def with_staging_dataset(self) -> Iterator["FilesystemClient"]:
         current_dataset_path = self._dataset_path
         try:
-            self._dataset_path = self.schema.naming.normalize_table_identifier(
-                current_dataset_path + "_staging"
-            )
+            self._dataset_path = self.schema.naming.normalize_table_identifier(current_dataset_path + "_staging")
             yield self
         finally:
             # restore previous dataset name
@@ -137,9 +127,7 @@ class FilesystemClient(JobClientBase, WithStagingDataset):
             # print(f"TRUNCATE {truncated_dirs}")
             truncate_prefixes: Set[str] = set()
             for table in truncate_tables:
-                table_prefix = self.table_prefix_layout.format(
-                    schema_name=self.schema.name, table_name=table
-                )
+                table_prefix = self.table_prefix_layout.format(schema_name=self.schema.name, table_name=table)
                 truncate_prefixes.add(posixpath.join(self.dataset_path, table_prefix))
             # print(f"TRUNCATE PREFIXES {truncate_prefixes}")
 
@@ -149,12 +137,8 @@ class FilesystemClient(JobClientBase, WithStagingDataset):
                 # NOTE: without refresh you get random results here
                 logger.info(f"Will truncate tables in {truncate_dir}")
                 try:
-                    all_files = self.fs_client.ls(
-                        truncate_dir, detail=False, refresh=True
-                    )
-                    logger.info(
-                        f"Found {len(all_files)} CANDIDATE files in {truncate_dir}"
-                    )
+                    all_files = self.fs_client.ls(truncate_dir, detail=False, refresh=True)
+                    logger.info(f"Found {len(all_files)} CANDIDATE files in {truncate_dir}")
                     # print(f"in truncate dir {truncate_dir}: {all_files}")
                     for item in all_files:
                         # check every file against all the prefixes
@@ -165,13 +149,9 @@ class FilesystemClient(JobClientBase, WithStagingDataset):
                                 # print(f"DEL {item}")
                                 self.fs_client.rm(item)
                 except FileNotFoundError:
-                    logger.info(
-                        f"Directory or path to truncate tables {truncate_dir} does not exist but it should be created previously!"
-                    )
+                    logger.info(f"Directory or path to truncate tables {truncate_dir} does not exist but it should be created previously!")
 
-    def update_stored_schema(
-        self, only_tables: Iterable[str] = None, expected_update: TSchemaTables = None
-    ) -> TSchemaTables:
+    def update_stored_schema(self, only_tables: Iterable[str] = None, expected_update: TSchemaTables = None) -> TSchemaTables:
         # create destination dirs for all tables
         dirs_to_create = self._get_table_dirs(only_tables or self.schema.tables.keys())
         for directory in dirs_to_create:
@@ -182,9 +162,7 @@ class FilesystemClient(JobClientBase, WithStagingDataset):
         """Gets unique directories where table data is stored."""
         table_dirs: Set[str] = set()
         for table_name in table_names:
-            table_prefix = self.table_prefix_layout.format(
-                schema_name=self.schema.name, table_name=table_name
-            )
+            table_prefix = self.table_prefix_layout.format(schema_name=self.schema.name, table_name=table_name)
             destination_dir = posixpath.join(self.dataset_path, table_prefix)
             # extract the path component
             table_dirs.add(os.path.dirname(destination_dir))
@@ -193,9 +171,7 @@ class FilesystemClient(JobClientBase, WithStagingDataset):
     def is_storage_initialized(self) -> bool:
         return self.fs_client.isdir(self.dataset_path)  # type: ignore[no-any-return]
 
-    def start_file_load(
-        self, table: TTableSchema, file_path: str, load_id: str
-    ) -> LoadJob:
+    def start_file_load(self, table: TTableSchema, file_path: str, load_id: str) -> LoadJob:
         cls = FollowupFilesystemJob if self.config.as_staging else LoadFilesystemJob
         return cls(
             file_path,

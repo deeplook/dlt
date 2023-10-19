@@ -72,9 +72,7 @@ def test_connection_string_credentials_native_representation(environment) -> Non
         ConnectionStringCredentials().parse_native_representation(1)
 
     with pytest.raises(InvalidConnectionString):
-        ConnectionStringCredentials().parse_native_representation(
-            "loader@localhost:5432/dlt_data"
-        )
+        ConnectionStringCredentials().parse_native_representation("loader@localhost:5432/dlt_data")
 
     dsn = "postgres://loader:pass@localhost:5432/dlt_data?a=b&c=d"
     csc = ConnectionStringCredentials()
@@ -177,13 +175,8 @@ def test_gcp_service_credentials_native_representation(environment) -> None:
     assert GcpServiceAccountCredentials.__config_gen_annotations__ == []
 
     gcpc = GcpServiceAccountCredentials()
-    gcpc.parse_native_representation(
-        SERVICE_JSON
-        % '"private_key": "-----BEGIN PRIVATE KEY-----\\n\\n-----END PRIVATE KEY-----\\n",'
-    )
-    assert (
-        gcpc.private_key == "-----BEGIN PRIVATE KEY-----\n\n-----END PRIVATE KEY-----\n"
-    )
+    gcpc.parse_native_representation(SERVICE_JSON % '"private_key": "-----BEGIN PRIVATE KEY-----\\n\\n-----END PRIVATE KEY-----\\n",')
+    assert gcpc.private_key == "-----BEGIN PRIVATE KEY-----\n\n-----END PRIVATE KEY-----\n"
     assert gcpc.project_id == "chat-analytics"
     assert gcpc.client_email == "loader@iam.gserviceaccount.com"
     # location is present but deprecated
@@ -227,18 +220,13 @@ def test_gcp_oauth_credentials_native_representation(environment) -> None:
         GcpOAuthCredentials().parse_native_representation("notjson")
 
     gcoauth = GcpOAuthCredentials()
-    gcoauth.parse_native_representation(
-        OAUTH_APP_USER_INFO % '"refresh_token": "refresh_token",'
-    )
+    gcoauth.parse_native_representation(OAUTH_APP_USER_INFO % '"refresh_token": "refresh_token",')
     # is not resolved, we resolve only when default credentials are present
     assert gcoauth.is_resolved() is False
     # but is not partial - all required fields are present
     assert gcoauth.is_partial() is False
     assert gcoauth.project_id == "level-dragon-333983"
-    assert (
-        gcoauth.client_id
-        == "921382012504-3mtjaj1s7vuvf53j88mgdq4te7akkjm3.apps.googleusercontent.com"
-    )
+    assert gcoauth.client_id == "921382012504-3mtjaj1s7vuvf53j88mgdq4te7akkjm3.apps.googleusercontent.com"
     assert gcoauth.client_secret == "gOCSPX-XdY5znbrvjSMEG3pkpA_GHuLPPth"
     assert gcoauth.refresh_token == "refresh_token"
     assert gcoauth.token is None
@@ -259,9 +247,7 @@ def test_gcp_oauth_credentials_native_representation(environment) -> None:
 
     # use OAUTH_USER_INFO without "installed"
     gcpc_3 = GcpOAuthCredentials()
-    gcpc_3.parse_native_representation(
-        OAUTH_USER_INFO % '"refresh_token": "refresh_token",'
-    )
+    gcpc_3.parse_native_representation(OAUTH_USER_INFO % '"refresh_token": "refresh_token",')
     assert dict(gcpc_3) == dict(gcpc_2)
 
 
@@ -319,9 +305,7 @@ def test_run_configuration_slack_credentials(environment: Any) -> None:
     assert c.slack_incoming_hook == hook
 
     # and obfuscated-like but really not
-    environment[
-        "RUNTIME__SLACK_INCOMING_HOOK"
-    ] = "DBgAXQFPQVsAAEteXlFRWUoPG0BdHQ-EbAg=="
+    environment["RUNTIME__SLACK_INCOMING_HOOK"] = "DBgAXQFPQVsAAEteXlFRWUoPG0BdHQ-EbAg=="
     c = resolve_configuration(RunConfiguration())
     assert c.slack_incoming_hook == "DBgAXQFPQVsAAEteXlFRWUoPG0BdHQ-EbAg=="
 

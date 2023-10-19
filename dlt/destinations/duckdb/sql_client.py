@@ -31,9 +31,7 @@ class DuckDBDBApiCursorImpl(DBApiCursorImpl):
         if chunk_size is None:
             return self.native_cursor.df(**kwargs)
         else:
-            multiple = chunk_size // self.vector_size + (
-                0 if self.vector_size % chunk_size == 0 else 1
-            )
+            multiple = chunk_size // self.vector_size + (0 if self.vector_size % chunk_size == 0 else 1)
             df = self.native_cursor.fetch_df_chunk(multiple, **kwargs)
             if df.shape[0] == 0:
                 return None
@@ -102,9 +100,7 @@ class DuckDbSqlClient(SqlClientBase[duckdb.DuckDBPyConnection], DBTransaction):
     def native_connection(self) -> duckdb.DuckDBPyConnection:
         return self._conn
 
-    def execute_sql(
-        self, sql: AnyStr, *args: Any, **kwargs: Any
-    ) -> Optional[Sequence[Sequence[Any]]]:
+    def execute_sql(self, sql: AnyStr, *args: Any, **kwargs: Any) -> Optional[Sequence[Sequence[Any]]]:
         with self.execute_query(sql, *args, **kwargs) as curr:
             if curr.description is None:
                 return None
@@ -114,9 +110,7 @@ class DuckDbSqlClient(SqlClientBase[duckdb.DuckDBPyConnection], DBTransaction):
 
     @contextmanager
     @raise_database_error
-    def execute_query(
-        self, query: AnyStr, *args: Any, **kwargs: Any
-    ) -> Iterator[DBApiCursor]:
+    def execute_query(self, query: AnyStr, *args: Any, **kwargs: Any) -> Iterator[DBApiCursor]:
         assert isinstance(query, str)
         db_args = args if args else kwargs if kwargs else None
         if db_args:
@@ -145,11 +139,7 @@ class DuckDbSqlClient(SqlClientBase[duckdb.DuckDBPyConnection], DBTransaction):
     #         return None
 
     def fully_qualified_dataset_name(self, escape: bool = True) -> str:
-        return (
-            self.capabilities.escape_identifier(self.dataset_name)
-            if escape
-            else self.dataset_name
-        )
+        return self.capabilities.escape_identifier(self.dataset_name) if escape else self.dataset_name
 
     @classmethod
     def _make_database_exception(cls, ex: Exception) -> Exception:
@@ -177,9 +167,7 @@ class DuckDbSqlClient(SqlClientBase[duckdb.DuckDBPyConnection], DBTransaction):
                 return term
             else:
                 return DatabaseTransientException(ex)
-        elif isinstance(
-            ex, (duckdb.DataError, duckdb.ProgrammingError, duckdb.IntegrityError)
-        ):
+        elif isinstance(ex, (duckdb.DataError, duckdb.ProgrammingError, duckdb.IntegrityError)):
             return DatabaseTerminalException(ex)
         elif cls.is_dbapi_exception(ex):
             return DatabaseTransientException(ex)

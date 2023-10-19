@@ -24,9 +24,7 @@ def client(schema: Schema) -> PostgresClient:
     # return client without opening connection
     return PostgresClient(
         schema,
-        PostgresClientConfiguration(
-            dataset_name="test_" + uniq_id(), credentials=PostgresCredentials()
-        ),
+        PostgresClientConfiguration(dataset_name="test_" + uniq_id(), credentials=PostgresCredentials()),
     )
 
 

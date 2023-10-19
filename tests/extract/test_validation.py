@@ -114,10 +114,7 @@ def test_validator_property_setter(yield_list: bool) -> None:
 
     resource = some_data()
 
-    assert (
-        isinstance(resource.validator, PydanticValidator)
-        and resource.validator.model is SimpleModel
-    )
+    assert isinstance(resource.validator, PydanticValidator) and resource.validator.model is SimpleModel
 
     class AnotherModel(BaseModel):
         a: int

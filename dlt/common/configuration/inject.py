@@ -108,9 +108,7 @@ def with_config(
             if p.name == "pipeline_name" and auto_pipeline_section:
                 # if argument has name pipeline_name and auto_section is used, use it to generate section context
                 pipeline_name_arg = p
-                pipeline_name_arg_default = (
-                    None if p.default == Parameter.empty else p.default
-                )
+                pipeline_name_arg_default = None if p.default == Parameter.empty else p.default
 
         @wraps(f)
         def _wrap(*args: Any, **kwargs: Any) -> Any:
@@ -135,9 +133,7 @@ def with_config(
                     config = bound_args.arguments.get(spec_arg.name, None)
                 # resolve SPEC, also provide section_context with pipeline_name
                 if pipeline_name_arg:
-                    curr_pipeline_name = bound_args.arguments.get(
-                        pipeline_name_arg.name, pipeline_name_arg_default
-                    )
+                    curr_pipeline_name = bound_args.arguments.get(pipeline_name_arg.name, pipeline_name_arg_default)
                 else:
                     curr_pipeline_name = None
                 section_context = ConfigSectionContext(
@@ -149,9 +145,7 @@ def with_config(
                 with _RESOLVE_LOCK:
                     with inject_section(section_context):
                         # print(f"RESOLVE CONF in inject: {f.__name__}: {section_context.sections} vs {sections}")
-                        config = resolve_configuration(
-                            config or SPEC(), explicit_value=bound_args.arguments
-                        )
+                        config = resolve_configuration(config or SPEC(), explicit_value=bound_args.arguments)
             resolved_params = dict(config)
             # overwrite or add resolved params
             for p in sig.parameters.values():
@@ -181,9 +175,7 @@ def with_config(
         return decorator
 
     if not callable(func):
-        raise ValueError(
-            "First parameter to the with_config must be callable ie. by using it as function decorator"
-        )
+        raise ValueError("First parameter to the with_config must be callable ie. by using it as function decorator")
 
     # We're called as @with_config without parens.
     return decorator(func)

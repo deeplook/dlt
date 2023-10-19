@@ -23,9 +23,7 @@ class DBTNodeResult(NamedTuple):
 
 
 class DBTProcessingError(DBTRunnerException):
-    def __init__(
-        self, command: str, run_results: Sequence[DBTNodeResult], dbt_results: Any
-    ) -> None:
+    def __init__(self, command: str, run_results: Sequence[DBTNodeResult], dbt_results: Any) -> None:
         self.command = command
         self.run_results = run_results
         # the results from DBT may be anything

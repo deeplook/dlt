@@ -49,9 +49,7 @@ class PipeNotBoundToData(PipeException):
 
 
 class InvalidStepFunctionArguments(PipeException):
-    def __init__(
-        self, pipe_name: str, func_name: str, sig: Signature, call_error: str
-    ) -> None:
+    def __init__(self, pipe_name: str, func_name: str, sig: Signature, call_error: str) -> None:
         self.func_name = func_name
         self.sig = sig
         super().__init__(
@@ -64,13 +62,7 @@ class ResourceExtractionError(PipeException):
     def __init__(self, pipe_name: str, gen: Any, msg: str, kind: str) -> None:
         self.msg = msg
         self.kind = kind
-        self.func_name = (
-            gen.__name__
-            if isgenerator(gen)
-            else get_callable_name(gen)
-            if callable(gen)
-            else str(gen)
-        )
+        self.func_name = gen.__name__ if isgenerator(gen) else get_callable_name(gen) if callable(gen) else str(gen)
         super().__init__(
             pipe_name,
             f"extraction of resource {pipe_name} in {kind} {self.func_name} caused an exception: {msg}",
@@ -86,9 +78,7 @@ class PipeGenInvalid(PipeException):
         if "DltSource" in type_name:
             msg += " Did you pass a @dlt.source decorated function without calling it?"
         if "DltResource" in type_name:
-            msg += (
-                " Did you pass a function that returns dlt.resource without calling it?"
-            )
+            msg += " Did you pass a function that returns dlt.resource without calling it?"
 
         super().__init__(pipe_name, msg)
 
@@ -125,9 +115,7 @@ class ResourceNotFoundError(DltResourceException, KeyError):
 
 
 class InvalidResourceDataType(DltResourceException):
-    def __init__(
-        self, resource_name: str, item: Any, _typ: Type[Any], msg: str
-    ) -> None:
+    def __init__(self, resource_name: str, item: Any, _typ: Type[Any], msg: str) -> None:
         self.item = item
         self._typ = _typ
         super().__init__(
@@ -187,9 +175,7 @@ class InvalidTransformerDataTypeGeneratorFunctionRequired(InvalidResourceDataTyp
 
 
 class InvalidTransformerGeneratorFunction(DltResourceException):
-    def __init__(
-        self, resource_name: str, func_name: str, sig: Signature, code: int
-    ) -> None:
+    def __init__(self, resource_name: str, func_name: str, sig: Signature, code: int) -> None:
         self.func_name = func_name
         self.sig = sig
         self.code = code
@@ -199,9 +185,7 @@ class InvalidTransformerGeneratorFunction(DltResourceException):
         elif code == 2:
             msg += f"Only the first argument may be 'positional only', actual signature is {sig}"
         elif code == 3:
-            msg += (
-                f"The first argument cannot be keyword only, actual signature is {sig}"
-            )
+            msg += f"The first argument cannot be keyword only, actual signature is {sig}"
 
         super().__init__(resource_name, msg)
 
@@ -254,15 +238,11 @@ class InvalidParentResourceIsAFunction(DltResourceException):
 
 class DeletingResourcesNotSupported(DltResourceException):
     def __init__(self, source_name: str, resource_name: str) -> None:
-        super().__init__(
-            resource_name, f"Resource cannot be removed the the source {source_name}"
-        )
+        super().__init__(resource_name, f"Resource cannot be removed the the source {source_name}")
 
 
 class ParametrizedResourceUnbound(DltResourceException):
-    def __init__(
-        self, resource_name: str, func_name: str, sig: Signature, kind: str, error: str
-    ) -> None:
+    def __init__(self, resource_name: str, func_name: str, sig: Signature, kind: str, error: str) -> None:
         self.func_name = func_name
         self.sig = sig
         msg = f"The {kind} {resource_name} is parametrized and expects following arguments: {sig}. Did you forget to bind the {func_name} function? For example from `source.{resource_name}.bind(...)"
@@ -278,9 +258,7 @@ class ResourceNotATransformer(DltResourceException):
 
 class TableNameMissing(DltSourceException):
     def __init__(self) -> None:
-        super().__init__(
-            """Table name is missing in table template. Please provide a string or a function that takes a data item as an argument"""
-        )
+        super().__init__("""Table name is missing in table template. Please provide a string or a function that takes a data item as an argument""")
 
 
 class InconsistentTableTemplate(DltSourceException):
@@ -301,17 +279,13 @@ class DataItemRequiredForDynamicTableHints(DltResourceException):
 class SourceDataIsNone(DltSourceException):
     def __init__(self, source_name: str) -> None:
         self.source_name = source_name
-        super().__init__(
-            f"No data returned or yielded from source function {source_name}. Did you forget the return statement?"
-        )
+        super().__init__(f"No data returned or yielded from source function {source_name}. Did you forget the return statement?")
 
 
 class SourceExhausted(DltSourceException):
     def __init__(self, source_name: str) -> None:
         self.source_name = source_name
-        super().__init__(
-            f"Source {source_name} is exhausted or has active iterator. You can iterate or pass the source to dlt pipeline only once."
-        )
+        super().__init__(f"Source {source_name} is exhausted or has active iterator. You can iterate or pass the source to dlt pipeline only once.")
 
 
 class ResourcesNotFoundError(DltSourceException):
@@ -334,9 +308,7 @@ class SourceNotAFunction(DltSourceException):
         self.source_name = source_name
         self.item = item
         self.typ = _typ
-        super().__init__(
-            f"First parameter to the source {source_name} must be a function or callable but is {_typ.__name__}. Please decorate a function with @dlt.source"
-        )
+        super().__init__(f"First parameter to the source {source_name} must be a function or callable but is {_typ.__name__}. Please decorate a function with @dlt.source")
 
 
 class SourceIsAClassTypeError(DltSourceException):
@@ -350,18 +322,14 @@ class SourceIsAClassTypeError(DltSourceException):
 
 class SourceSchemaNotAvailable(DltSourceException):
     def __init__(self) -> None:
-        super().__init__(
-            "Current source schema is available only when called from a function decorated with dlt.source or dlt.resource"
-        )
+        super().__init__("Current source schema is available only when called from a function decorated with dlt.source or dlt.resource")
 
 
 class ExplicitSourceNameInvalid(DltSourceException):
     def __init__(self, source_name: str, schema_name: str) -> None:
         self.source_name = source_name
         self.schema_name = schema_name
-        super().__init__(
-            f"Your explicit source name {source_name} is not a valid schema name. Please use a valid schema name ie. '{schema_name}'."
-        )
+        super().__init__(f"Your explicit source name {source_name} is not a valid schema name. Please use a valid schema name ie. '{schema_name}'.")
 
 
 class IncrementalUnboundError(DltResourceException):
@@ -382,6 +350,4 @@ class ValidationError(ValueError, DltException):
         self.original_exception = original_exception
         self.validator = validator
         self.data_item = data_item
-        super().__init__(
-            f"Extracted data item could not be validated with {validator}. Original message: {original_exception}"
-        )
+        super().__init__(f"Extracted data item could not be validated with {validator}. Original message: {original_exception}")

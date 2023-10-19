@@ -50,9 +50,7 @@ def source(pokemon_api_url: str):
 
 if __name__ == "__main__":
     # build duck db pipeline
-    pipeline = dlt.pipeline(
-        pipeline_name="pokemon", destination="duckdb", dataset_name="pokemon_data"
-    )
+    pipeline = dlt.pipeline(pipeline_name="pokemon", destination="duckdb", dataset_name="pokemon_data")
 
     # the pokemon_list resource does not need to be loaded
     load_info = pipeline.run(source("https://pokeapi.co/api/v2/pokemon"))

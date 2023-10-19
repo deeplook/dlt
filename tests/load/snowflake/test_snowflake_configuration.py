@@ -40,9 +40,7 @@ def test_connection_string_with_all_params() -> None:
 
 def test_to_connector_params() -> None:
     # PEM key
-    pkey_str = Path("./tests/common/cases/secrets/encrypted-private-key").read_text(
-        "utf8"
-    )
+    pkey_str = Path("./tests/common/cases/secrets/encrypted-private-key").read_text("utf8")
 
     creds = SnowflakeCredentials()
     creds.private_key = pkey_str  # type: ignore[assignment]
@@ -68,9 +66,7 @@ def test_to_connector_params() -> None:
     )
 
     # base64 encoded DER key
-    pkey_str = Path(
-        "./tests/common/cases/secrets/encrypted-private-key-base64"
-    ).read_text("utf8")
+    pkey_str = Path("./tests/common/cases/secrets/encrypted-private-key-base64").read_text("utf8")
 
     creds = SnowflakeCredentials()
     creds.private_key = pkey_str  # type: ignore[assignment]
@@ -137,6 +133,4 @@ def test_snowflake_configuration() -> None:
         SnowflakeCredentials(),
         explicit_value="snowflake://user1:pass@host1/db1?warehouse=warehouse1&role=role1",
     )
-    assert SnowflakeClientConfiguration(credentials=c).fingerprint() == digest128(
-        "host1"
-    )
+    assert SnowflakeClientConfiguration(credentials=c).fingerprint() == digest128("host1")

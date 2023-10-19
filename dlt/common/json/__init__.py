@@ -24,25 +24,19 @@ class SupportsJson(Protocol):
     _impl_name: str
     """Implementation name"""
 
-    def dump(
-        self, obj: Any, fp: IO[bytes], sort_keys: bool = False, pretty: bool = False
-    ) -> None:
+    def dump(self, obj: Any, fp: IO[bytes], sort_keys: bool = False, pretty: bool = False) -> None:
         ...
 
     def typed_dump(self, obj: Any, fp: IO[bytes], pretty: bool = False) -> None:
         ...
 
-    def typed_dumps(
-        self, obj: Any, sort_keys: bool = False, pretty: bool = False
-    ) -> str:
+    def typed_dumps(self, obj: Any, sort_keys: bool = False, pretty: bool = False) -> str:
         ...
 
     def typed_loads(self, s: str) -> Any:
         ...
 
-    def typed_dumpb(
-        self, obj: Any, sort_keys: bool = False, pretty: bool = False
-    ) -> bytes:
+    def typed_dumpb(self, obj: Any, sort_keys: bool = False, pretty: bool = False) -> bytes:
         ...
 
     def typed_loadb(self, s: Union[bytes, bytearray, memoryview]) -> Any:
