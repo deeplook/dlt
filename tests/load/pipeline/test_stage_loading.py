@@ -8,16 +8,29 @@ from dlt.common.utils import uniq_id
 from dlt.common.schema.typing import TDataType
 
 from tests.load.pipeline.test_merge_disposition import github
-from tests.load.pipeline.utils import  load_table_counts
-from tests.pipeline.utils import  assert_load_info
-from tests.load.utils import TABLE_ROW_ALL_DATA_TYPES, TABLE_UPDATE_COLUMNS_SCHEMA, assert_all_data_types_row
+from tests.load.pipeline.utils import load_table_counts
+from tests.pipeline.utils import assert_load_info
+from tests.load.utils import (
+    TABLE_ROW_ALL_DATA_TYPES,
+    TABLE_UPDATE_COLUMNS_SCHEMA,
+    assert_all_data_types_row,
+)
 from tests.cases import table_update_and_row
 from tests.load.pipeline.utils import destinations_configs, DestinationTestConfiguration
 
 
-@dlt.resource(table_name="issues", write_disposition="merge", primary_key="id", merge_key=("node_id", "url"))
+@dlt.resource(
+    table_name="issues",
+    write_disposition="merge",
+    primary_key="id",
+    merge_key=("node_id", "url"),
+)
 def load_modified_issues():
-    with open("tests/normalize/cases/github.issues.load_page_5_duck.json", "r", encoding="utf-8") as f:
+    with open(
+        "tests/normalize/cases/github.issues.load_page_5_duck.json",
+        "r",
+        encoding="utf-8",
+    ) as f:
         issues = json.load(f)
 
         # change 2 issues
@@ -30,10 +43,16 @@ def load_modified_issues():
         yield from issues
 
 
-@pytest.mark.parametrize("destination_config", destinations_configs(all_staging_configs=True), ids=lambda x: x.name)
+@pytest.mark.parametrize(
+    "destination_config",
+    destinations_configs(all_staging_configs=True),
+    ids=lambda x: x.name,
+)
 def test_staging_load(destination_config: DestinationTestConfiguration) -> None:
-
-    pipeline = destination_config.setup_pipeline(pipeline_name='test_stage_loading_5', dataset_name="test_staging_load" + uniq_id())
+    pipeline = destination_config.setup_pipeline(
+        pipeline_name="test_stage_loading_5",
+        dataset_name="test_staging_load" + uniq_id(),
+    )
 
     info = pipeline.run(github(), loader_file_format=destination_config.file_format)
     assert_load_info(info)
@@ -73,15 +92,23 @@ def test_staging_load(destination_config: DestinationTestConfiguration) -> None:
             assert rows[0][0] == 300
 
     # test append
-    info = pipeline.run(github().load_issues, write_disposition="append", loader_file_format=destination_config.file_format)
+    info = pipeline.run(
+        github().load_issues,
+        write_disposition="append",
+        loader_file_format=destination_config.file_format,
+    )
     assert_load_info(info)
     assert pipeline.default_schema.tables["issues"]["write_disposition"] == "append"
     # the counts of all tables must be double
     append_counts = load_table_counts(pipeline, *[t["name"] for t in pipeline.default_schema.data_tables()])
-    assert {k:v*2 for k, v in initial_counts.items()} == append_counts
+    assert {k: v * 2 for k, v in initial_counts.items()} == append_counts
 
     # test replace
-    info = pipeline.run(github().load_issues, write_disposition="replace", loader_file_format=destination_config.file_format)
+    info = pipeline.run(
+        github().load_issues,
+        write_disposition="replace",
+        loader_file_format=destination_config.file_format,
+    )
     assert_load_info(info)
     assert pipeline.default_schema.tables["issues"]["write_disposition"] == "replace"
     # the counts of all tables must be double
@@ -89,16 +116,22 @@ def test_staging_load(destination_config: DestinationTestConfiguration) -> None:
     assert replace_counts == initial_counts
 
 
-@pytest.mark.parametrize("destination_config", destinations_configs(all_staging_configs=True), ids=lambda x: x.name)
+@pytest.mark.parametrize(
+    "destination_config",
+    destinations_configs(all_staging_configs=True),
+    ids=lambda x: x.name,
+)
 def test_all_data_types(destination_config: DestinationTestConfiguration) -> None:
-
-    pipeline = destination_config.setup_pipeline('test_stage_loading', dataset_name="test_all_data_types" + uniq_id())
+    pipeline = destination_config.setup_pipeline("test_stage_loading", dataset_name="test_all_data_types" + uniq_id())
 
     # Redshift parquet -> exclude col7_precision
     # redshift and athena, parquet and jsonl, exclude time types
     exclude_types: List[TDataType] = []
     exclude_columns: List[str] = []
-    if destination_config.destination in ("redshift", "athena") and destination_config.file_format in ('parquet', 'jsonl'):
+    if destination_config.destination in (
+        "redshift",
+        "athena",
+    ) and destination_config.file_format in ("parquet", "jsonl"):
         # Redshift copy doesn't support TIME column
         exclude_types.append("time")
     if destination_config.destination == "redshift" and destination_config.file_format in ("parquet", "jsonl"):
@@ -124,7 +157,7 @@ def test_all_data_types(destination_config: DestinationTestConfiguration) -> Non
     @dlt.resource(table_name="data_types", write_disposition="merge", columns=column_schemas)
     def my_resource():
         nonlocal data_types
-        yield [data_types]*10
+        yield [data_types] * 10
 
     @dlt.source(max_table_nesting=0)
     def my_source():
@@ -146,5 +179,5 @@ def test_all_data_types(destination_config: DestinationTestConfiguration) -> Non
             parse_complex_strings=parse_complex_strings,
             allow_base64_binary=allow_base64_binary,
             timestamp_precision=sql_client.capabilities.timestamp_precision,
-            schema=column_schemas
+            schema=column_schemas,
         )

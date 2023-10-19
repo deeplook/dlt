@@ -20,6 +20,7 @@ class LogMethod(Protocol):
 
 def __getattr__(name: str) -> LogMethod:
     """Forwards log method calls (debug, info, error etc.) to LOGGER"""
+
     def wrapper(msg: str, *args: Any, **kwargs: Any) -> None:
         if LOGGER:
             # skip stack frames when displaying log so the original logging frame is displayed
@@ -28,6 +29,7 @@ def __getattr__(name: str) -> LogMethod:
                 # exception has one more frame
                 stacklevel = 3
             getattr(LOGGER, name)(msg, *args, **kwargs, stacklevel=stacklevel)
+
     return wrapper
 
 
@@ -54,7 +56,8 @@ def init_logging(config: RunConfiguration) -> None:
         config.log_level,
         config.log_format,
         config.pipeline_name,
-        version)
+        version,
+    )
 
 
 def is_logging() -> bool:
@@ -120,6 +123,6 @@ def _init_logging(logger_name: str, level: str, fmt: str, component: str, versio
         if logger_name == "root":
             json_logging.config_root_logger()
     else:
-        handler.setFormatter(_MetricsFormatter(fmt=fmt, style='{'))
+        handler.setFormatter(_MetricsFormatter(fmt=fmt, style="{"))
 
     return logger

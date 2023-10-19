@@ -25,8 +25,8 @@ info = dlt.pipeline(
     # export_schema_path=...  # uncomment to see the final schema in the folder you want
 ).run(
     rasa(event_files, store_last_timestamp=True),  # also store last timestamp so we have no duplicate events
-    credentials=credentials # if you skip this parameter, the credentials will be injected by the config providers
-    )
+    credentials=credentials,  # if you skip this parameter, the credentials will be injected by the config providers
+)
 
 print(info)
 

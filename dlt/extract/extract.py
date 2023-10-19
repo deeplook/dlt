@@ -16,7 +16,12 @@ from dlt.common.utils import uniq_id
 from dlt.common.typing import TDataItems, TDataItem
 from dlt.common.schema import Schema, utils, TSchemaUpdate
 from dlt.common.schema.typing import TColumnSchema, TTableSchemaColumns
-from dlt.common.storages import NormalizeStorageConfiguration, NormalizeStorage, DataItemStorage, FileStorage
+from dlt.common.storages import (
+    NormalizeStorageConfiguration,
+    NormalizeStorage,
+    DataItemStorage,
+    FileStorage,
+)
 from dlt.common.configuration.specs import known_sections
 
 from dlt.extract.decorators import SourceSchemaInjectableContext
@@ -24,6 +29,7 @@ from dlt.extract.exceptions import DataItemRequiredForDynamicTableHints
 from dlt.extract.pipe import PipeIterator
 from dlt.extract.source import DltResource, DltSource
 from dlt.extract.typing import TableNameMeta
+
 try:
     from dlt.common.libs import pyarrow
 except MissingDependencyException:
@@ -37,12 +43,11 @@ except ModuleNotFoundError:
 class ExtractorItemStorage(DataItemStorage):
     load_file_type: TLoaderFileFormat
 
-    def __init__(self, storage: FileStorage, extract_folder: str="extract") -> None:
+    def __init__(self, storage: FileStorage, extract_folder: str = "extract") -> None:
         # data item storage with jsonl with pua encoding
         super().__init__(self.load_file_type)
         self.extract_folder = extract_folder
         self.storage = storage
-
 
     def _get_data_item_path_template(self, load_id: str, schema_name: str, table_name: str) -> str:
         template = NormalizeStorage.build_extracted_file_stem(schema_name, table_name, "%s")
@@ -64,11 +69,12 @@ class ExtractorStorage(NormalizeStorage):
     EXTRACT_FOLDER: ClassVar[str] = "extract"
 
     """Wrapper around multiple extractor storages with different file formats"""
+
     def __init__(self, C: NormalizeStorageConfiguration) -> None:
         super().__init__(True, C)
         self._item_storages: Dict[TLoaderFileFormat, ExtractorItemStorage] = {
             "puae-jsonl": JsonLExtractorStorage(self.storage, extract_folder=self.EXTRACT_FOLDER),
-            "arrow": ArrowExtractorStorage(self.storage, extract_folder=self.EXTRACT_FOLDER)
+            "arrow": ArrowExtractorStorage(self.storage, extract_folder=self.EXTRACT_FOLDER),
         }
 
     def _get_extract_path(self, extract_id: str) -> str:
@@ -99,22 +105,30 @@ class ExtractorStorage(NormalizeStorage):
         if with_delete:
             self.storage.delete_folder(extract_path, recursively=True)
 
-    def write_data_item(self, file_format: TLoaderFileFormat, load_id: str, schema_name: str, table_name: str, item: TDataItems, columns: TTableSchemaColumns) -> None:
+    def write_data_item(
+        self,
+        file_format: TLoaderFileFormat,
+        load_id: str,
+        schema_name: str,
+        table_name: str,
+        item: TDataItems,
+        columns: TTableSchemaColumns,
+    ) -> None:
         self.get_storage(file_format).write_data_item(load_id, schema_name, table_name, item, columns)
-
 
 
 class Extractor:
     file_format: TLoaderFileFormat
     dynamic_tables: TSchemaUpdate
+
     def __init__(
-            self,
-            extract_id: str,
-            storage: ExtractorStorage,
-            schema: Schema,
-            resources_with_items: Set[str],
-            dynamic_tables: TSchemaUpdate,
-            collector: Collector = NULL_COLLECTOR
+        self,
+        extract_id: str,
+        storage: ExtractorStorage,
+        schema: Schema,
+        resources_with_items: Set[str],
+        dynamic_tables: TSchemaUpdate,
+        collector: Collector = NULL_COLLECTOR,
     ) -> None:
         self._storage = storage
         self.schema = schema
@@ -140,7 +154,7 @@ class Extractor:
             if (pyarrow and pyarrow.is_arrow_item(item)) or (pd and isinstance(item, pd.DataFrame)):
                 return "arrow"
             return "puae-jsonl"
-        return None # Empty list is unknown format
+        return None  # Empty list is unknown format
 
     def write_table(self, resource: DltResource, items: TDataItems, meta: Any) -> None:
         if isinstance(meta, TableNameMeta):
@@ -206,10 +220,7 @@ class ArrowExtractor(Extractor):
     file_format = "arrow"
 
     def write_table(self, resource: DltResource, items: TDataItems, meta: Any) -> None:
-        items = [
-            pyarrow.pyarrow.Table.from_pandas(item) if (pd and isinstance(item, pd.DataFrame)) else item
-            for item in (items if isinstance(items, list) else [items])
-        ]
+        items = [pyarrow.pyarrow.Table.from_pandas(item) if (pd and isinstance(item, pd.DataFrame)) else item for item in (items if isinstance(items, list) else [items])]
         super().write_table(resource, items, meta)
 
     def _write_static_table(self, resource: DltResource, table_name: str, items: TDataItems) -> None:
@@ -238,28 +249,42 @@ def extract(
     *,
     max_parallel_items: int = None,
     workers: int = None,
-    futures_poll_interval: float = None
+    futures_poll_interval: float = None,
 ) -> TSchemaUpdate:
     dynamic_tables: TSchemaUpdate = {}
     schema = source.schema
     resources_with_items: Set[str] = set()
     extractors: Dict[TLoaderFileFormat, Extractor] = {
         "puae-jsonl": JsonLExtractor(
-            extract_id, storage, schema, resources_with_items, dynamic_tables, collector=collector
+            extract_id,
+            storage,
+            schema,
+            resources_with_items,
+            dynamic_tables,
+            collector=collector,
         ),
         "arrow": ArrowExtractor(
-            extract_id, storage, schema, resources_with_items, dynamic_tables, collector=collector
-        )
+            extract_id,
+            storage,
+            schema,
+            resources_with_items,
+            dynamic_tables,
+            collector=collector,
+        ),
     }
     last_item_format: Optional[TLoaderFileFormat] = None
 
     with collector(f"Extract {source.name}"):
         # yield from all selected pipes
-        with PipeIterator.from_pipes(source.resources.selected_pipes, max_parallel_items=max_parallel_items, workers=workers, futures_poll_interval=futures_poll_interval) as pipes:
+        with PipeIterator.from_pipes(
+            source.resources.selected_pipes,
+            max_parallel_items=max_parallel_items,
+            workers=workers,
+            futures_poll_interval=futures_poll_interval,
+        ) as pipes:
             left_gens = total_gens = len(pipes._sources)
             collector.update("Resources", 0, total_gens)
             for pipe_item in pipes:
-
                 curr_gens = len(pipes._sources)
                 if left_gens > curr_gens:
                     delta = left_gens - curr_gens
@@ -304,20 +329,32 @@ def extract_with_schema(
     schema: Schema,
     collector: Collector,
     max_parallel_items: int,
-    workers: int
+    workers: int,
 ) -> str:
     # generate extract_id to be able to commit all the sources together later
     extract_id = storage.create_extract_id()
     with Container().injectable_context(SourceSchemaInjectableContext(schema)):
         # inject the config section with the current source name
-        with inject_section(ConfigSectionContext(sections=(known_sections.SOURCES, source.section, source.name), source_state_key=source.name)):
+        with inject_section(
+            ConfigSectionContext(
+                sections=(known_sections.SOURCES, source.section, source.name),
+                source_state_key=source.name,
+            )
+        ):
             # reset resource states, the `extracted` list contains all the explicit resources and all their parents
             for resource in source.resources.extracted.values():
                 with contextlib.suppress(DataItemRequiredForDynamicTableHints):
                     if resource.write_disposition == "replace":
                         reset_resource_state(resource.name)
 
-            extractor = extract(extract_id, source, storage, collector, max_parallel_items=max_parallel_items, workers=workers)
+            extractor = extract(
+                extract_id,
+                source,
+                storage,
+                collector,
+                max_parallel_items=max_parallel_items,
+                workers=workers,
+            )
             # iterate over all items in the pipeline and update the schema if dynamic table hints were present
             for _, partials in extractor.items():
                 for partial in partials:

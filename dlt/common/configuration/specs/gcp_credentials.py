@@ -4,10 +4,20 @@ from deprecated import deprecated
 
 from dlt.common import json, pendulum
 from dlt.common.configuration.specs.api_credentials import OAuth2Credentials
-from dlt.common.configuration.specs.exceptions import InvalidGoogleNativeCredentialsType, InvalidGoogleOauth2Json, InvalidGoogleServicesJson, NativeValueError, OAuth2ScopesRequired
+from dlt.common.configuration.specs.exceptions import (
+    InvalidGoogleNativeCredentialsType,
+    InvalidGoogleOauth2Json,
+    InvalidGoogleServicesJson,
+    NativeValueError,
+    OAuth2ScopesRequired,
+)
 from dlt.common.exceptions import MissingDependencyException
 from dlt.common.typing import DictStrAny, TSecretValue, StrAny
-from dlt.common.configuration.specs.base_configuration import CredentialsConfiguration, CredentialsWithDefault, configspec
+from dlt.common.configuration.specs.base_configuration import (
+    CredentialsConfiguration,
+    CredentialsWithDefault,
+    configspec,
+)
 from dlt.common.utils import is_interactive
 
 
@@ -48,13 +58,16 @@ class GcpServiceAccountCredentialsWithoutDefaults(GcpCredentials):
         """Accepts ServiceAccountCredentials as native value. In other case reverts to serialized services.json"""
         service_dict: DictStrAny = None
         try:
-            from google.oauth2.service_account import Credentials as ServiceAccountCredentials
+            from google.oauth2.service_account import (
+                Credentials as ServiceAccountCredentials,
+            )
+
             if isinstance(native_value, ServiceAccountCredentials):
                 # extract credentials
                 service_dict = {
                     "project_id": native_value.project_id,
                     "client_email": native_value.service_account_email,
-                    "private_key": native_value  # keep native credentials in private key
+                    "private_key": native_value,  # keep native credentials in private key
                 }
                 self.__is_resolved__ = True
         except ImportError:
@@ -83,7 +96,10 @@ class GcpServiceAccountCredentialsWithoutDefaults(GcpCredentials):
     def to_native_credentials(self) -> Any:
         """Returns google.oauth2.service_account.Credentials"""
 
-        from google.oauth2.service_account import Credentials as ServiceAccountCredentials
+        from google.oauth2.service_account import (
+            Credentials as ServiceAccountCredentials,
+        )
+
         if isinstance(self.private_key, ServiceAccountCredentials):
             # private key holds the native instance if it was passed to parse_native_representation
             return self.private_key
@@ -105,6 +121,7 @@ class GcpOAuthCredentialsWithoutDefaults(GcpCredentials, OAuth2Credentials):
         oauth_dict: DictStrAny = None
         try:
             from google.oauth2.credentials import Credentials as GoogleOAuth2Credentials
+
             if isinstance(native_value, GoogleOAuth2Credentials):
                 # extract credentials, project id may not be present
                 oauth_dict = {
@@ -113,7 +130,7 @@ class GcpOAuthCredentialsWithoutDefaults(GcpCredentials, OAuth2Credentials):
                     "client_secret": native_value.client_secret,
                     "refresh_token": native_value.refresh_token,
                     "scopes": native_value.scopes,
-                    "token": native_value.token
+                    "token": native_value.token,
                 }
                 # if token is present, we are logged in
                 self.__is_resolved__ = native_value.token is not None
@@ -164,10 +181,7 @@ class GcpOAuthCredentialsWithoutDefaults(GcpCredentials, OAuth2Credentials):
             raise MissingDependencyException("GcpOAuthCredentials", ["requests_oauthlib"])
 
         google = OAuth2Session(client_id=self.client_id, scope=self.scopes)
-        extra = {
-            "client_id": self.client_id,
-            "client_secret": self.client_secret
-        }
+        extra = {"client_id": self.client_id, "client_secret": self.client_secret}
         token = google.refresh_token(token_url=self.token_uri, refresh_token=self.refresh_token, **extra)["access_token"]
         return TSecretValue(token)
 
@@ -191,9 +205,7 @@ class GcpOAuthCredentialsWithoutDefaults(GcpCredentials, OAuth2Credentials):
         return credentials
 
     def _installed_dict(self, redirect_url: str = "http://localhost") -> StrAny:
-        installed_dict = {
-            self.client_type: self._info_dict()
-        }
+        installed_dict = {self.client_type: self._info_dict()}
 
         if redirect_url:
             installed_dict[self.client_type]["redirect_uris"] = [redirect_url]
@@ -211,13 +223,13 @@ class GcpOAuthCredentialsWithoutDefaults(GcpCredentials, OAuth2Credentials):
 
 @configspec
 class GcpDefaultCredentials(CredentialsWithDefault, GcpCredentials):
-
     _LAST_FAILED_DEFAULT: float = 0.0
 
     def parse_native_representation(self, native_value: Any) -> None:
         """Accepts google credentials as native value"""
         try:
             from google.auth.credentials import Credentials as GoogleCredentials
+
             if isinstance(native_value, GoogleCredentials):
                 self.project_id = self.project_id or native_value.quota_project_id
                 self._set_default_credentials(native_value)
@@ -230,7 +242,6 @@ class GcpDefaultCredentials(CredentialsWithDefault, GcpCredentials):
 
     @staticmethod
     def _get_default_credentials(retry_timeout_s: float = 600.0) -> Tuple[Any, str]:
-
         now = pendulum.now().timestamp()
         if now - GcpDefaultCredentials._LAST_FAILED_DEFAULT < retry_timeout_s:
             return None, None

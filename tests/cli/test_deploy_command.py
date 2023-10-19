@@ -23,10 +23,13 @@ from tests.utils import TEST_STORAGE_ROOT, test_storage
 
 
 DEPLOY_PARAMS = [
-    ("github-action", {"schedule": "*/30 * * * *", "run_on_push": True, "run_manually": True}),
+    (
+        "github-action",
+        {"schedule": "*/30 * * * *", "run_on_push": True, "run_manually": True},
+    ),
     ("airflow-composer", {"secrets_format": "toml"}),
     ("airflow-composer", {"secrets_format": "env"}),
-    ]
+]
 
 
 @pytest.mark.parametrize("deployment_method,deployment_args", DEPLOY_PARAMS)
@@ -94,17 +97,12 @@ def test_deploy_command(test_storage: FileStorage, deployment_method: str, deplo
             venv.run_script("debug_pipeline.py")
             with echo.always_choose(False, always_choose_value=True):
                 with io.StringIO() as buf, contextlib.redirect_stdout(buf):
-                    deploy_command.deploy_command(
-                        "debug_pipeline.py",
-                        deployment_method,
-                        deploy_command.COMMAND_DEPLOY_REPO_LOCATION,
-                        **deployment_args
-                    )
+                    deploy_command.deploy_command("debug_pipeline.py", deployment_method, deploy_command.COMMAND_DEPLOY_REPO_LOCATION, **deployment_args)
                     _out = buf.getvalue()
                 print(_out)
                 # make sure our secret and config values are all present
-                assert 'api_key_9x3ehash' in _out
-                assert 'dlt_data' in _out
+                assert "api_key_9x3ehash" in _out
+                assert "dlt_data" in _out
                 if "schedule" in deployment_args:
                     assert get_schedule_description(deployment_args["schedule"])
                 secrets_format = deployment_args.get("secrets_format", "env")
@@ -119,4 +117,3 @@ def test_deploy_command(test_storage: FileStorage, deployment_method: str, deplo
             with echo.always_choose(False, always_choose_value=True):
                 rc = _dlt.deploy_command_wrapper("no_pipeline.py", deployment_method, deploy_command.COMMAND_DEPLOY_REPO_LOCATION, **deployment_args)
                 assert rc == -4
-

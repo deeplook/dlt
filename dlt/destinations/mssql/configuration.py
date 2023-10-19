@@ -7,7 +7,9 @@ from dlt.common.utils import digest128
 from dlt.common.typing import TSecretValue
 from dlt.common.exceptions import SystemConfigurationException
 
-from dlt.common.destination.reference import DestinationClientDwhWithStagingConfiguration
+from dlt.common.destination.reference import (
+    DestinationClientDwhWithStagingConfiguration,
+)
 
 
 @configspec
@@ -45,17 +47,18 @@ class MsSqlCredentials(ConnectionStringCredentials):
         if self.odbc_driver:
             return self.odbc_driver
         # Pick a default driver if available
-        supported_drivers = ['ODBC Driver 18 for SQL Server', 'ODBC Driver 17 for SQL Server']
+        supported_drivers = [
+            "ODBC Driver 18 for SQL Server",
+            "ODBC Driver 17 for SQL Server",
+        ]
         import pyodbc
+
         available_drivers = pyodbc.drivers()
         for driver in supported_drivers:
             if driver in available_drivers:
                 return driver
         docs_url = "https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver16"
-        raise SystemConfigurationException(
-            f"No supported ODBC driver found for MS SQL Server.  "
-            f"See {docs_url} for information on how to install the '{supported_drivers[0]}' on your platform."
-        )
+        raise SystemConfigurationException(f"No supported ODBC driver found for MS SQL Server.  " f"See {docs_url} for information on how to install the '{supported_drivers[0]}' on your platform.")
 
     def to_odbc_dsn(self) -> str:
         params = {
@@ -69,7 +72,6 @@ class MsSqlCredentials(ConnectionStringCredentials):
         if self.query:
             params.update(self.query)
         return ";".join([f"{k}={v}" for k, v in params.items()])
-
 
 
 @configspec

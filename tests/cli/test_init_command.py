@@ -16,7 +16,11 @@ import dlt
 
 from dlt.common import git
 from dlt.common.configuration.paths import make_dlt_settings_path
-from dlt.common.configuration.providers import CONFIG_TOML, SECRETS_TOML, SecretsTomlProvider
+from dlt.common.configuration.providers import (
+    CONFIG_TOML,
+    SECRETS_TOML,
+    SecretsTomlProvider,
+)
 from dlt.common.runners import Venv
 from dlt.common.storages.file_storage import FileStorage
 from dlt.common.source import _SOURCES
@@ -24,13 +28,25 @@ from dlt.common.utils import set_working_dir
 
 
 from dlt.cli import init_command, echo
-from dlt.cli.init_command import SOURCES_MODULE_NAME, utils as cli_utils, files_ops, _select_source_files
+from dlt.cli.init_command import (
+    SOURCES_MODULE_NAME,
+    utils as cli_utils,
+    files_ops,
+    _select_source_files,
+)
 from dlt.cli.exceptions import CliCommandException
 from dlt.cli.requirements import SourceRequirements
 from dlt.reflection.script_visitor import PipelineScriptVisitor
 from dlt.reflection import names as n
 
-from tests.cli.utils import echo_default_choice, repo_dir, project_files, cloned_init_repo, get_repo_dir, get_project_files
+from tests.cli.utils import (
+    echo_default_choice,
+    repo_dir,
+    project_files,
+    cloned_init_repo,
+    get_repo_dir,
+    get_project_files,
+)
 from tests.common.utils import modify_and_commit_file
 from tests.utils import IMPLEMENTED_DESTINATIONS, clean_test_storage
 
@@ -121,7 +137,7 @@ def test_init_list_verified_pipelines_update_warning(repo_dir: str, project_file
     assert match
     # Try parsing the printed requiremnt string to verify it's valid
     parsed_requirement = Requirement(match.group(1))
-    assert '0.0.1' not in parsed_requirement.specifier
+    assert "0.0.1" not in parsed_requirement.specifier
 
 
 def test_init_all_verified_sources_together(repo_dir: str, project_files: FileStorage) -> None:
@@ -166,7 +182,7 @@ def test_init_all_verified_sources_isolated(cloned_init_repo: FileStorage) -> No
             assert_index_version_constraint(files, candidate)
 
 
-@pytest.mark.parametrize('destination_name', IMPLEMENTED_DESTINATIONS)
+@pytest.mark.parametrize("destination_name", IMPLEMENTED_DESTINATIONS)
 def test_init_all_destinations(destination_name: str, project_files: FileStorage, repo_dir: str) -> None:
     pipeline_name = f"generic_{destination_name}_pipeline"
     init_command.init_command(pipeline_name, destination_name, True, repo_dir)
@@ -200,7 +216,7 @@ def test_init_code_update_index_diff(repo_dir: str, project_files: FileStorage) 
     new, modified, deleted = files_ops.gen_index_diff(local_index, remote_index)
     # remote file entry in new
     assert new[new_file_path] == remote_index["files"][new_file_path]
-    #no git sha yet
+    # no git sha yet
     assert new[new_file_path]["git_sha"] is None
     # remote file entry in modified
     assert modified[mod_file_path] == remote_index["files"][mod_file_path]
@@ -241,20 +257,38 @@ def test_init_code_update_index_diff(repo_dir: str, project_files: FileStorage) 
     modified.update(new)
     # resolve conflicts in three different ways
     # skip option (the default)
-    res, sel_modified, sel_deleted = _select_source_files("pipedrive", deepcopy(modified), deepcopy(deleted), conflict_modified, conflict_deleted)
+    res, sel_modified, sel_deleted = _select_source_files(
+        "pipedrive",
+        deepcopy(modified),
+        deepcopy(deleted),
+        conflict_modified,
+        conflict_deleted,
+    )
     # noting is written, including non-conflicting file
     assert res == "s"
     assert sel_modified == {}
     assert sel_deleted == {}
     # Apply option - local changes will be lost
     with echo.always_choose(False, "a"):
-        res, sel_modified, sel_deleted = _select_source_files("pipedrive", deepcopy(modified), deepcopy(deleted), conflict_modified, conflict_deleted)
+        res, sel_modified, sel_deleted = _select_source_files(
+            "pipedrive",
+            deepcopy(modified),
+            deepcopy(deleted),
+            conflict_modified,
+            conflict_deleted,
+        )
         assert res == "a"
         assert sel_modified == modified
         assert sel_deleted == deleted
     # merge only non conflicting changes are applied
     with echo.always_choose(False, "m"):
-        res, sel_modified, sel_deleted = _select_source_files("pipedrive", deepcopy(modified), deepcopy(deleted), conflict_modified, conflict_deleted)
+        res, sel_modified, sel_deleted = _select_source_files(
+            "pipedrive",
+            deepcopy(modified),
+            deepcopy(deleted),
+            conflict_modified,
+            conflict_deleted,
+        )
         assert res == "m"
         assert len(sel_modified) == 1 and mod_file_path_2 in sel_modified
         assert sel_deleted == {}
@@ -424,7 +458,10 @@ def test_incompatible_dlt_version_warning(repo_dir: str, project_files: FileStor
 
 
 def assert_init_files(
-        project_files: FileStorage, pipeline_name: str, destination_name: str, dependency_destination: Optional[str] = None
+    project_files: FileStorage,
+    pipeline_name: str,
+    destination_name: str,
+    dependency_destination: Optional[str] = None,
 ) -> PipelineScriptVisitor:
     visitor, _ = assert_common_files(project_files, pipeline_name + ".py", destination_name)
     assert not project_files.has_folder(pipeline_name)
@@ -450,7 +487,12 @@ def assert_index_version_constraint(project_files: FileStorage, source_name: str
     assert index_constraint == SourceRequirements.from_string(project_files.load(cli_utils.REQUIREMENTS_TXT)).dlt_version_constraint()
 
 
-def assert_source_files(project_files: FileStorage, source_name: str, destination_name: str, has_source_section: bool = True) -> Tuple[PipelineScriptVisitor, SecretsTomlProvider]:
+def assert_source_files(
+    project_files: FileStorage,
+    source_name: str,
+    destination_name: str,
+    has_source_section: bool = True,
+) -> Tuple[PipelineScriptVisitor, SecretsTomlProvider]:
     visitor, secrets = assert_common_files(project_files, source_name + "_pipeline.py", destination_name)
     assert project_files.has_folder(source_name)
     source_secrets = secrets.get_value(source_name, type, None, source_name)
@@ -490,7 +532,13 @@ def assert_common_files(project_files: FileStorage, pipeline_script: str, destin
         # destination is there
         assert secrets.get_value(destination_name, type, None, "destination") is not None
     # certain values are never there
-    for not_there in ["dataset_name", "destination_name", "default_schema_name", "as_staging", "staging_config"]:
+    for not_there in [
+        "dataset_name",
+        "destination_name",
+        "default_schema_name",
+        "as_staging",
+        "staging_config",
+    ]:
         assert secrets.get_value(not_there, type, None, "destination", destination_name)[0] is None
 
     return visitor, secrets

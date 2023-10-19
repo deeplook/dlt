@@ -34,14 +34,22 @@ def test_pipeline_with_dlt_update(test_storage: FileStorage) -> None:
                     # NOTE: we force a newer duckdb into the 0.3.0 dlt version to get compatible duckdb storage
                     venv._install_deps(venv.context, ["duckdb" + "==" + pkg_version("duckdb")])
                     # load 20 issues
-                    print(venv.run_script("../tests/pipeline/cases/github_pipeline/github_pipeline.py", "20"))
+                    print(
+                        venv.run_script(
+                            "../tests/pipeline/cases/github_pipeline/github_pipeline.py",
+                            "20",
+                        )
+                    )
                     # load schema and check _dlt_loads definition
                     github_schema: TStoredSchema = json.loads(test_storage.load(f".dlt/pipelines/{GITHUB_PIPELINE_NAME}/schemas/github.schema.json"))
                     # print(github_schema["tables"][LOADS_TABLE_NAME])
                     assert github_schema["engine_version"] == 5
                     assert "schema_version_hash" not in github_schema["tables"][LOADS_TABLE_NAME]["columns"]
                     # check loads table without attaching to pipeline
-                    duckdb_cfg = resolve_configuration(DuckDbClientConfiguration(dataset_name=GITHUB_DATASET), sections=("destination", "duckdb"))
+                    duckdb_cfg = resolve_configuration(
+                        DuckDbClientConfiguration(dataset_name=GITHUB_DATASET),
+                        sections=("destination", "duckdb"),
+                    )
                     with DuckDbSqlClient(GITHUB_DATASET, duckdb_cfg.credentials) as client:
                         rows = client.execute_sql(f"SELECT * FROM {LOADS_TABLE_NAME}")
                         # make sure we have just 4 columns
@@ -99,11 +107,19 @@ def test_load_package_with_dlt_update(test_storage: FileStorage) -> None:
                 with Venv.create(tempfile.mkdtemp(), ["dlt[duckdb]==0.3.0"]) as venv:
                     venv._install_deps(venv.context, ["duckdb" + "==" + pkg_version("duckdb")])
                     # extract and normalize on old version but DO NOT LOAD
-                    print(venv.run_script("../tests/pipeline/cases/github_pipeline/github_extract.py", "70"))
+                    print(
+                        venv.run_script(
+                            "../tests/pipeline/cases/github_pipeline/github_extract.py",
+                            "70",
+                        )
+                    )
                 # switch to current version and make sure the load package loads and schema migrates
                 venv = Venv.restore_current()
                 print(venv.run_script("../tests/pipeline/cases/github_pipeline/github_load.py"))
-                duckdb_cfg = resolve_configuration(DuckDbClientConfiguration(dataset_name=GITHUB_DATASET), sections=("destination", "duckdb"))
+                duckdb_cfg = resolve_configuration(
+                    DuckDbClientConfiguration(dataset_name=GITHUB_DATASET),
+                    sections=("destination", "duckdb"),
+                )
                 with DuckDbSqlClient(GITHUB_DATASET, duckdb_cfg.credentials) as client:
                     rows = client.execute_sql("SELECT * FROM issues")
                     assert len(rows) == 70

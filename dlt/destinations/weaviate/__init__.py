@@ -43,9 +43,7 @@ def capabilities() -> DestinationCapabilitiesContext:
     return caps
 
 
-def client(
-    schema: Schema, initial_config: DestinationClientConfiguration = config.value
-) -> JobClientBase:
+def client(schema: Schema, initial_config: DestinationClientConfiguration = config.value) -> JobClientBase:
     from dlt.destinations.weaviate.weaviate_client import WeaviateClient
 
     return WeaviateClient(schema, _configure(initial_config))  # type: ignore

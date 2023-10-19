@@ -129,8 +129,8 @@ def test_file_transaction_simultaneous(fs: fsspec.AbstractFileSystem):
 
     pool = ThreadPoolExecutor(max_workers=40)
     results = pool.map(
-        lambda _: TransactionalFile(
-        "/bucket/test_123", fs).acquire_lock(blocking=False, jitter_mean=0.3), range(200)
+        lambda _: TransactionalFile("/bucket/test_123", fs).acquire_lock(blocking=False, jitter_mean=0.3),
+        range(200),
     )
     assert sum(results) == 1
 

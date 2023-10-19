@@ -13,7 +13,12 @@ from dlt.common.configuration.specs.config_section_context import ConfigSectionC
 from dlt.common.time import ensure_pendulum_date, ensure_pendulum_datetime
 
 from tests.cases import TABLE_UPDATE_COLUMNS_SCHEMA, TABLE_ROW_ALL_DATA_TYPES
-from tests.utils import TEST_STORAGE_ROOT, write_version, autouse_test_storage, preserve_environ
+from tests.utils import (
+    TEST_STORAGE_ROOT,
+    write_version,
+    autouse_test_storage,
+    preserve_environ,
+)
 
 
 def get_writer(
@@ -21,12 +26,19 @@ def get_writer(
     buffer_max_items: int = 10,
     file_max_items: int = 10,
     file_max_bytes: int = None,
-    _caps: DestinationCapabilitiesContext = None
+    _caps: DestinationCapabilitiesContext = None,
 ) -> BufferedDataWriter[ParquetDataWriter]:
     caps = _caps or DestinationCapabilitiesContext.generic_capabilities()
     caps.preferred_loader_file_format = _format
     file_template = os.path.join(TEST_STORAGE_ROOT, f"{_format}.%s")
-    return BufferedDataWriter(_format, file_template, buffer_max_items=buffer_max_items, _caps=caps, file_max_items=file_max_items, file_max_bytes=file_max_bytes)
+    return BufferedDataWriter(
+        _format,
+        file_template,
+        buffer_max_items=buffer_max_items,
+        _caps=caps,
+        file_max_items=file_max_items,
+        file_max_bytes=file_max_bytes,
+    )
 
 
 def test_parquet_writer_schema_evolution_with_big_buffer() -> None:
@@ -37,7 +49,18 @@ def test_parquet_writer_schema_evolution_with_big_buffer() -> None:
 
     with get_writer("parquet") as writer:
         writer.write_data_item([{"col1": 1, "col2": 2, "col3": "3"}], {"col1": c1, "col2": c2, "col3": c3})
-        writer.write_data_item([{"col1": 1, "col2": 2, "col3": "3", "col4": "4", "col5": {"hello": "marcin"}}], {"col1": c1, "col2": c2, "col3": c3, "col4": c4})
+        writer.write_data_item(
+            [
+                {
+                    "col1": 1,
+                    "col2": 2,
+                    "col3": "3",
+                    "col4": "4",
+                    "col5": {"hello": "marcin"},
+                }
+            ],
+            {"col1": c1, "col2": c2, "col3": c3, "col4": c4},
+        )
 
     with open(writer.closed_files[0], "rb") as f:
         table = pq.read_table(f)
@@ -55,9 +78,23 @@ def test_parquet_writer_schema_evolution_with_small_buffer() -> None:
 
     with get_writer("parquet", buffer_max_items=4, file_max_items=50) as writer:
         for _ in range(0, 20):
-            writer.write_data_item([{"col1": 1, "col2": 2, "col3": "3"}], {"col1": c1, "col2": c2, "col3": c3})
+            writer.write_data_item(
+                [{"col1": 1, "col2": 2, "col3": "3"}],
+                {"col1": c1, "col2": c2, "col3": c3},
+            )
         for _ in range(0, 20):
-            writer.write_data_item([{"col1": 1, "col2": 2, "col3": "3", "col4": "4", "col5": {"hello": "marcin"}}], {"col1": c1, "col2": c2, "col3": c3, "col4": c4})
+            writer.write_data_item(
+                [
+                    {
+                        "col1": 1,
+                        "col2": 2,
+                        "col3": "3",
+                        "col4": "4",
+                        "col5": {"hello": "marcin"},
+                    }
+                ],
+                {"col1": c1, "col2": c2, "col3": c3, "col4": c4},
+            )
 
     assert len(writer.closed_files) == 2
 
@@ -76,8 +113,14 @@ def test_parquet_writer_json_serialization() -> None:
     c3 = new_column("col3", "complex")
 
     with get_writer("parquet") as writer:
-        writer.write_data_item([{"col1": 1, "col2": 2, "col3": {"hello":"dave"}}], {"col1": c1, "col2": c2, "col3": c3})
-        writer.write_data_item([{"col1": 1, "col2": 2, "col3": {"hello":"marcin"}}], {"col1": c1, "col2": c2, "col3": c3})
+        writer.write_data_item(
+            [{"col1": 1, "col2": 2, "col3": {"hello": "dave"}}],
+            {"col1": c1, "col2": c2, "col3": c3},
+        )
+        writer.write_data_item(
+            [{"col1": 1, "col2": 2, "col3": {"hello": "marcin"}}],
+            {"col1": c1, "col2": c2, "col3": c3},
+        )
         writer.write_data_item([{"col1": 1, "col2": 2, "col3": {}}], {"col1": c1, "col2": c2, "col3": c3})
         writer.write_data_item([{"col1": 1, "col2": 2, "col3": []}], {"col1": c1, "col2": c2, "col3": c3})
 
@@ -85,11 +128,15 @@ def test_parquet_writer_json_serialization() -> None:
         table = pq.read_table(f)
         assert table.column("col1").to_pylist() == [1, 1, 1, 1]
         assert table.column("col2").to_pylist() == [2, 2, 2, 2]
-        assert table.column("col3").to_pylist() == ["""{"hello":"dave"}""","""{"hello":"marcin"}""","""{}""","""[]"""]
+        assert table.column("col3").to_pylist() == [
+            """{"hello":"dave"}""",
+            """{"hello":"marcin"}""",
+            """{}""",
+            """[]""",
+        ]
 
 
 def test_parquet_writer_all_data_fields() -> None:
-
     data = dict(TABLE_ROW_ALL_DATA_TYPES)
     # fix dates to use pendulum
     data["col4"] = ensure_pendulum_datetime(data["col4"])  # type: ignore[arg-type]
@@ -158,15 +205,20 @@ def test_parquet_writer_size_file_rotation() -> None:
 
 
 def test_parquet_writer_config() -> None:
-
     os.environ["NORMALIZE__DATA_WRITER__VERSION"] = "2.0"
     os.environ["NORMALIZE__DATA_WRITER__DATA_PAGE_SIZE"] = str(1024 * 512)
     os.environ["NORMALIZE__DATA_WRITER__TIMESTAMP_TIMEZONE"] = "America/New York"
 
-    with inject_section(ConfigSectionContext(pipeline_name=None, sections=("normalize", ))):
+    with inject_section(ConfigSectionContext(pipeline_name=None, sections=("normalize",))):
         with get_writer("parquet", file_max_bytes=2**8, buffer_max_items=2) as writer:
             for i in range(0, 5):
-                writer.write_data_item([{"col1": i, "col2": pendulum.now()}], {"col1": new_column("col1", "bigint"), "col2": new_column("col2", "timestamp")})
+                writer.write_data_item(
+                    [{"col1": i, "col2": pendulum.now()}],
+                    {
+                        "col1": new_column("col1", "bigint"),
+                        "col2": new_column("col2", "timestamp"),
+                    },
+                )
             # force the parquet writer to be created
             writer._flush_items()
 
@@ -189,8 +241,18 @@ def test_parquet_writer_schema_from_caps() -> None:
     with get_writer("parquet", file_max_bytes=2**8, buffer_max_items=2) as writer:
         for _ in range(0, 5):
             writer.write_data_item(
-                [{"col1": Decimal("2617.27"), "col2": pendulum.now(), "col3": Decimal(2**250)}],
-                {"col1": new_column("col1", "decimal"), "col2": new_column("col2", "timestamp"), "col3": new_column("col3", "wei")}
+                [
+                    {
+                        "col1": Decimal("2617.27"),
+                        "col2": pendulum.now(),
+                        "col3": Decimal(2**250),
+                    }
+                ],
+                {
+                    "col1": new_column("col1", "decimal"),
+                    "col2": new_column("col2", "timestamp"),
+                    "col3": new_column("col3", "wei"),
+                },
             )
         # force the parquet writer to be created
         writer._flush_items()

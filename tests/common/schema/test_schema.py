@@ -13,8 +13,18 @@ from dlt.common.normalizers.naming import snake_case, direct
 from dlt.common.typing import DictStrAny, StrAny
 from dlt.common.utils import uniq_id
 from dlt.common.schema import TColumnSchema, Schema, TStoredSchema, utils, TColumnHint
-from dlt.common.schema.exceptions import InvalidSchemaName, ParentTableNotFoundException, SchemaEngineNoUpgradePathException
-from dlt.common.schema.typing import LOADS_TABLE_NAME, VERSION_TABLE_NAME, TColumnName, TSimpleRegex, COLUMN_HINTS
+from dlt.common.schema.exceptions import (
+    InvalidSchemaName,
+    ParentTableNotFoundException,
+    SchemaEngineNoUpgradePathException,
+)
+from dlt.common.schema.typing import (
+    LOADS_TABLE_NAME,
+    VERSION_TABLE_NAME,
+    TColumnName,
+    TSimpleRegex,
+    COLUMN_HINTS,
+)
 from dlt.common.storages import SchemaStorage
 
 from tests.utils import autouse_test_storage, preserve_environ
@@ -30,17 +40,15 @@ def schema_storage() -> SchemaStorage:
         SchemaStorageConfiguration(),
         explicit_value={
             "import_schema_path": "tests/common/cases/schemas/rasa",
-            "external_schema_format": "json"
-        }
+            "external_schema_format": "json",
+        },
     )
     return SchemaStorage(C, makedirs=True)
 
 
 @pytest.fixture
 def schema_storage_no_import() -> SchemaStorage:
-    C = resolve_configuration(
-        SchemaStorageConfiguration()
-    )
+    C = resolve_configuration(SchemaStorageConfiguration())
     return SchemaStorage(C, makedirs=True)
 
 
@@ -51,15 +59,16 @@ def schema() -> Schema:
 
 @pytest.fixture
 def cn_schema() -> Schema:
-    return Schema("column_default", {
-        "names": "tests.common.normalizers.custom_normalizers",
-        "json": {
-            "module": "tests.common.normalizers.custom_normalizers",
-            "config": {
-                "not_null": ["fake_id"]
-            }
-        }
-    })
+    return Schema(
+        "column_default",
+        {
+            "names": "tests.common.normalizers.custom_normalizers",
+            "json": {
+                "module": "tests.common.normalizers.custom_normalizers",
+                "config": {"not_null": ["fake_id"]},
+            },
+        },
+    )
 
 
 def test_normalize_schema_name(schema: Schema) -> None:
@@ -169,7 +178,7 @@ def test_schema_name() -> None:
         Schema("1_a")
     # too long
     with pytest.raises(InvalidSchemaName) as exc:
-        Schema("a"*65)
+        Schema("a" * 65)
 
 
 def test_create_schema_with_normalize_name() -> None:
@@ -178,7 +187,11 @@ def test_create_schema_with_normalize_name() -> None:
 
 
 def test_schema_descriptions_and_annotations(schema_storage: SchemaStorage):
-    schema = SchemaStorage.load_schema_file(os.path.join(COMMON_TEST_CASES_PATH, "schemas/local"), "event", extensions=("yaml", ))
+    schema = SchemaStorage.load_schema_file(
+        os.path.join(COMMON_TEST_CASES_PATH, "schemas/local"),
+        "event",
+        extensions=("yaml",),
+    )
     assert schema.tables["blocks"]["description"] == "Ethereum blocks"
     assert schema.tables["blocks"]["x-annotation"] == "this will be preserved on save"  # type: ignore[typeddict-item]
     assert schema.tables["blocks"]["columns"]["_dlt_load_id"]["description"] == "load id coming from the extractor"
@@ -211,11 +224,24 @@ def test_replace_schema_content() -> None:
     assert schema_eth._imported_version_hash == schema._imported_version_hash
 
 
-@pytest.mark.parametrize("columns,hint,value", [
-    (["_dlt_id", "_dlt_root_id", "_dlt_load_id", "_dlt_parent_id", "_dlt_list_idx"], "nullable", False),
-    (["_dlt_id"], "unique", True),
-    (["_dlt_parent_id"], "foreign_key", True),
-])
+@pytest.mark.parametrize(
+    "columns,hint,value",
+    [
+        (
+            [
+                "_dlt_id",
+                "_dlt_root_id",
+                "_dlt_load_id",
+                "_dlt_parent_id",
+                "_dlt_list_idx",
+            ],
+            "nullable",
+            False,
+        ),
+        (["_dlt_id"], "unique", True),
+        (["_dlt_parent_id"], "foreign_key", True),
+    ],
+)
 def test_relational_normalizer_schema_hints(columns: Sequence[str], hint: str, value: bool, schema_storage: SchemaStorage) -> None:
     schema = schema_storage.load_schema("event")
     for name in columns:
@@ -257,10 +283,10 @@ def test_save_load_incomplete_column(schema: Schema, schema_storage_no_import: S
     schema_storage_no_import.save_schema(schema)
     schema_copy = schema_storage_no_import.load_schema("event")
     assert schema_copy.get_table("table")["columns"]["I"] == {
-        'name': 'I',
-        'nullable': False,
-        'primary_key': True,
-        'x-special': 'spec'
+        "name": "I",
+        "nullable": False,
+        "primary_key": True,
+        "x-special": "spec",
     }
 
 
@@ -329,7 +355,7 @@ def test_preserve_column_order(schema: Schema, schema_storage: SchemaStorage) ->
     schema_storage.save_schema(loaded_schema)
     loaded_schema = schema_storage.load_schema("event")
     table = loaded_schema.get_table_columns("event_test_order")
-    verify_items(table, update  + update2)
+    verify_items(table, update + update2)
 
 
 def test_get_schema_new_exist(schema_storage: SchemaStorage) -> None:
@@ -337,15 +363,32 @@ def test_get_schema_new_exist(schema_storage: SchemaStorage) -> None:
         schema_storage.load_schema("wrongschema")
 
 
-@pytest.mark.parametrize("columns,hint,value", [
-    (["timestamp", "_timestamp", "_dist_key", "_dlt_id", "_dlt_root_id", "_dlt_load_id", "_dlt_parent_id", "_dlt_list_idx", "sender_id"], "nullable", False),
-    (["confidence", "_sender_id"], "nullable", True),
-    (["timestamp", "_timestamp"], "partition", True),
-    (["_dist_key", "sender_id"], "cluster", True),
-    (["_dlt_id"], "unique", True),
-    (["_dlt_parent_id"], "foreign_key", True),
-    (["timestamp", "_timestamp"], "sort", True),
-])
+@pytest.mark.parametrize(
+    "columns,hint,value",
+    [
+        (
+            [
+                "timestamp",
+                "_timestamp",
+                "_dist_key",
+                "_dlt_id",
+                "_dlt_root_id",
+                "_dlt_load_id",
+                "_dlt_parent_id",
+                "_dlt_list_idx",
+                "sender_id",
+            ],
+            "nullable",
+            False,
+        ),
+        (["confidence", "_sender_id"], "nullable", True),
+        (["timestamp", "_timestamp"], "partition", True),
+        (["_dist_key", "sender_id"], "cluster", True),
+        (["_dlt_id"], "unique", True),
+        (["_dlt_parent_id"], "foreign_key", True),
+        (["timestamp", "_timestamp"], "sort", True),
+    ],
+)
 def test_rasa_event_hints(columns: Sequence[str], hint: str, value: bool, schema_storage: SchemaStorage) -> None:
     schema = schema_storage.load_schema("event")
     for name in columns:
@@ -414,10 +457,16 @@ def test_merge_hints(schema: Schema) -> None:
     schema._settings["default_hints"] = {}
     schema._compiled_hints = {}
     new_hints = {
-            "not_null": ["_dlt_id", "_dlt_root_id", "_dlt_parent_id", "_dlt_list_idx", "re:^_dlt_load_id$"],
-            "foreign_key": ["re:^_dlt_parent_id$"],
-            "unique": ["re:^_dlt_id$"]
-        }
+        "not_null": [
+            "_dlt_id",
+            "_dlt_root_id",
+            "_dlt_parent_id",
+            "_dlt_list_idx",
+            "re:^_dlt_load_id$",
+        ],
+        "foreign_key": ["re:^_dlt_parent_id$"],
+        "unique": ["re:^_dlt_id$"],
+    }
     schema.merge_hints(new_hints)  # type: ignore[arg-type]
     assert schema._settings["default_hints"] == new_hints
 
@@ -428,17 +477,21 @@ def test_merge_hints(schema: Schema) -> None:
         assert set(new_hints[k]) == set(schema._settings["default_hints"][k])  # type: ignore[index]
 
     # add new stuff
-    new_new_hints = {
-        "not_null": ["timestamp"],
-        "primary_key": ["id"]
-    }
+    new_new_hints = {"not_null": ["timestamp"], "primary_key": ["id"]}
     schema.merge_hints(new_new_hints)  # type: ignore[arg-type]
     expected_hints = {
-            "not_null": ["_dlt_id", "_dlt_root_id", "_dlt_parent_id", "_dlt_list_idx", "re:^_dlt_load_id$", "timestamp"],
-            "foreign_key": ["re:^_dlt_parent_id$"],
-            "unique": ["re:^_dlt_id$"],
-            "primary_key": ["id"]
-        }
+        "not_null": [
+            "_dlt_id",
+            "_dlt_root_id",
+            "_dlt_parent_id",
+            "_dlt_list_idx",
+            "re:^_dlt_load_id$",
+            "timestamp",
+        ],
+        "foreign_key": ["re:^_dlt_parent_id$"],
+        "unique": ["re:^_dlt_id$"],
+        "primary_key": ["id"],
+    }
     assert len(expected_hints) == len(schema._settings["default_hints"])
     for k in expected_hints:
         assert set(expected_hints[k]) == set(schema._settings["default_hints"][k])  # type: ignore[index]
@@ -449,8 +502,8 @@ def test_default_table_resource() -> None:
     eth_v5 = load_yml_case("schemas/eth/ethereum_schema_v5")
     tables = Schema.from_dict(eth_v5).tables
 
-    assert tables['blocks']['resource'] == 'blocks'
-    assert all([t.get('resource') is None for t in tables.values() if t.get('parent')])
+    assert tables["blocks"]["resource"] == "blocks"
+    assert all([t.get("resource") is None for t in tables.values() if t.get("parent")])
 
 
 def test_data_tables(schema: Schema, schema_storage: SchemaStorage) -> None:
@@ -460,8 +513,8 @@ def test_data_tables(schema: Schema, schema_storage: SchemaStorage) -> None:
     # with tables
     schema = schema_storage.load_schema("event")
     # some of them are incomplete
-    assert set(schema.tables.keys()) == set([LOADS_TABLE_NAME, VERSION_TABLE_NAME, 'event_slot', 'event_user', 'event_bot'])
-    assert [t["name"] for t in schema.data_tables()] == ['event_slot']
+    assert set(schema.tables.keys()) == set([LOADS_TABLE_NAME, VERSION_TABLE_NAME, "event_slot", "event_user", "event_bot"])
+    assert [t["name"] for t in schema.data_tables()] == ["event_slot"]
 
 
 def test_write_disposition(schema_storage: SchemaStorage) -> None:
@@ -486,15 +539,16 @@ def test_write_disposition(schema_storage: SchemaStorage) -> None:
 
 
 def test_compare_columns() -> None:
-    table = utils.new_table("test_table", columns=[
-        {"name": "col1", "data_type": "text", "nullable": True},
-        {"name": "col2", "data_type": "text", "nullable": False},
-        {"name": "col3", "data_type": "timestamp", "nullable": True},
-        {"name": "col4", "data_type": "timestamp", "nullable": True}
-    ])
-    table2 = utils.new_table("test_table", columns=[
-        {"name": "col1", "data_type": "text", "nullable": False}
-    ])
+    table = utils.new_table(
+        "test_table",
+        columns=[
+            {"name": "col1", "data_type": "text", "nullable": True},
+            {"name": "col2", "data_type": "text", "nullable": False},
+            {"name": "col3", "data_type": "timestamp", "nullable": True},
+            {"name": "col4", "data_type": "timestamp", "nullable": True},
+        ],
+    )
+    table2 = utils.new_table("test_table", columns=[{"name": "col1", "data_type": "text", "nullable": False}])
     # columns identical with self
     for c in table["columns"].values():
         assert utils.compare_complete_columns(c, c) is True
@@ -528,14 +582,9 @@ def test_normalize_table_identifiers_merge_columns() -> None:
             "name": "case",
             "data_type": "bigint",
             "nullable": False,
-            "x-description": "desc"
+            "x-description": "desc",
         },
-        {
-            "name": "Case",
-            "data_type": "double",
-            "nullable": True,
-            "primary_key": True
-        },
+        {"name": "Case", "data_type": "double", "nullable": True, "primary_key": True},
     ]
     # schema normalizing to snake case will conflict on case and Case
     table = utils.new_table("blend", columns=table_create)  # type: ignore[arg-type]
@@ -543,11 +592,11 @@ def test_normalize_table_identifiers_merge_columns() -> None:
     # only one column
     assert len(norm_table["columns"]) == 1
     assert norm_table["columns"]["case"] == {
-        'nullable': False,  # remove default, preserve non default
-        'primary_key': True,
-        'name': 'case',
-        'data_type': 'double',
-        'x-description': 'desc'
+        "nullable": False,  # remove default, preserve non default
+        "primary_key": True,
+        "name": "case",
+        "data_type": "double",
+        "x-description": "desc",
     }
 
 
@@ -610,19 +659,30 @@ def test_group_tables_by_resource(schema: Schema) -> None:
 
     # All resources without filter
     expected_tables = {
-        "a_events": [schema.tables["a_events"], schema.tables["a_events__1"], schema.tables["a_events__1__2"]],
+        "a_events": [
+            schema.tables["a_events"],
+            schema.tables["a_events__1"],
+            schema.tables["a_events__1__2"],
+        ],
         "b_events": [schema.tables["b_events"], schema.tables["b_events__1"]],
         "products": [schema.tables["c_products"]],
         "_dlt_version": [schema.tables["_dlt_version"]],
-        "_dlt_loads": [schema.tables["_dlt_loads"]]
+        "_dlt_loads": [schema.tables["_dlt_loads"]],
     }
     result = utils.group_tables_by_resource(schema.tables)
     assert result == expected_tables
 
     # With resource filter
-    result = utils.group_tables_by_resource(schema.tables, pattern=utils.compile_simple_regex(TSimpleRegex("re:[a-z]_events")))
+    result = utils.group_tables_by_resource(
+        schema.tables,
+        pattern=utils.compile_simple_regex(TSimpleRegex("re:[a-z]_events")),
+    )
     assert result == {
-        "a_events": [schema.tables["a_events"], schema.tables["a_events__1"], schema.tables["a_events__1__2"]],
+        "a_events": [
+            schema.tables["a_events"],
+            schema.tables["a_events__1"],
+            schema.tables["a_events__1__2"],
+        ],
         "b_events": [schema.tables["b_events"], schema.tables["b_events__1"]],
     }
 
@@ -631,9 +691,20 @@ def test_group_tables_by_resource(schema: Schema) -> None:
     schema.update_table(utils.new_table("mc_products__sub", columns=[], parent_table_name="mc_products"))
     result = utils.group_tables_by_resource(schema.tables, pattern=utils.compile_simple_regex(TSimpleRegex("products")))
     # both tables with resource "products" must be here
-    assert result == {'products': [
-        {'columns': {}, 'name': 'c_products', 'resource': 'products', 'write_disposition': 'append'},
-        {'columns': {}, 'name': 'mc_products', 'resource': 'products', 'write_disposition': 'append'},
-        {'columns': {}, 'name': 'mc_products__sub', 'parent': 'mc_products'}
+    assert result == {
+        "products": [
+            {
+                "columns": {},
+                "name": "c_products",
+                "resource": "products",
+                "write_disposition": "append",
+            },
+            {
+                "columns": {},
+                "name": "mc_products",
+                "resource": "products",
+                "write_disposition": "append",
+            },
+            {"columns": {}, "name": "mc_products__sub", "parent": "mc_products"},
         ]
     }

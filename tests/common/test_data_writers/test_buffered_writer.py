@@ -16,11 +16,21 @@ from tests.utils import TEST_STORAGE_ROOT, write_version, autouse_test_storage
 import datetime  # noqa: 251
 
 
-def get_insert_writer(_format: TLoaderFileFormat = "insert_values", buffer_max_items: int = 10, disable_compression: bool = False) -> BufferedDataWriter[DataWriter]:
+def get_insert_writer(
+    _format: TLoaderFileFormat = "insert_values",
+    buffer_max_items: int = 10,
+    disable_compression: bool = False,
+) -> BufferedDataWriter[DataWriter]:
     caps = DestinationCapabilitiesContext.generic_capabilities()
     caps.preferred_loader_file_format = _format
     file_template = os.path.join(TEST_STORAGE_ROOT, f"{_format}.%s")
-    return BufferedDataWriter(_format, file_template, buffer_max_items=buffer_max_items, disable_compression=disable_compression, _caps=caps)
+    return BufferedDataWriter(
+        _format,
+        file_template,
+        buffer_max_items=buffer_max_items,
+        disable_compression=disable_compression,
+        _caps=caps,
+    )
 
 
 def test_write_no_item() -> None:
@@ -35,7 +45,6 @@ def test_write_no_item() -> None:
 
 @pytest.mark.parametrize("disable_compression", [True, False], ids=["no_compression", "compression"])
 def test_rotation_on_schema_change(disable_compression: bool) -> None:
-
     c1 = new_column("col1", "bigint")
     c2 = new_column("col2", "bigint")
     c3 = new_column("col3", "text")
@@ -48,7 +57,7 @@ def test_rotation_on_schema_change(disable_compression: bool) -> None:
         return map(lambda x: {"col1": x}, range(0, count))
 
     def c2_doc(count: int) -> Iterator[DictStrAny]:
-        return map(lambda x: {"col1": x, "col2": x*2+1}, range(0, count))
+        return map(lambda x: {"col1": x, "col2": x * 2 + 1}, range(0, count))
 
     def c3_doc(count: int) -> Iterator[DictStrAny]:
         return map(lambda x: {"col3": "col3_value"}, range(0, count))
@@ -136,7 +145,7 @@ def test_NO_rotation_on_schema_change(disable_compression: bool) -> None:
         return map(lambda x: {"col1": x}, range(0, count))
 
     def c2_doc(count: int) -> Iterator[DictStrAny]:
-        return map(lambda x: {"col1": x, "col2": x*2+1}, range(0, count))
+        return map(lambda x: {"col1": x, "col2": x * 2 + 1}, range(0, count))
 
     # change schema before file first flush
     with get_insert_writer(_format="jsonl", disable_compression=disable_compression) as writer:
@@ -171,6 +180,5 @@ def test_writer_requiring_schema(disable_compression: bool) -> None:
 @pytest.mark.parametrize("disable_compression", [True, False], ids=["no_compression", "compression"])
 def test_writer_optional_schema(disable_compression: bool) -> None:
     with get_insert_writer(_format="jsonl", disable_compression=disable_compression) as writer:
-            writer.write_data_item([{"col1": 1}], None)
-            writer.write_data_item([{"col1": 1}], None)
-
+        writer.write_data_item([{"col1": 1}], None)
+        writer.write_data_item([{"col1": 1}], None)

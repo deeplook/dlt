@@ -8,10 +8,15 @@ from typing import Any
 from dlt.normalize.configuration import SchemaStorageConfiguration
 from dlt.common.runners import Runnable
 
-from tests.common.runners.utils import _TestRunnableWorkerMethod, _TestRunnableWorker, ALL_METHODS, mp_method_auto
+from tests.common.runners.utils import (
+    _TestRunnableWorkerMethod,
+    _TestRunnableWorker,
+    ALL_METHODS,
+    mp_method_auto,
+)
 
 
-@pytest.mark.parametrize('method', ALL_METHODS)
+@pytest.mark.parametrize("method", ALL_METHODS)
 def test_runnable_process_pool(method: str) -> None:
     multiprocessing.set_start_method(method, force=True)
     # 4 tasks

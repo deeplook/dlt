@@ -1,6 +1,9 @@
 import pytest
 
-from dlt.common.destination.reference import DestinationClientDwhConfiguration, DestinationReference
+from dlt.common.destination.reference import (
+    DestinationClientDwhConfiguration,
+    DestinationReference,
+)
 from dlt.common.exceptions import InvalidDestinationReference, UnknownDestinationModule
 from dlt.common.schema import Schema
 from dlt.common.schema.exceptions import InvalidDatasetName

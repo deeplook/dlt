@@ -14,7 +14,12 @@ except ModuleNotFoundError:
 
 @deprecated(reason="Use `df` method on cursor returned from client.execute_query")
 def query_results_to_df(
-    client: SqlClientBase[Any], query: str, index_col: Any = None, coerce_float: bool = True, parse_dates: Any = None, dtype: Any = None
+    client: SqlClientBase[Any],
+    query: str,
+    index_col: Any = None,
+    coerce_float: bool = True,
+    parse_dates: Any = None,
+    dtype: Any = None,
 ) -> pd.DataFrame:
     """
     A helper function that executes a query in the destination and returns the result as Pandas `DataFrame`

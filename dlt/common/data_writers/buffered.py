@@ -4,7 +4,11 @@ from typing import List, IO, Any, Optional, Type, TypeVar, Generic
 from dlt.common.utils import uniq_id
 from dlt.common.typing import TDataItem, TDataItems
 from dlt.common.data_writers import TLoaderFileFormat
-from dlt.common.data_writers.exceptions import BufferedDataWriterClosed, DestinationCapabilitiesRequired, InvalidFileNameTemplateException
+from dlt.common.data_writers.exceptions import (
+    BufferedDataWriterClosed,
+    DestinationCapabilitiesRequired,
+    InvalidFileNameTemplateException,
+)
 from dlt.common.data_writers.writers import DataWriter
 from dlt.common.schema.typing import TTableSchemaColumns
 from dlt.common.configuration import with_config, known_sections, configspec
@@ -16,7 +20,6 @@ TWriter = TypeVar("TWriter", bound=DataWriter)
 
 
 class BufferedDataWriter(Generic[TWriter]):
-
     @configspec
     class BufferedDataWriterConfiguration(BaseConfiguration):
         buffer_max_items: int = 5000
@@ -26,7 +29,6 @@ class BufferedDataWriter(Generic[TWriter]):
         _caps: Optional[DestinationCapabilitiesContext] = None
 
         __section__ = known_sections.DATA_WRITER
-
 
     @with_config(spec=BufferedDataWriterConfiguration)
     def __init__(
@@ -123,9 +125,9 @@ class BufferedDataWriter(Generic[TWriter]):
             if not self._writer:
                 # create new writer and write header
                 if self._file_format_spec.is_binary_format:
-                    self._file = self.open(self._file_name, "wb") # type: ignore
+                    self._file = self.open(self._file_name, "wb")  # type: ignore
                 else:
-                    self._file = self.open(self._file_name, "wt", encoding="utf-8") # type: ignore
+                    self._file = self.open(self._file_name, "wt", encoding="utf-8")  # type: ignore
                 self._writer = DataWriter.from_file_format(self.file_format, self._file, caps=self._caps)  # type: ignore[assignment]
                 self._writer.write_header(self._current_columns)
             # write buffer

@@ -24,6 +24,7 @@ try:
             span.set_tag("destination", pipeline.destination.__name__)
         if pipeline.dataset_name:
             span.set_tag("dataset_name", pipeline.dataset_name)
+
 except ImportError:
     # sentry is optional dependency and enabled only when RuntimeConfiguration.sentry_dsn is set
     pass
@@ -75,7 +76,12 @@ def on_start_trace_step(trace: PipelineTrace, step: TPipelineStep, pipeline: Sup
         _add_sentry_tags(span, pipeline)
 
 
-def on_end_trace_step(trace: PipelineTrace, step: PipelineStepTrace, pipeline: SupportsPipeline, step_info: Any) -> None:
+def on_end_trace_step(
+    trace: PipelineTrace,
+    step: PipelineStepTrace,
+    pipeline: SupportsPipeline,
+    step_info: Any,
+) -> None:
     if pipeline.runtime_config.sentry_dsn:
         # print(f"---END SENTRY SPAN {trace.transaction_id}:{step.span_id}: {step} SCOPE: {Hub.current.scope}")
         with contextlib.suppress(Exception):
@@ -88,7 +94,7 @@ def on_end_trace_step(trace: PipelineTrace, step: PipelineStepTrace, pipeline: S
         "elapsed": (step.finished_at - trace.started_at).total_seconds(),
         "success": step.step_exception is None,
         "destination_name": DestinationReference.to_name(pipeline.destination) if pipeline.destination else None,
-        "transaction_id": trace.transaction_id
+        "transaction_id": trace.transaction_id,
     }
     # disable automatic slack messaging until we can configure messages themselves
     if step.step == "extract" and step_info:

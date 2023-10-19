@@ -24,10 +24,10 @@ class SupportsJson(Protocol):
     _impl_name: str
     """Implementation name"""
 
-    def dump(self, obj: Any, fp: IO[bytes], sort_keys: bool = False, pretty:bool = False) -> None:
+    def dump(self, obj: Any, fp: IO[bytes], sort_keys: bool = False, pretty: bool = False) -> None:
         ...
 
-    def typed_dump(self, obj: Any, fp: IO[bytes], pretty:bool = False) -> None:
+    def typed_dump(self, obj: Any, fp: IO[bytes], pretty: bool = False) -> None:
         ...
 
     def typed_dumps(self, obj: Any, sort_keys: bool = False, pretty: bool = False) -> str:
@@ -42,10 +42,10 @@ class SupportsJson(Protocol):
     def typed_loadb(self, s: Union[bytes, bytearray, memoryview]) -> Any:
         ...
 
-    def dumps(self, obj: Any, sort_keys: bool = False, pretty:bool = False) -> str:
+    def dumps(self, obj: Any, sort_keys: bool = False, pretty: bool = False) -> str:
         ...
 
-    def dumpb(self, obj: Any, sort_keys: bool = False, pretty:bool = False) -> bytes:
+    def dumpb(self, obj: Any, sort_keys: bool = False, pretty: bool = False) -> bytes:
         ...
 
     def load(self, fp: Union[IO[bytes], IO[str]]) -> Any:
@@ -74,10 +74,10 @@ def custom_encode(obj: Any) -> str:
     elif isinstance(obj, HexBytes):
         return obj.hex()
     elif isinstance(obj, bytes):
-        return base64.b64encode(obj).decode('ascii')
-    elif hasattr(obj, 'asdict'):
+        return base64.b64encode(obj).decode("ascii")
+    elif hasattr(obj, "asdict"):
         return obj.asdict()  # type: ignore
-    elif hasattr(obj, '_asdict'):
+    elif hasattr(obj, "_asdict"):
         return obj._asdict()  # type: ignore
     elif PydanticBaseModel and isinstance(obj, PydanticBaseModel):
         return obj.dict()  # type: ignore[return-value]
@@ -89,22 +89,23 @@ def custom_encode(obj: Any) -> str:
 
 
 # use PUA range to encode additional types
-_DECIMAL = '\uF026'
-_DATETIME = '\uF027'
-_DATE = '\uF028'
-_UUIDT = '\uF029'
-_HEXBYTES = '\uF02A'
-_B64BYTES = '\uF02B'
-_WEI = '\uF02C'
-_TIME = '\uF02D'
+_DECIMAL = "\uF026"
+_DATETIME = "\uF027"
+_DATE = "\uF028"
+_UUIDT = "\uF029"
+_HEXBYTES = "\uF02A"
+_B64BYTES = "\uF02B"
+_WEI = "\uF02C"
+_TIME = "\uF02D"
 
 
 def _datetime_decoder(obj: str) -> datetime:
-    if obj.endswith('Z'):
+    if obj.endswith("Z"):
         # Backwards compatibility for data encoded with previous dlt version
         # fromisoformat does not support Z suffix (until py3.11)
-        obj = obj[:-1] + '+00:00'
+        obj = obj[:-1] + "+00:00"
     return pendulum.DateTime.fromisoformat(obj)  # type: ignore[attr-defined, no-any-return]
+
 
 # define decoder for each prefix
 DECODERS: List[Callable[[Any], Any]] = [
@@ -139,10 +140,10 @@ def custom_pua_encode(obj: Any) -> str:
     elif isinstance(obj, HexBytes):
         return _HEXBYTES + obj.hex()
     elif isinstance(obj, bytes):
-        return _B64BYTES + base64.b64encode(obj).decode('ascii')
-    elif hasattr(obj, 'asdict'):
+        return _B64BYTES + base64.b64encode(obj).decode("ascii")
+    elif hasattr(obj, "asdict"):
         return obj.asdict()  # type: ignore
-    elif hasattr(obj, '_asdict'):
+    elif hasattr(obj, "_asdict"):
         return obj._asdict()  # type: ignore
     elif dataclasses.is_dataclass(obj):
         return dataclasses.asdict(obj)  # type: ignore
@@ -158,7 +159,7 @@ def custom_pua_decode(obj: Any) -> Any:
     if isinstance(obj, str) and len(obj) > 1:
         c = ord(obj[0]) - 0xF026
         # decode only the PUA space defined in DECODERS
-        if c >=0 and c <= PUA_CHARACTER_MAX:
+        if c >= 0 and c <= PUA_CHARACTER_MAX:
             return DECODERS[c](obj[1:])
     return obj
 
@@ -176,7 +177,7 @@ def custom_pua_remove(obj: Any) -> Any:
     if isinstance(obj, str) and len(obj) > 1:
         c = ord(obj[0]) - 0xF026
         # decode only the PUA space defined in DECODERS
-        if c >=0 and c <= PUA_CHARACTER_MAX:
+        if c >= 0 and c <= PUA_CHARACTER_MAX:
             return obj[1:]
     return obj
 
@@ -185,11 +186,14 @@ def custom_pua_remove(obj: Any) -> Any:
 json: SupportsJson = None
 if os.environ.get("DLT_USE_JSON") == "simplejson":
     from dlt.common.json import _simplejson as _json_d
+
     json = _json_d  # type: ignore[assignment]
 else:
     try:
         from dlt.common.json import _orjson as _json_or
+
         json = _json_or  # type: ignore[assignment]
     except ImportError:
         from dlt.common.json import _simplejson as _json_simple
+
         json = _json_simple  # type: ignore[assignment]

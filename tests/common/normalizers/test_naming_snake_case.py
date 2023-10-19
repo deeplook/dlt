@@ -2,8 +2,12 @@ from typing import Type
 import pytest
 
 from dlt.common.normalizers.naming import NamingConvention
-from dlt.common.normalizers.naming.snake_case import NamingConvention as SnakeCaseNamingConvention
-from dlt.common.normalizers.naming.duck_case import NamingConvention as DuckCaseNamingConvention
+from dlt.common.normalizers.naming.snake_case import (
+    NamingConvention as SnakeCaseNamingConvention,
+)
+from dlt.common.normalizers.naming.duck_case import (
+    NamingConvention as DuckCaseNamingConvention,
+)
 
 
 @pytest.fixture
@@ -80,4 +84,3 @@ def test_normalize_make_path(convention: Type[NamingConvention]) -> None:
 def test_normalizes_underscores(naming_unlimited: NamingConvention) -> None:
     assert naming_unlimited.normalize_identifier("event__value_value2____") == "event_value_value2xxxx"
     assert naming_unlimited.normalize_path("e_vent__value_value2___") == "e_vent__value_value2__x"
-

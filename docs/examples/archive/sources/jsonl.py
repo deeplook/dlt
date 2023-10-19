@@ -8,7 +8,6 @@ from dlt.common.typing import StrAny, StrOrBytesPath
 
 
 def chunk_jsonl(path: StrOrBytesPath, chunk_size: int = 20) -> Union[Iterator[StrAny], Iterator[List[StrAny]]]:
-
     with open(path, "rb") as f:
 
         def _iter() -> Iterator[StrAny]:
@@ -24,7 +23,9 @@ def chunk_jsonl(path: StrOrBytesPath, chunk_size: int = 20) -> Union[Iterator[St
                 else:
                     break
 
+
 jsonl_file = dlt.resource(chunk_jsonl, name="jsonl", spec=BaseConfiguration)
+
 
 @dlt.resource(name="jsonl")
 def jsonl_files(paths: Sequence[StrOrBytesPath], chunk_size: int = 20) -> Union[Iterator[StrAny], Iterator[List[StrAny]]]:

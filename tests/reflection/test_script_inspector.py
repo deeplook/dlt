@@ -1,11 +1,17 @@
 from types import SimpleNamespace
 import pytest
 
-from dlt.reflection.script_inspector import load_script_module, inspect_pipeline_script, DummyModule, PipelineIsRunning
+from dlt.reflection.script_inspector import (
+    load_script_module,
+    inspect_pipeline_script,
+    DummyModule,
+    PipelineIsRunning,
+)
 
 from tests.utils import unload_modules
 
 MODULE_CASES = "./tests/reflection/module_cases"
+
 
 def test_import_init_module() -> None:
     with pytest.raises(ModuleNotFoundError):

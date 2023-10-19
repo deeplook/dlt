@@ -1,5 +1,10 @@
 from typing import Sequence
-from dlt.common.exceptions import DestinationTerminalException, DestinationTransientException, DestinationUndefinedEntity, DestinationException
+from dlt.common.exceptions import (
+    DestinationTerminalException,
+    DestinationTransientException,
+    DestinationUndefinedEntity,
+    DestinationException,
+)
 from dlt.common.destination.reference import TLoadJobState
 
 
@@ -29,7 +34,10 @@ class DestinationConnectionError(DestinationTransientException):
         self.client_type = client_type
         self.dataset_name = dataset_name
         self.inner_exc = inner_exc
-        super().__init__(f"Connection with {client_type} to dataset name {dataset_name} failed. Please check if you configured the credentials at all and provided the right credentials values. You can be also denied access or your internet connection may be down. The actual reason given is: {reason}")
+        super().__init__(
+            f"Connection with {client_type} to dataset name {dataset_name} failed. Please check if you configured the credentials at all and provided the right credentials values. You can be also denied access or your internet connection may be down. The actual reason given is: {reason}"
+        )
+
 
 class LoadClientNotConnected(DestinationTransientException):
     def __init__(self, client_type: str, dataset_name: str) -> None:
@@ -49,8 +57,10 @@ class DestinationSchemaTampered(DestinationTerminalException):
     def __init__(self, schema_name: str, version_hash: str, stored_version_hash: str) -> None:
         self.version_hash = version_hash
         self.stored_version_hash = stored_version_hash
-        super().__init__(f"Schema {schema_name} content was changed - by a loader or by destination code - from the moment it was retrieved by load package. "
-                         f"Such schema cannot reliably be updated or saved. Current version hash: {version_hash} != stored version hash {stored_version_hash}")
+        super().__init__(
+            f"Schema {schema_name} content was changed - by a loader or by destination code - from the moment it was retrieved by load package. "
+            f"Such schema cannot reliably be updated or saved. Current version hash: {version_hash} != stored version hash {stored_version_hash}"
+        )
 
 
 class LoadJobNotExistsException(DestinationTerminalException):
@@ -76,7 +86,13 @@ class LoadJobFileTooBig(DestinationTerminalException):
 
 
 class MergeDispositionException(DestinationTerminalException):
-    def __init__(self, dataset_name: str, staging_dataset_name: str, tables: Sequence[str], reason: str) -> None:
+    def __init__(
+        self,
+        dataset_name: str,
+        staging_dataset_name: str,
+        tables: Sequence[str],
+        reason: str,
+    ) -> None:
         self.dataset_name = dataset_name
         self.staging_dataset_name = staging_dataset_name
         self.tables = tables

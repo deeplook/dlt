@@ -3,7 +3,28 @@ from datetime import datetime, date  # noqa: I251
 import inspect
 import os
 from re import Pattern as _REPattern
-from typing import Callable, Dict, Any, Final, Literal, List, Mapping, NewType, Optional, Tuple, Type, TypeVar, Generic, Protocol, TYPE_CHECKING, Union, runtime_checkable, get_args, get_origin, IO
+from typing import (
+    Callable,
+    Dict,
+    Any,
+    Final,
+    Literal,
+    List,
+    Mapping,
+    NewType,
+    Optional,
+    Tuple,
+    Type,
+    TypeVar,
+    Generic,
+    Protocol,
+    TYPE_CHECKING,
+    Union,
+    runtime_checkable,
+    get_args,
+    get_origin,
+    IO,
+)
 from typing_extensions import TypeAlias, ParamSpec, Concatenate
 
 from dlt.common.pendulum import timedelta, pendulum
@@ -11,10 +32,12 @@ from dlt.common.pendulum import timedelta, pendulum
 if TYPE_CHECKING:
     from _typeshed import StrOrBytesPath
     from typing import _TypedDict
+
     REPattern = _REPattern[str]
 else:
     StrOrBytesPath = Any
     from typing import _TypedDictMeta as _TypedDict
+
     REPattern = _REPattern
 
 AnyType: TypeAlias = Any
@@ -47,13 +70,15 @@ TVariantRV = Tuple[str, Any]
 VARIANT_FIELD_FORMAT = "v_%s"
 TFileOrPath = Union[str, os.PathLike, IO[Any]]
 
+
 @runtime_checkable
 class SupportsVariant(Protocol, Generic[TVariantBase]):
     """Defines variant type protocol that should be recognized by normalizers
 
-        Variant types behave like TVariantBase type (ie. Decimal) but also implement the protocol below that is used to extract the variant value from it.
-        See `Wei` type declaration which returns Decimal or str for values greater than supported by destination warehouse.
+    Variant types behave like TVariantBase type (ie. Decimal) but also implement the protocol below that is used to extract the variant value from it.
+    See `Wei` type declaration which returns Decimal or str for values greater than supported by destination warehouse.
     """
+
     def __call__(self) -> Union[TVariantBase, TVariantRV]:
         ...
 
@@ -159,6 +184,7 @@ def get_generic_type_argument_from_instance(instance: Any, sample_value: Optiona
 
 TInputArgs = ParamSpec("TInputArgs")
 TReturnVal = TypeVar("TReturnVal")
+
 
 def copy_sig(wrapper: Callable[TInputArgs, Any]) -> Callable[[Callable[..., TReturnVal]], Callable[TInputArgs, TReturnVal]]:
     """Copies docstring and signature from wrapper to func but keeps the func return value type"""

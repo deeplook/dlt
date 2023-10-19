@@ -5,12 +5,24 @@ from collections.abc import Mapping as C_Mapping
 
 from dlt.common.exceptions import MissingDependencyException
 from dlt.common.pipeline import reset_resource_state
-from dlt.common.schema.typing import TColumnNames, TAnySchemaColumns, TTableSchemaColumns
+from dlt.common.schema.typing import (
+    TColumnNames,
+    TAnySchemaColumns,
+    TTableSchemaColumns,
+)
 from dlt.common.typing import AnyFun, DictStrAny, TDataItem, TDataItems
 from dlt.common.utils import get_callable_name
-from dlt.extract.exceptions import InvalidResourceDataTypeFunctionNotAGenerator, InvalidStepFunctionArguments
+from dlt.extract.exceptions import (
+    InvalidResourceDataTypeFunctionNotAGenerator,
+    InvalidStepFunctionArguments,
+)
 
-from dlt.extract.typing import TTableHintTemplate, TDataItem, TFunHintTemplate, SupportsPipe
+from dlt.extract.typing import (
+    TTableHintTemplate,
+    TDataItem,
+    TFunHintTemplate,
+    SupportsPipe,
+)
 
 try:
     from dlt.common.libs import pydantic
@@ -42,22 +54,24 @@ def ensure_table_schema_columns(columns: TAnySchemaColumns) -> TTableSchemaColum
         return columns
     elif isinstance(columns, Sequence):
         # Assume list of columns
-        return {col['name']: col for col in columns}
-    elif pydantic is not None and (
-        isinstance(columns, pydantic.BaseModel) or issubclass(columns, pydantic.BaseModel)
-    ):
+        return {col["name"]: col for col in columns}
+    elif pydantic is not None and (isinstance(columns, pydantic.BaseModel) or issubclass(columns, pydantic.BaseModel)):
         return pydantic.pydantic_to_table_schema_columns(columns)
 
     raise ValueError(f"Unsupported columns type: {type(columns)}")
 
 
-def ensure_table_schema_columns_hint(columns: TTableHintTemplate[TAnySchemaColumns]) -> TTableHintTemplate[TTableSchemaColumns]:
+def ensure_table_schema_columns_hint(
+    columns: TTableHintTemplate[TAnySchemaColumns],
+) -> TTableHintTemplate[TTableSchemaColumns]:
     """Convert column schema hint to a hint returning `TTableSchemaColumns`.
     A callable hint is wrapped in another function which converts the original result.
     """
     if callable(columns) and not isinstance(columns, type):
+
         def wrapper(item: TDataItem) -> TTableSchemaColumns:
             return ensure_table_schema_columns(cast(TFunHintTemplate[TAnySchemaColumns], columns)(item))
+
         return wrapper
 
     return ensure_table_schema_columns(columns)
@@ -73,7 +87,7 @@ def reset_pipe_state(pipe: SupportsPipe, source_state_: Optional[DictStrAny] = N
 def simulate_func_call(f: Union[Any, AnyFun], args_to_skip: int, *args: Any, **kwargs: Any) -> Tuple[inspect.Signature, inspect.Signature, inspect.BoundArguments]:
     """Simulates a call to a resource or transformer function before it will be wrapped for later execution in the pipe
 
-       Returns a tuple with a `f` signature, modified signature in case of transformers and bound arguments
+    Returns a tuple with a `f` signature, modified signature in case of transformers and bound arguments
     """
     if not callable(f):
         # just provoke a call to raise default exception

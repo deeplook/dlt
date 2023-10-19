@@ -22,7 +22,12 @@ from dlt.destinations.dummy.configuration import DummyClientConfiguration
 from dlt.load.exceptions import LoadClientJobFailed, LoadClientJobRetry
 from dlt.common.schema.utils import get_top_level_table
 
-from tests.utils import clean_test_storage, init_test_logging, TEST_DICT_CONFIG_PROVIDER, preserve_environ
+from tests.utils import (
+    clean_test_storage,
+    init_test_logging,
+    TEST_DICT_CONFIG_PROVIDER,
+    preserve_environ,
+)
 from tests.load.utils import prepare_load_package
 from tests.utils import skip_if_not_active
 
@@ -31,8 +36,9 @@ skip_if_not_active("dummy")
 
 NORMALIZED_FILES = [
     "event_user.839c6e6b514e427687586ccc65bf133f.0.jsonl",
-    "event_loop_interrupted.839c6e6b514e427687586ccc65bf133f.0.jsonl"
+    "event_loop_interrupted.839c6e6b514e427687586ccc65bf133f.0.jsonl",
 ]
+
 
 @pytest.fixture(autouse=True)
 def storage() -> FileStorage:
@@ -47,10 +53,7 @@ def logger_autouse() -> None:
 def test_spool_job_started() -> None:
     # default config keeps the job always running
     load = setup_loader()
-    load_id, schema = prepare_load_package(
-        load.load_storage,
-        NORMALIZED_FILES
-    )
+    load_id, schema = prepare_load_package(load.load_storage, NORMALIZED_FILES)
     files = load.load_storage.list_new_jobs(load_id)
     assert len(files) == 2
     jobs: List[LoadJob] = []
@@ -67,20 +70,14 @@ def test_spool_job_started() -> None:
 
 def test_unsupported_writer_type() -> None:
     load = setup_loader()
-    load_id, _ = prepare_load_package(
-        load.load_storage,
-        ["event_bot.181291798a78198.0.unsupported_format"]
-    )
+    load_id, _ = prepare_load_package(load.load_storage, ["event_bot.181291798a78198.0.unsupported_format"])
     with pytest.raises(TerminalValueError):
         load.load_storage.list_new_jobs(load_id)
 
 
 def test_unsupported_write_disposition() -> None:
     load = setup_loader()
-    load_id, schema = prepare_load_package(
-        load.load_storage,
-        [NORMALIZED_FILES[0]]
-    )
+    load_id, schema = prepare_load_package(load.load_storage, [NORMALIZED_FILES[0]])
     # mock unsupported disposition
     schema.get_table("event_user")["write_disposition"] = "skip"
     # write back schema
@@ -94,10 +91,7 @@ def test_unsupported_write_disposition() -> None:
 
 def test_get_new_jobs_info() -> None:
     load = setup_loader()
-    load_id, schema = prepare_load_package(
-        load.load_storage,
-        NORMALIZED_FILES
-    )
+    load_id, schema = prepare_load_package(load.load_storage, NORMALIZED_FILES)
 
     # no write disposition specified - get all new jobs
     assert len(load.get_new_jobs_info(load_id)) == 2
@@ -105,31 +99,40 @@ def test_get_new_jobs_info() -> None:
 
 def test_get_completed_table_chain_single_job_per_table() -> None:
     load = setup_loader()
-    load_id, schema = prepare_load_package(
-        load.load_storage,
-        NORMALIZED_FILES
-    )
+    load_id, schema = prepare_load_package(load.load_storage, NORMALIZED_FILES)
 
     top_job_table = get_top_level_table(schema.tables, "event_user")
     assert load.get_completed_table_chain(load_id, schema, top_job_table) is None
     # fake being completed
-    assert len(load.get_completed_table_chain(load_id, schema, top_job_table, "event_user.839c6e6b514e427687586ccc65bf133f.0.jsonl")) == 1
+    assert (
+        len(
+            load.get_completed_table_chain(
+                load_id,
+                schema,
+                top_job_table,
+                "event_user.839c6e6b514e427687586ccc65bf133f.0.jsonl",
+            )
+        )
+        == 1
+    )
     # actually complete
     loop_top_job_table = get_top_level_table(schema.tables, "event_loop_interrupted")
     load.load_storage.start_job(load_id, "event_loop_interrupted.839c6e6b514e427687586ccc65bf133f.0.jsonl")
     assert load.get_completed_table_chain(load_id, schema, loop_top_job_table) is None
     load.load_storage.complete_job(load_id, "event_loop_interrupted.839c6e6b514e427687586ccc65bf133f.0.jsonl")
     assert load.get_completed_table_chain(load_id, schema, loop_top_job_table) == [schema.get_table("event_loop_interrupted")]
-    assert load.get_completed_table_chain(load_id, schema, loop_top_job_table, "event_user.839c6e6b514e427687586ccc65bf133f.0.jsonl") == [schema.get_table("event_loop_interrupted")]
+    assert load.get_completed_table_chain(
+        load_id,
+        schema,
+        loop_top_job_table,
+        "event_user.839c6e6b514e427687586ccc65bf133f.0.jsonl",
+    ) == [schema.get_table("event_loop_interrupted")]
 
 
 def test_spool_job_failed() -> None:
     # this config fails job on start
     load = setup_loader(client_config=DummyClientConfiguration(fail_prob=1.0))
-    load_id, schema = prepare_load_package(
-        load.load_storage,
-        NORMALIZED_FILES
-    )
+    load_id, schema = prepare_load_package(load.load_storage, NORMALIZED_FILES)
     files = load.load_storage.list_new_jobs(load_id)
     jobs: List[LoadJob] = []
     for f in files:
@@ -149,10 +152,7 @@ def test_spool_job_failed() -> None:
 
     # test the whole flow
     load = setup_loader(client_config=DummyClientConfiguration(fail_prob=1.0))
-    load_id, schema = prepare_load_package(
-        load.load_storage,
-        NORMALIZED_FILES
-    )
+    load_id, schema = prepare_load_package(load.load_storage, NORMALIZED_FILES)
     run_all(load)
     package_info = load.load_storage.get_load_package_info(load_id)
     assert package_info.state == "loaded"
@@ -165,10 +165,7 @@ def test_spool_job_failed_exception_init() -> None:
     os.environ["LOAD__RAISE_ON_FAILED_JOBS"] = "true"
     os.environ["FAIL_IN_INIT"] = "true"
     load = setup_loader(client_config=DummyClientConfiguration(fail_prob=1.0))
-    load_id, _ = prepare_load_package(
-        load.load_storage,
-        NORMALIZED_FILES
-    )
+    load_id, _ = prepare_load_package(load.load_storage, NORMALIZED_FILES)
     with patch.object(dummy_impl.DummyClient, "complete_load") as complete_load:
         with pytest.raises(LoadClientJobFailed) as py_ex:
             run_all(load)
@@ -187,10 +184,7 @@ def test_spool_job_failed_exception_complete() -> None:
     os.environ["RAISE_ON_FAILED_JOBS"] = "true"
     os.environ["FAIL_IN_INIT"] = "false"
     load = setup_loader(client_config=DummyClientConfiguration(fail_prob=1.0))
-    load_id, _ = prepare_load_package(
-        load.load_storage,
-        NORMALIZED_FILES
-    )
+    load_id, _ = prepare_load_package(load.load_storage, NORMALIZED_FILES)
     with pytest.raises(LoadClientJobFailed) as py_ex:
         run_all(load)
     assert py_ex.value.load_id == load_id
@@ -204,22 +198,17 @@ def test_spool_job_failed_exception_complete() -> None:
 def test_spool_job_retry_new() -> None:
     # this config retries job on start (transient fail)
     load = setup_loader(client_config=DummyClientConfiguration(retry_prob=1.0))
-    load_id, schema = prepare_load_package(
-        load.load_storage,
-        NORMALIZED_FILES
-    )
+    load_id, schema = prepare_load_package(load.load_storage, NORMALIZED_FILES)
     files = load.load_storage.list_new_jobs(load_id)
     for f in files:
         job = Load.w_spool_job(load, f, load_id, schema)
         assert job.state() == "retry"
 
+
 def test_spool_job_retry_spool_new() -> None:
     # this config retries job on start (transient fail)
     load = setup_loader(client_config=DummyClientConfiguration(retry_prob=1.0))
-    load_id, schema = prepare_load_package(
-        load.load_storage,
-        NORMALIZED_FILES
-    )
+    load_id, schema = prepare_load_package(load.load_storage, NORMALIZED_FILES)
     # call higher level function that returns jobs and counts
     with ThreadPool() as pool:
         load.pool = pool
@@ -232,17 +221,14 @@ def test_spool_job_retry_started() -> None:
     # this config keeps the job always running
     load = setup_loader()
     # dummy_impl.CLIENT_CONFIG = DummyClientConfiguration
-    load_id, schema = prepare_load_package(
-        load.load_storage,
-        NORMALIZED_FILES
-    )
+    load_id, schema = prepare_load_package(load.load_storage, NORMALIZED_FILES)
     files = load.load_storage.list_new_jobs(load_id)
     jobs: List[LoadJob] = []
     for f in files:
         job = Load.w_spool_job(load, f, load_id, schema)
         assert type(job) is dummy_impl.LoadDummyJob
         assert job.state() == "running"
-        assert  load.load_storage.storage.has_file(load.load_storage._get_job_file_path(load_id, LoadStorage.STARTED_JOBS_FOLDER, job.file_name()))
+        assert load.load_storage.storage.has_file(load.load_storage._get_job_file_path(load_id, LoadStorage.STARTED_JOBS_FOLDER, job.file_name()))
         # mock job config to make it retry
         job.config.retry_prob = 1.0
         jobs.append(job)
@@ -266,10 +252,7 @@ def test_spool_job_retry_started() -> None:
 
 def test_try_retrieve_job() -> None:
     load = setup_loader()
-    load_id, schema = prepare_load_package(
-        load.load_storage,
-        NORMALIZED_FILES
-    )
+    load_id, schema = prepare_load_package(load.load_storage, NORMALIZED_FILES)
     # manually move jobs to started
     files = load.load_storage.list_new_jobs(load_id)
     for f in files:
@@ -282,10 +265,7 @@ def test_try_retrieve_job() -> None:
         for j in jobs:
             assert j.state() == "failed"
     # new load package
-    load_id, schema = prepare_load_package(
-        load.load_storage,
-        NORMALIZED_FILES
-    )
+    load_id, schema = prepare_load_package(load.load_storage, NORMALIZED_FILES)
     load.pool = ThreadPool()
     jobs_count, jobs = load.spool_new_jobs(load_id, schema)
     assert jobs_count == 2
@@ -304,7 +284,10 @@ def test_completed_loop() -> None:
 
 def test_failed_loop() -> None:
     # ask to delete completed
-    load = setup_loader(delete_completed_jobs=True, client_config=DummyClientConfiguration(fail_prob=1.0))
+    load = setup_loader(
+        delete_completed_jobs=True,
+        client_config=DummyClientConfiguration(fail_prob=1.0),
+    )
     # actually not deleted because one of the jobs failed
     assert_complete_job(load, load.load_storage.storage, should_delete_completed=False)
 
@@ -319,10 +302,7 @@ def test_completed_loop_with_delete_completed() -> None:
 def test_retry_on_new_loop() -> None:
     # test job that retries sitting in new jobs
     load = setup_loader(client_config=DummyClientConfiguration(retry_prob=1.0))
-    load_id, schema = prepare_load_package(
-        load.load_storage,
-        NORMALIZED_FILES
-    )
+    load_id, schema = prepare_load_package(load.load_storage, NORMALIZED_FILES)
     with ThreadPool() as pool:
         # 1st retry
         load.run(pool)
@@ -350,10 +330,7 @@ def test_retry_on_new_loop() -> None:
 
 def test_retry_exceptions() -> None:
     load = setup_loader(client_config=DummyClientConfiguration(retry_prob=1.0))
-    prepare_load_package(
-        load.load_storage,
-        NORMALIZED_FILES
-    )
+    prepare_load_package(load.load_storage, NORMALIZED_FILES)
     with ThreadPool() as pool:
         # 1st retry
         with pytest.raises(LoadClientJobRetry) as py_ex:
@@ -374,8 +351,10 @@ def test_wrong_writer_type() -> None:
     load = setup_loader()
     load_id, _ = prepare_load_package(
         load.load_storage,
-        ["event_bot.b1d32c6660b242aaabbf3fc27245b7e6.0.insert_values",
-        "event_user.b1d32c6660b242aaabbf3fc27245b7e6.0.insert_values"]
+        [
+            "event_bot.b1d32c6660b242aaabbf3fc27245b7e6.0.insert_values",
+            "event_user.b1d32c6660b242aaabbf3fc27245b7e6.0.insert_values",
+        ],
     )
     with ThreadPool() as pool:
         with pytest.raises(JobWithUnsupportedWriterException) as exv:
@@ -393,16 +372,18 @@ def test_terminal_exceptions() -> None:
 
 
 def assert_complete_job(load: Load, storage: FileStorage, should_delete_completed: bool = False) -> None:
-    load_id, _ = prepare_load_package(
-        load.load_storage,
-        NORMALIZED_FILES
-    )
+    load_id, _ = prepare_load_package(load.load_storage, NORMALIZED_FILES)
     # will complete all jobs
     with patch.object(dummy_impl.DummyClient, "complete_load") as complete_load:
         with ThreadPool() as pool:
             load.run(pool)
             # did process schema update
-            assert storage.has_file(os.path.join(load.load_storage.get_package_path(load_id), LoadStorage.APPLIED_SCHEMA_UPDATES_FILE_NAME))
+            assert storage.has_file(
+                os.path.join(
+                    load.load_storage.get_package_path(load_id),
+                    LoadStorage.APPLIED_SCHEMA_UPDATES_FILE_NAME,
+                )
+            )
             # will finalize the whole package
             load.run(pool)
             # moved to loaded
@@ -437,7 +418,4 @@ def setup_loader(delete_completed_jobs: bool = False, client_config: DummyClient
 
     # setup loader
     with TEST_DICT_CONFIG_PROVIDER().values({"delete_completed_jobs": delete_completed_jobs}):
-        return Load(
-            destination,
-            initial_client_config=client_config
-    )
+        return Load(destination, initial_client_config=client_config)

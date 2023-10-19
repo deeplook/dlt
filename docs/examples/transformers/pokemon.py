@@ -45,16 +45,12 @@ def source(pokemon_api_url: str):
     # 2. send pokemon details into `species` transformer to get species details
     # NOTE: dlt is smart enough to get data from pokemon_list and pokemon details once
 
-    return (
-        pokemon_list | pokemon,
-        pokemon_list | pokemon | species
-    )
+    return (pokemon_list | pokemon, pokemon_list | pokemon | species)
+
 
 if __name__ == "__main__":
     # build duck db pipeline
-    pipeline = dlt.pipeline(
-        pipeline_name="pokemon", destination="duckdb", dataset_name="pokemon_data"
-    )
+    pipeline = dlt.pipeline(pipeline_name="pokemon", destination="duckdb", dataset_name="pokemon_data")
 
     # the pokemon_list resource does not need to be loaded
     load_info = pipeline.run(source("https://pokeapi.co/api/v2/pokemon"))

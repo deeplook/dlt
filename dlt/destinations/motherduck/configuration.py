@@ -1,7 +1,9 @@
 from typing import Any, ClassVar, Final, List
 
 from dlt.common.configuration import configspec
-from dlt.common.destination.reference import DestinationClientDwhWithStagingConfiguration
+from dlt.common.destination.reference import (
+    DestinationClientDwhWithStagingConfiguration,
+)
 from dlt.common.exceptions import DestinationTerminalException
 from dlt.common.typing import TSecretValue
 from dlt.common.utils import digest128
@@ -31,11 +33,13 @@ class MotherDuckCredentials(DuckDbBaseCredentials):
 
     def borrow_conn(self, read_only: bool) -> Any:
         from duckdb import HTTPException, InvalidInputException
+
         try:
             return super().borrow_conn(read_only)
         except (InvalidInputException, HTTPException) as ext_ex:
-            if 'Failed to download extension' in str(ext_ex) and "motherduck" in str(ext_ex):
+            if "Failed to download extension" in str(ext_ex) and "motherduck" in str(ext_ex):
                 from importlib.metadata import version as pkg_version
+
                 raise MotherduckLocalVersionNotSupported(pkg_version("duckdb")) from ext_ex
 
             raise
@@ -47,7 +51,9 @@ class MotherDuckCredentials(DuckDbBaseCredentials):
     def on_resolved(self) -> None:
         self._token_to_password()
         if self.drivername == MOTHERDUCK_DRIVERNAME and not self.password:
-            raise ConfigurationValueError("Motherduck schema 'md' was specified without corresponding token or password. The required format of connection string is: md:///<database_name>?token=<token>")
+            raise ConfigurationValueError(
+                "Motherduck schema 'md' was specified without corresponding token or password. The required format of connection string is: md:///<database_name>?token=<token>"
+            )
 
 
 @configspec

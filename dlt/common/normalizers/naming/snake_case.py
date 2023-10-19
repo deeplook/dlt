@@ -2,11 +2,12 @@ import re
 from typing import Any, List, Sequence
 from functools import lru_cache
 
-from dlt.common.normalizers.naming.naming import NamingConvention as BaseNamingConvention
+from dlt.common.normalizers.naming.naming import (
+    NamingConvention as BaseNamingConvention,
+)
 
 
 class NamingConvention(BaseNamingConvention):
-
     _RE_UNDERSCORES = re.compile("__+")
     _RE_LEADING_DIGITS = re.compile(r"^\d+")
     # _RE_ENDING_UNDERSCORES = re.compile(r"_+$")
@@ -40,17 +41,13 @@ class NamingConvention(BaseNamingConvention):
         normalized_ident = NamingConvention._RE_NON_ALPHANUMERIC.sub("_", normalized_ident)
 
         # shorten identifier
-        return NamingConvention.shorten_identifier(
-            NamingConvention._to_snake_case(normalized_ident),
-            identifier,
-            max_length
-        )
+        return NamingConvention.shorten_identifier(NamingConvention._to_snake_case(normalized_ident), identifier, max_length)
 
     @classmethod
     def _to_snake_case(cls, identifier: str) -> str:
         # then convert to snake case
-        identifier = cls._SNAKE_CASE_BREAK_1.sub(r'\1_\2', identifier)
-        identifier = cls._SNAKE_CASE_BREAK_2.sub(r'\1_\2', identifier).lower()
+        identifier = cls._SNAKE_CASE_BREAK_1.sub(r"\1_\2", identifier)
+        identifier = cls._SNAKE_CASE_BREAK_2.sub(r"\1_\2", identifier).lower()
 
         # leading digits will be prefixed (if regex is defined)
         if cls._RE_LEADING_DIGITS and cls._RE_LEADING_DIGITS.match(identifier):

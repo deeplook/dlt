@@ -3,16 +3,30 @@ from typing import Type
 from dlt.common.schema.schema import Schema
 from dlt.common.configuration import with_config, known_sections
 from dlt.common.configuration.accessors import config
-from dlt.common.data_writers.escape import escape_redshift_identifier, escape_redshift_literal
+from dlt.common.data_writers.escape import (
+    escape_redshift_identifier,
+    escape_redshift_literal,
+)
 from dlt.common.destination import DestinationCapabilitiesContext
-from dlt.common.destination.reference import JobClientBase, DestinationClientConfiguration
+from dlt.common.destination.reference import (
+    JobClientBase,
+    DestinationClientConfiguration,
+)
 from dlt.common.arithmetics import DEFAULT_NUMERIC_PRECISION, DEFAULT_NUMERIC_SCALE
 
 from dlt.destinations.redshift.configuration import RedshiftClientConfiguration
 
 
-@with_config(spec=RedshiftClientConfiguration, sections=(known_sections.DESTINATION, "redshift",))
-def _configure(config: RedshiftClientConfiguration = config.value) -> RedshiftClientConfiguration:
+@with_config(
+    spec=RedshiftClientConfiguration,
+    sections=(
+        known_sections.DESTINATION,
+        "redshift",
+    ),
+)
+def _configure(
+    config: RedshiftClientConfiguration = config.value,
+) -> RedshiftClientConfiguration:
     return config
 
 

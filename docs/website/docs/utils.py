@@ -3,6 +3,7 @@ from typing import List
 
 DLT_MARKER = "@@@DLT_"
 
+
 def parse_toml_file(filename: str) -> None:
     # test toml file by going snippet by snippet
     with open(filename, "r", encoding="utf-8") as f:

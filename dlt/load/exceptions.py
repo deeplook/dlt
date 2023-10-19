@@ -1,5 +1,8 @@
 from typing import Sequence
-from dlt.destinations.exceptions import DestinationTerminalException, DestinationTransientException
+from dlt.destinations.exceptions import (
+    DestinationTerminalException,
+    DestinationTransientException,
+)
 
 
 # class LoadException(DltException):

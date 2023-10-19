@@ -19,7 +19,15 @@ from dlt.cli import echo as fmt
 DLT_PIPELINE_COMMAND_DOCS_URL = "https://dlthub.com/docs/reference/command-line-interface"
 
 
-def pipeline_command(operation: str, pipeline_name: str, pipelines_dir: str, verbosity: int, dataset_name: str = None, destination: TDestinationReferenceArg = None, **command_kwargs: Any) -> None:
+def pipeline_command(
+    operation: str,
+    pipeline_name: str,
+    pipelines_dir: str,
+    verbosity: int,
+    dataset_name: str = None,
+    destination: TDestinationReferenceArg = None,
+    **command_kwargs: Any,
+) -> None:
     if operation == "list":
         pipelines_dir = pipelines_dir or get_dlt_pipelines_dir()
         storage = FileStorage(pipelines_dir)
@@ -38,11 +46,19 @@ def pipeline_command(operation: str, pipeline_name: str, pipelines_dir: str, ver
         if operation not in {"sync", "drop"}:
             raise
         fmt.warning(str(e))
-        if not fmt.confirm("Do you want to attempt to restore the pipeline state from destination?", default=False):
+        if not fmt.confirm(
+            "Do you want to attempt to restore the pipeline state from destination?",
+            default=False,
+        ):
             return
         destination = destination or fmt.text_input(f"Enter destination name for pipeline {fmt.bold(pipeline_name)}")
         dataset_name = dataset_name or fmt.text_input(f"Enter dataset name for pipeline {fmt.bold(pipeline_name)}")
-        p = dlt.pipeline(pipeline_name, pipelines_dir, destination=destination, dataset_name=dataset_name)
+        p = dlt.pipeline(
+            pipeline_name,
+            pipelines_dir,
+            destination=destination,
+            dataset_name=dataset_name,
+        )
         p.sync_destination()
         if p.first_run:
             # remote state was not found
@@ -88,7 +104,7 @@ def pipeline_command(operation: str, pipeline_name: str, pipelines_dir: str, ver
             fmt.warning("This pipeline does not have a default schema")
         else:
             is_single_schema = len(p.schema_names) == 1
-            for schema_name in  p.schema_names:
+            for schema_name in p.schema_names:
                 fmt.echo("Resources in schema: %s" % fmt.bold(schema_name))
                 schema = p.schemas[schema_name]
                 data_tables = {t["name"]: t for t in schema.data_tables()}
@@ -99,7 +115,14 @@ def pipeline_command(operation: str, pipeline_name: str, pipelines_dir: str, ver
                         if source_state:
                             resource_state_ = resource_state(resource_name, source_state)
                             res_state_slots = len(resource_state_)
-                    fmt.echo("%s with %s table(s) and %s resource state slot(s)" % (fmt.bold(resource_name), fmt.bold(str(len(tables))), fmt.bold(str(res_state_slots))))
+                    fmt.echo(
+                        "%s with %s table(s) and %s resource state slot(s)"
+                        % (
+                            fmt.bold(resource_name),
+                            fmt.bold(str(len(tables))),
+                            fmt.bold(str(res_state_slots)),
+                        )
+                    )
         fmt.echo()
         fmt.echo("Working dir content:")
         extracted_files = p.list_extracted_resources()
@@ -138,7 +161,13 @@ def pipeline_command(operation: str, pipeline_name: str, pipelines_dir: str, ver
             failed_jobs = p.list_failed_jobs_in_package(load_id)
             if failed_jobs:
                 for failed_job in p.list_failed_jobs_in_package(load_id):
-                    fmt.echo("JOB: %s(%s)" % (fmt.bold(failed_job.job_file_info.job_id()), fmt.bold(failed_job.job_file_info.table_name)))
+                    fmt.echo(
+                        "JOB: %s(%s)"
+                        % (
+                            fmt.bold(failed_job.job_file_info.job_id()),
+                            fmt.bold(failed_job.job_file_info.table_name),
+                        )
+                    )
                     fmt.echo("JOB file type: %s" % fmt.bold(failed_job.job_file_info.file_format))
                     fmt.echo("JOB file path: %s" % fmt.bold(failed_job.file_path))
                     if verbosity > 0:
@@ -148,16 +177,18 @@ def pipeline_command(operation: str, pipeline_name: str, pipelines_dir: str, ver
             else:
                 fmt.echo("No failed jobs found")
 
-
     if operation == "sync":
-        if fmt.confirm("About to drop the local state of the pipeline and reset all the schemas. The destination state, data and schemas are left intact. Proceed?", default=False):
+        if fmt.confirm(
+            "About to drop the local state of the pipeline and reset all the schemas. The destination state, data and schemas are left intact. Proceed?",
+            default=False,
+        ):
             fmt.echo("Dropping local state")
             p = p.drop()
             fmt.echo("Restoring from destination")
             p.sync_destination()
 
     if operation == "load-package":
-        load_id = command_kwargs.get('load_id')
+        load_id = command_kwargs.get("load_id")
         if not load_id:
             packages = sorted(p.list_normalized_load_packages())
             if not packages:
@@ -175,7 +206,14 @@ def pipeline_command(operation: str, pipeline_name: str, pipelines_dir: str, ver
             else:
                 tables = remove_defaults({"tables": package_info.schema_update})  # type: ignore
                 fmt.echo(fmt.bold("Schema update:"))
-                fmt.echo(yaml.dump(tables, allow_unicode=True, default_flow_style=False, sort_keys=False))
+                fmt.echo(
+                    yaml.dump(
+                        tables,
+                        allow_unicode=True,
+                        default_flow_style=False,
+                        sort_keys=False,
+                    )
+                )
 
     if operation == "schema":
         if not p.default_schema_name:
@@ -198,10 +236,28 @@ def pipeline_command(operation: str, pipeline_name: str, pipelines_dir: str, ver
 
         fmt.echo("About to drop the following data in dataset %s in destination %s:" % (fmt.bold(drop.info["dataset_name"]), fmt.bold(p.destination.__name__)))
         fmt.echo("%s: %s" % (fmt.style("Selected schema", fg="green"), drop.info["schema_name"]))
-        fmt.echo("%s: %s" % (fmt.style("Selected resource(s)", fg="green"), drop.info["resource_names"]))
+        fmt.echo(
+            "%s: %s"
+            % (
+                fmt.style("Selected resource(s)", fg="green"),
+                drop.info["resource_names"],
+            )
+        )
         fmt.echo("%s: %s" % (fmt.style("Table(s) to drop", fg="green"), drop.info["tables"]))
-        fmt.echo("%s: %s" % (fmt.style("Resource(s) state to reset", fg="green"), drop.info["resource_states"]))
-        fmt.echo("%s: %s" % (fmt.style("Source state path(s) to reset", fg="green"), drop.info["state_paths"]))
+        fmt.echo(
+            "%s: %s"
+            % (
+                fmt.style("Resource(s) state to reset", fg="green"),
+                drop.info["resource_states"],
+            )
+        )
+        fmt.echo(
+            "%s: %s"
+            % (
+                fmt.style("Source state path(s) to reset", fg="green"),
+                drop.info["state_paths"],
+            )
+        )
         # for k, v in drop.info.items():
         #     fmt.echo("%s: %s" % (fmt.style(k, fg="green"), v))
         for warning in drop.info["warnings"]:

@@ -19,9 +19,7 @@ from dlt.destinations.sql_client import SqlClientBase
 from dlt.destinations.type_mapping import TypeMapper
 
 
-HINT_TO_MSSQL_ATTR: Dict[TColumnHint, str] = {
-    "unique": "UNIQUE"
-}
+HINT_TO_MSSQL_ATTR: Dict[TColumnHint, str] = {"unique": "UNIQUE"}
 
 
 class MsSqlTypeMapper(TypeMapper):
@@ -44,7 +42,7 @@ class MsSqlTypeMapper(TypeMapper):
         "binary": "varbinary(%i)",
         "decimal": "decimal(%i,%i)",
         "time": "time(%i)",
-        "wei": "decimal(%i,%i)"
+        "wei": "decimal(%i,%i)",
     }
 
     dbt_to_sct = {
@@ -81,9 +79,13 @@ class MsSqlTypeMapper(TypeMapper):
 
 
 class MsSqlStagingCopyJob(SqlStagingCopyJob):
-
     @classmethod
-    def generate_sql(cls, table_chain: Sequence[TTableSchema], sql_client: SqlClientBase[Any], params: Optional[SqlJobParams] = None) -> List[str]:
+    def generate_sql(
+        cls,
+        table_chain: Sequence[TTableSchema],
+        sql_client: SqlClientBase[Any],
+        params: Optional[SqlJobParams] = None,
+    ) -> List[str]:
         sql: List[str] = []
         for table in table_chain:
             with sql_client.with_staging_dataset(staging=True):
@@ -100,9 +102,14 @@ class MsSqlStagingCopyJob(SqlStagingCopyJob):
 
 class MsSqlMergeJob(SqlMergeJob):
     @classmethod
-    def gen_key_table_clauses(cls, root_table_name: str, staging_root_table_name: str, key_clauses: Sequence[str], for_delete: bool) -> List[str]:
-        """Generate sql clauses that may be used to select or delete rows in root table of destination dataset
-        """
+    def gen_key_table_clauses(
+        cls,
+        root_table_name: str,
+        staging_root_table_name: str,
+        key_clauses: Sequence[str],
+        for_delete: bool,
+    ) -> List[str]:
+        """Generate sql clauses that may be used to select or delete rows in root table of destination dataset"""
         if for_delete:
             # MS SQL doesn't support alias in DELETE FROM
             return [f"FROM {root_table_name} WHERE EXISTS (SELECT 1 FROM {staging_root_table_name} WHERE {' OR '.join([c.format(d=root_table_name,s=staging_root_table_name) for c in key_clauses])})"]
@@ -115,18 +122,14 @@ class MsSqlMergeJob(SqlMergeJob):
     @classmethod
     def _new_temp_table_name(cls, name_prefix: str) -> str:
         name = SqlMergeJob._new_temp_table_name(name_prefix)
-        return '#' + name
+        return "#" + name
 
 
 class MsSqlClient(InsertValuesJobClient):
-
     capabilities: ClassVar[DestinationCapabilitiesContext] = capabilities()
 
     def __init__(self, schema: Schema, config: MsSqlClientConfiguration) -> None:
-        sql_client = PyOdbcMsSqlClient(
-            config.normalize_dataset_name(schema),
-            config.credentials
-        )
+        sql_client = PyOdbcMsSqlClient(config.normalize_dataset_name(schema), config.credentials)
         super().__init__(schema, config, sql_client)
         self.config: MsSqlClientConfiguration = config
         self.sql_client = sql_client

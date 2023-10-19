@@ -12,6 +12,7 @@ from docs.examples.sources.stdout import json_stdout as singer_process_pipe
 
 FilePathOrDict = Union[StrAny, StrOrBytesPath]
 
+
 class SingerMessage(TypedDict):
     type: str  # noqa: A003
 
@@ -23,6 +24,7 @@ class SingerRecord(SingerMessage):
 
 class SingerState(SingerMessage):
     value: DictStrAny
+
 
 # try:
 #     from singer import parse_message_from_obj, Message, RecordMessage, StateMessage
@@ -57,7 +59,13 @@ def singer_raw_stream(singer_messages: TDataItems, use_state: bool = True) -> It
 
 
 @dlt.source(spec=BaseConfiguration)  # use BaseConfiguration spec to prevent injections
-def tap(venv: Venv, tap_name: str, config_file: FilePathOrDict, catalog_file: FilePathOrDict, use_state: bool = True) -> Any:
+def tap(
+    venv: Venv,
+    tap_name: str,
+    config_file: FilePathOrDict,
+    catalog_file: FilePathOrDict,
+    use_state: bool = True,
+) -> Any:
     # TODO: generate append/replace dispositions and some table/column hints from catalog files
 
     def as_config_file(config: FilePathOrDict) -> StrOrBytesPath:
@@ -83,18 +91,14 @@ def tap(venv: Venv, tap_name: str, config_file: FilePathOrDict, catalog_file: Fi
         else:
             state = None
         if state is not None and state.get("singer"):
-            state_params = ("--state", as_config_file(dlt.current.source_state()["singer"]))
+            state_params = (
+                "--state",
+                as_config_file(dlt.current.source_state()["singer"]),
+            )
         else:
             state_params = ()  # type: ignore
 
-        pipe_iterator = singer_process_pipe(venv,
-                                        tap_name,
-                                        "--config",
-                                        os.path.abspath(config_file_path),
-                                        "--catalog",
-                                        os.path.abspath(catalog_file_path),
-                                        *state_params
-                                        )
+        pipe_iterator = singer_process_pipe(venv, tap_name, "--config", os.path.abspath(config_file_path), "--catalog", os.path.abspath(catalog_file_path), *state_params)
         yield from get_source_from_stream(pipe_iterator, state)
 
     return singer_messages

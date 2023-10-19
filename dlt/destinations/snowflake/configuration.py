@@ -11,13 +11,14 @@ from dlt.common.typing import TSecretStrValue
 from dlt.common.configuration.specs import ConnectionStringCredentials
 from dlt.common.configuration.exceptions import ConfigurationValueError
 from dlt.common.configuration import configspec
-from dlt.common.destination.reference import DestinationClientDwhWithStagingConfiguration
+from dlt.common.destination.reference import (
+    DestinationClientDwhWithStagingConfiguration,
+)
 from dlt.common.utils import digest128
 
 
 def _read_private_key(private_key: str, password: Optional[str] = None) -> bytes:
-    """Load an encrypted or unencrypted private key from string.
-    """
+    """Load an encrypted or unencrypted private key from string."""
     try:
         from cryptography.hazmat.backends import default_backend
         from cryptography.hazmat.primitives.asymmetric import rsa
@@ -25,7 +26,10 @@ def _read_private_key(private_key: str, password: Optional[str] = None) -> bytes
         from cryptography.hazmat.primitives import serialization
         from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
     except ModuleNotFoundError as e:
-        raise MissingDependencyException("SnowflakeCredentials with private key", dependencies=[f"{version.DLT_PKG_NAME}[snowflake]"]) from e
+        raise MissingDependencyException(
+            "SnowflakeCredentials with private key",
+            dependencies=[f"{version.DLT_PKG_NAME}[snowflake]"],
+        ) from e
 
     try:
         # load key from base64-encoded DER key
@@ -45,7 +49,7 @@ def _read_private_key(private_key: str, password: Optional[str] = None) -> bytes
     return pkey.private_bytes(
         encoding=serialization.Encoding.DER,
         format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption()
+        encryption_algorithm=serialization.NoEncryption(),
     )
 
 
@@ -64,10 +68,10 @@ class SnowflakeCredentials(ConnectionStringCredentials):
 
     def parse_native_representation(self, native_value: Any) -> None:
         super().parse_native_representation(native_value)
-        self.warehouse = self.query.get('warehouse')
-        self.role = self.query.get('role')
-        self.private_key = self.query.get('private_key')  # type: ignore
-        self.private_key_passphrase = self.query.get('private_key_passphrase')  # type: ignore
+        self.warehouse = self.query.get("warehouse")
+        self.role = self.query.get("role")
+        self.private_key = self.query.get("private_key")  # type: ignore
+        self.private_key_passphrase = self.query.get("private_key_passphrase")  # type: ignore
         if not self.is_partial() and (self.password or self.private_key):
             self.resolve()
 
@@ -77,11 +81,19 @@ class SnowflakeCredentials(ConnectionStringCredentials):
 
     def to_url(self) -> URL:
         query = dict(self.query or {})
-        if self.warehouse and 'warehouse' not in query:
-            query['warehouse'] = self.warehouse
-        if self.role and 'role' not in query:
-            query['role'] = self.role
-        return URL.create(self.drivername, self.username, self.password, self.host, self.port, self.database, query)
+        if self.warehouse and "warehouse" not in query:
+            query["warehouse"] = self.warehouse
+        if self.role and "role" not in query:
+            query["role"] = self.role
+        return URL.create(
+            self.drivername,
+            self.username,
+            self.password,
+            self.host,
+            self.port,
+            self.database,
+            query,
+        )
 
     def to_connector_params(self) -> Dict[str, Any]:
         private_key: Optional[bytes] = None

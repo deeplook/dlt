@@ -66,7 +66,7 @@ class TypeMapper:
         if precision is None:
             return None
         elif scale is None:
-            return (precision, )
+            return (precision,)
         return (precision, scale)
 
     def decimal_precision(self, precision: Optional[int] = None, scale: Optional[int] = None) -> Optional[Tuple[int, int]]:
@@ -75,7 +75,8 @@ class TypeMapper:
             return None
         default_precision, default_scale = defaults
         return (
-            precision if precision is not None else default_precision, scale if scale is not None else default_scale
+            precision if precision is not None else default_precision,
+            scale if scale is not None else default_scale,
         )
 
     def wei_precision(self, precision: Optional[int] = None, scale: Optional[int] = None) -> Optional[Tuple[int, int]]:
@@ -84,12 +85,15 @@ class TypeMapper:
             return None
         default_precision, default_scale = defaults
         return (
-            precision if precision is not None else default_precision, scale if scale is not None else default_scale
+            precision if precision is not None else default_precision,
+            scale if scale is not None else default_scale,
         )
 
     def from_db_type(self, db_type: str, precision: Optional[int], scale: Optional[int]) -> TColumnType:
-        return without_none(dict(  # type: ignore[return-value]
-            data_type=self.dbt_to_sct.get(db_type, "text"),
-            precision=precision,
-            scale=scale
-        ))
+        return without_none(
+            dict(  # type: ignore[return-value]
+                data_type=self.dbt_to_sct.get(db_type, "text"),
+                precision=precision,
+                scale=scale,
+            )
+        )

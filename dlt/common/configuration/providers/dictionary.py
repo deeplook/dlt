@@ -7,7 +7,6 @@ from .provider import ConfigProvider, get_key_name
 
 
 class DictionaryProvider(ConfigProvider):
-
     NAME: ClassVar[str] = "Dictionary Provider"
 
     def __init__(self) -> None:
@@ -20,11 +19,11 @@ class DictionaryProvider(ConfigProvider):
     def get_value(self, key: str, hint: Type[Any], pipeline_name: str, *sections: str) -> Tuple[Optional[Any], str]:
         full_path = sections + (key,)
         if pipeline_name:
-            full_path = (pipeline_name, ) + full_path
+            full_path = (pipeline_name,) + full_path
         full_key = get_key_name(key, "__", pipeline_name, *sections)
         node = self._values
         try:
-            for k in  full_path:
+            for k in full_path:
                 if not isinstance(node, dict):
                     raise KeyError(k)
                 node = node[k]

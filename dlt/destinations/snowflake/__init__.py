@@ -5,15 +5,26 @@ from dlt.common.schema.schema import Schema
 from dlt.common.configuration import with_config, known_sections
 from dlt.common.configuration.accessors import config
 from dlt.common.destination import DestinationCapabilitiesContext
-from dlt.common.destination.reference import JobClientBase, DestinationClientConfiguration
+from dlt.common.destination.reference import (
+    JobClientBase,
+    DestinationClientConfiguration,
+)
 from dlt.common.data_writers.escape import escape_snowflake_identifier
 from dlt.common.arithmetics import DEFAULT_NUMERIC_PRECISION, DEFAULT_NUMERIC_SCALE
 
 from dlt.destinations.snowflake.configuration import SnowflakeClientConfiguration
 
 
-@with_config(spec=SnowflakeClientConfiguration, sections=(known_sections.DESTINATION, "snowflake",))
-def _configure(config: SnowflakeClientConfiguration = config.value) -> SnowflakeClientConfiguration:
+@with_config(
+    spec=SnowflakeClientConfiguration,
+    sections=(
+        known_sections.DESTINATION,
+        "snowflake",
+    ),
+)
+def _configure(
+    config: SnowflakeClientConfiguration = config.value,
+) -> SnowflakeClientConfiguration:
     return config
 
 

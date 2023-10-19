@@ -18,12 +18,13 @@ from dlt.common.time import ensure_pendulum_date
 CATCHUP_BEGIN = pendulum.datetime(2023, 1, 1, tz="Europe/Berlin")
 
 default_args = {
-    'owner': 'airflow',
-    'depends_on_past': False,
-    'email_on_failure': False,
-    'email_on_retry': False,
-    'retries': 0,
+    "owner": "airflow",
+    "depends_on_past": False,
+    "email_on_failure": False,
+    "email_on_retry": False,
+    "retries": 0,
 }
+
 
 @dlt.resource()
 def existing_incremental(updated_at: dlt.sources.incremental[pendulum.DateTime] = dlt.sources.incremental("updated_at", allow_external_schedulers=True)):
@@ -31,14 +32,14 @@ def existing_incremental(updated_at: dlt.sources.incremental[pendulum.DateTime] 
 
 
 def test_date_coercion() -> None:
-    @dag(schedule_interval='@daily',
+    @dag(
+        schedule_interval="@daily",
         start_date=CATCHUP_BEGIN,
         catchup=False,
         max_active_runs=1,
-        default_args=default_args
+        default_args=default_args,
     )
     def dag_regular():
-
         @task
         def scheduled() -> None:
             context = get_current_context()
@@ -61,7 +62,7 @@ def test_date_coercion() -> None:
 
             # datetime.datetime coercion must be pendulum anyway
             @dlt.resource()
-            def incremental_datetime(updated_at = dlt.sources.incremental[datetime.datetime]("updated_at", allow_external_schedulers=True)):
+            def incremental_datetime(updated_at=dlt.sources.incremental[datetime.datetime]("updated_at", allow_external_schedulers=True)):
                 yield {"updated_at": CATCHUP_BEGIN, "state": updated_at.get_state()}
 
             r = incremental_datetime()
@@ -72,8 +73,11 @@ def test_date_coercion() -> None:
 
             # datetime.date coercion also works
             @dlt.resource()  # type: ignore[no-redef]
-            def incremental_datetime(updated_at = dlt.sources.incremental[datetime.date]("updated_at", allow_external_schedulers=True)):
-                yield {"updated_at": ensure_pendulum_date(CATCHUP_BEGIN), "state": updated_at.get_state()}
+            def incremental_datetime(updated_at=dlt.sources.incremental[datetime.date]("updated_at", allow_external_schedulers=True)):
+                yield {
+                    "updated_at": ensure_pendulum_date(CATCHUP_BEGIN),
+                    "state": updated_at.get_state(),
+                }
 
             r = incremental_datetime()
             state = list(r)[0]
@@ -82,8 +86,11 @@ def test_date_coercion() -> None:
 
             # coerce to int
             @dlt.resource()  # type: ignore[no-redef]
-            def incremental_datetime(updated_at = dlt.sources.incremental[int]("updated_at", allow_external_schedulers=True)):
-                yield {"updated_at": CATCHUP_BEGIN.int_timestamp, "state": updated_at.get_state()}
+            def incremental_datetime(updated_at=dlt.sources.incremental[int]("updated_at", allow_external_schedulers=True)):
+                yield {
+                    "updated_at": CATCHUP_BEGIN.int_timestamp,
+                    "state": updated_at.get_state(),
+                }
 
             r = incremental_datetime()
             state = list(r)[0]
@@ -92,8 +99,11 @@ def test_date_coercion() -> None:
 
             # coerce to float
             @dlt.resource()  # type: ignore[no-redef]
-            def incremental_datetime(updated_at = dlt.sources.incremental[float]("updated_at", allow_external_schedulers=True)):
-                yield {"updated_at": CATCHUP_BEGIN.timestamp(), "state": updated_at.get_state()}
+            def incremental_datetime(updated_at=dlt.sources.incremental[float]("updated_at", allow_external_schedulers=True)):
+                yield {
+                    "updated_at": CATCHUP_BEGIN.timestamp(),
+                    "state": updated_at.get_state(),
+                }
 
             r = incremental_datetime()
             state = list(r)[0]
@@ -102,8 +112,11 @@ def test_date_coercion() -> None:
 
             # coerce to str
             @dlt.resource()  # type: ignore[no-redef]
-            def incremental_datetime(updated_at = dlt.sources.incremental[str]("updated_at", allow_external_schedulers=True)):
-                yield {"updated_at": CATCHUP_BEGIN.in_tz("UTC").isoformat(), "state": updated_at.get_state()}
+            def incremental_datetime(updated_at=dlt.sources.incremental[str]("updated_at", allow_external_schedulers=True)):
+                yield {
+                    "updated_at": CATCHUP_BEGIN.in_tz("UTC").isoformat(),
+                    "state": updated_at.get_state(),
+                }
 
             r = incremental_datetime()
             state = list(r)[0]
@@ -122,11 +135,12 @@ def test_date_coercion() -> None:
 def test_no_next_execution_date() -> None:
     now = pendulum.now()
 
-    @dag(schedule=None,
+    @dag(
+        schedule=None,
         catchup=False,
         start_date=CATCHUP_BEGIN,
         default_args=default_args,
-        max_active_runs=1
+        max_active_runs=1,
     )
     def dag_no_schedule():
         @task
@@ -134,8 +148,11 @@ def test_no_next_execution_date() -> None:
             context = get_current_context()
 
             @dlt.resource()
-            def incremental_datetime(updated_at = dlt.sources.incremental[datetime.datetime]("updated_at", allow_external_schedulers=True)):
-                yield {"updated_at": context["data_interval_start"], "state": updated_at.get_state()}
+            def incremental_datetime(updated_at=dlt.sources.incremental[datetime.datetime]("updated_at", allow_external_schedulers=True)):
+                yield {
+                    "updated_at": context["data_interval_start"],
+                    "state": updated_at.get_state(),
+                }
 
             r = incremental_datetime()
             state = list(r)[0]
@@ -151,8 +168,11 @@ def test_no_next_execution_date() -> None:
 
             # will be filtered out (now earlier than data_interval_start)
             @dlt.resource()  # type: ignore[no-redef]
-            def incremental_datetime(updated_at = dlt.sources.incremental[datetime.datetime]("updated_at", allow_external_schedulers=True)):
-                yield {"updated_at": now.subtract(hours=1, seconds=1), "state": updated_at.get_state()}
+            def incremental_datetime(updated_at=dlt.sources.incremental[datetime.datetime]("updated_at", allow_external_schedulers=True)):
+                yield {
+                    "updated_at": now.subtract(hours=1, seconds=1),
+                    "state": updated_at.get_state(),
+                }
 
             r = incremental_datetime()
             assert len(list(r)) == 0
@@ -172,18 +192,23 @@ def test_no_next_execution_date() -> None:
     ti.run()
     assert ti.state == State.SUCCESS
 
-    @dag(schedule_interval='@daily',
+    @dag(
+        schedule_interval="@daily",
         start_date=CATCHUP_BEGIN,
         catchup=True,
-        default_args=default_args
+        default_args=default_args,
     )
     def dag_daily_schedule():
         @task
         def scheduled():
             context = get_current_context()
+
             @dlt.resource()
-            def incremental_datetime(updated_at = dlt.sources.incremental[datetime.datetime]("updated_at", allow_external_schedulers=True)):
-                yield {"updated_at": context["data_interval_start"], "state": updated_at.get_state()}
+            def incremental_datetime(updated_at=dlt.sources.incremental[datetime.datetime]("updated_at", allow_external_schedulers=True)):
+                yield {
+                    "updated_at": context["data_interval_start"],
+                    "state": updated_at.get_state(),
+                }
 
             r = incremental_datetime()
             state = list(r)[0]
@@ -208,7 +233,7 @@ def test_no_next_execution_date() -> None:
         state=DagRunState.RUNNING,
         execution_date=now,
         run_type=DagRunType.MANUAL,
-        data_interval=(now, now)
+        data_interval=(now, now),
     )
     dag_def.run(start_date=now, run_at_least_once=True)
     task_def = dag_def.task_dict["scheduled"]
@@ -219,16 +244,20 @@ def test_no_next_execution_date() -> None:
 
 def test_scheduler_pipeline_state() -> None:
     pipeline = dlt.pipeline(
-            pipeline_name="pipeline_dag_regular", dataset_name="mock_data_" + uniq_id(), destination="duckdb", credentials=":pipeline:")
+        pipeline_name="pipeline_dag_regular",
+        dataset_name="mock_data_" + uniq_id(),
+        destination="duckdb",
+        credentials=":pipeline:",
+    )
     now = pendulum.now()
 
-    @dag(schedule_interval='@daily',
+    @dag(
+        schedule_interval="@daily",
         start_date=CATCHUP_BEGIN,
         catchup=False,
-        default_args=default_args
+        default_args=default_args,
     )
     def dag_regular():
-
         @task
         def scheduled() -> None:
             r = existing_incremental()
@@ -252,7 +281,7 @@ def test_scheduler_pipeline_state() -> None:
         state=DagRunState.RUNNING,
         execution_date=now,
         run_type=DagRunType.MANUAL,
-        data_interval=(now, now)
+        data_interval=(now, now),
     )
     dag_def.run(start_date=now, run_at_least_once=True)
     task_def = dag_def.task_dict["scheduled"]
@@ -260,7 +289,6 @@ def test_scheduler_pipeline_state() -> None:
     ti.run()
     assert ti.state == State.SUCCESS
     assert "sources" not in pipeline.state
-
 
     pipeline = pipeline.drop()
 
@@ -271,10 +299,9 @@ def test_scheduler_pipeline_state() -> None:
         schedule=None,
         start_date=CATCHUP_BEGIN,
         catchup=False,
-        default_args=default_args
+        default_args=default_args,
     )
     def dag_no_schedule():
-
         @task
         def unscheduled() -> None:
             r = existing_incremental()

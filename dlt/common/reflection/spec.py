@@ -60,7 +60,10 @@ def spec_from_signature(f: AnyFun, sig: Signature, include_defaults: bool = True
 
     for p in sig.parameters.values():
         # skip *args and **kwargs, skip typical method params
-        if p.kind not in (Parameter.VAR_KEYWORD, Parameter.VAR_POSITIONAL) and p.name not in ["self", "cls"]:
+        if p.kind not in (
+            Parameter.VAR_KEYWORD,
+            Parameter.VAR_POSITIONAL,
+        ) and p.name not in ["self", "cls"]:
             field_type = AnyType if p.annotation == Parameter.empty else p.annotation
             # only valid hints and parameters with defaults are eligible
             if is_valid_hint(field_type) and p.default != Parameter.empty:

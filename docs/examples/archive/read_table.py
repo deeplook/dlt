@@ -9,7 +9,12 @@ from docs.examples.sources.sql_query import query_table, query_sql
 source_dsn = "redshift+redshift_connector://loader@chat-analytics.czwteevq7bpe.eu-central-1.redshift.amazonaws.com:5439/chat_analytics_rasa"
 
 # get data from table, we preserve method signature from pandas
-items = query_table("blocks__transactions", source_dsn, table_schema_name="mainnet_2_ethereum", coerce_float=False)
+items = query_table(
+    "blocks__transactions",
+    source_dsn,
+    table_schema_name="mainnet_2_ethereum",
+    coerce_float=False,
+)
 # the data is also an iterator
 
 for i in items:

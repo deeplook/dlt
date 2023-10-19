@@ -7,13 +7,23 @@ from dlt.common.typing import TSecretValue, Any
 from dlt.common.configuration import with_config
 from dlt.common.configuration.container import Container
 from dlt.common.configuration.inject import get_orig_args, last_config
-from dlt.common.destination.reference import DestinationReference, TDestinationReferenceArg
+from dlt.common.destination.reference import (
+    DestinationReference,
+    TDestinationReferenceArg,
+)
 from dlt.common.pipeline import LoadInfo, PipelineContext, get_dlt_pipelines_dir
 from dlt.common.data_writers import TLoaderFileFormat
 
-from dlt.pipeline.configuration import PipelineConfiguration, ensure_correct_pipeline_kwargs
+from dlt.pipeline.configuration import (
+    PipelineConfiguration,
+    ensure_correct_pipeline_kwargs,
+)
 from dlt.pipeline.pipeline import Pipeline
-from dlt.pipeline.progress import _from_name as collector_from_name, TCollectorArg, _NULL_COLLECTOR
+from dlt.pipeline.progress import (
+    _from_name as collector_from_name,
+    TCollectorArg,
+    _NULL_COLLECTOR,
+)
 
 
 @overload
@@ -81,7 +91,8 @@ def pipeline(
 @overload
 def pipeline() -> Pipeline:  # type: ignore
     """When called without any arguments, returns the recently created `Pipeline` instance.
-    If not found, it creates a new instance with all the pipeline options set to defaults."""
+    If not found, it creates a new instance with all the pipeline options set to defaults.
+    """
 
 
 @with_config(spec=PipelineConfiguration, auto_pipeline_section=True)
@@ -136,7 +147,8 @@ def pipeline(
         progress,
         False,
         last_config(**kwargs),
-        kwargs["runtime"])
+        kwargs["runtime"],
+    )
     # set it as current pipeline
     p.activate()
     return p
@@ -159,7 +171,22 @@ def attach(
         pipelines_dir = get_dlt_pipelines_dir()
     progress = collector_from_name(progress)
     # create new pipeline instance
-    p = Pipeline(pipeline_name, pipelines_dir, pipeline_salt, None, None, None, credentials, None, None, full_refresh, progress, True, last_config(**kwargs), kwargs["runtime"])
+    p = Pipeline(
+        pipeline_name,
+        pipelines_dir,
+        pipeline_salt,
+        None,
+        None,
+        None,
+        credentials,
+        None,
+        None,
+        full_refresh,
+        progress,
+        True,
+        last_config(**kwargs),
+        kwargs["runtime"],
+    )
     # set it as current pipeline
     p.activate()
     return p
@@ -235,11 +262,13 @@ def run(
         table_name=table_name,
         write_disposition=write_disposition,
         columns=columns,
-        schema=schema
+        schema=schema,
     )
+
 
 # plug default tracking module
 from dlt.pipeline import trace, track
+
 trace.TRACKING_MODULE = track
 
 # setup default pipeline in the container

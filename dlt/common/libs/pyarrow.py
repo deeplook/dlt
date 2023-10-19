@@ -12,7 +12,11 @@ try:
     import pyarrow
     import pyarrow.parquet
 except ModuleNotFoundError:
-    raise MissingDependencyException("DLT parquet Helpers", [f"{version.DLT_PKG_NAME}[parquet]"], "DLT Helpers for for parquet.")
+    raise MissingDependencyException(
+        "DLT parquet Helpers",
+        [f"{version.DLT_PKG_NAME}[parquet]"],
+        "DLT Helpers for for parquet.",
+    )
 
 
 TAnyArrowItem = Union[pyarrow.Table, pyarrow.RecordBatch]
@@ -91,8 +95,7 @@ def get_pyarrow_int(precision: Optional[int]) -> Any:
 
 
 def _get_column_type_from_py_arrow(dtype: pyarrow.DataType) -> TColumnType:
-    """Returns (data_type, precision, scale) tuple from pyarrow.DataType
-    """
+    """Returns (data_type, precision, scale) tuple from pyarrow.DataType"""
     if pyarrow.types.is_string(dtype) or pyarrow.types.is_large_string(dtype):
         return dict(data_type="text")
     elif pyarrow.types.is_floating(dtype):
@@ -124,7 +127,7 @@ def _get_column_type_from_py_arrow(dtype: pyarrow.DataType) -> TColumnType:
         return dict(data_type="time", precision=precision)
     elif pyarrow.types.is_integer(dtype):
         result: TColumnType = dict(data_type="bigint")
-        if dtype.bit_width != 64: # 64bit is a default bigint
+        if dtype.bit_width != 64:  # 64bit is a default bigint
             result["precision"] = dtype.bit_width
         return result
     elif pyarrow.types.is_fixed_size_binary(dtype):

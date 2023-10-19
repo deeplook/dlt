@@ -36,11 +36,11 @@ def expect_extracted_file(storage: ExtractorStorage, schema_name: str, table_nam
 
 
 class AssertItems(ItemTransform[TDataItem]):
-     def __init__(self, expected_items: Any, item_type: TItemFormat = "json") -> None:
-         self.expected_items = expected_items
-         self.item_type = item_type
+    def __init__(self, expected_items: Any, item_type: TItemFormat = "json") -> None:
+        self.expected_items = expected_items
+        self.item_type = item_type
 
-     def __call__(self, item: TDataItems, meta: Any = None) -> Optional[TDataItems]:
+    def __call__(self, item: TDataItems, meta: Any = None) -> Optional[TDataItems]:
         assert data_item_to_list(self.item_type, item) == self.expected_items
         return item
 

@@ -12,16 +12,24 @@ else:
 from contextlib import contextmanager
 from typing import Any, AnyStr, ClassVar, Iterator, Optional, Sequence
 
-from dlt.destinations.exceptions import DatabaseTerminalException, DatabaseTransientException, DatabaseUndefinedRelation
+from dlt.destinations.exceptions import (
+    DatabaseTerminalException,
+    DatabaseTransientException,
+    DatabaseUndefinedRelation,
+)
 from dlt.destinations.typing import DBApi, DBApiCursor, DBTransaction
-from dlt.destinations.sql_client import DBApiCursorImpl, SqlClientBase, raise_database_error, raise_open_connection_error
+from dlt.destinations.sql_client import (
+    DBApiCursorImpl,
+    SqlClientBase,
+    raise_database_error,
+    raise_open_connection_error,
+)
 
 from dlt.destinations.postgres.configuration import PostgresCredentials
 from dlt.destinations.postgres import capabilities
 
 
 class Psycopg2SqlClient(SqlClientBase["psycopg2.connection"], DBTransaction):
-
     dbapi: ClassVar[DBApi] = psycopg2
     capabilities: ClassVar[DestinationCapabilitiesContext] = capabilities()
 
@@ -32,9 +40,9 @@ class Psycopg2SqlClient(SqlClientBase["psycopg2.connection"], DBTransaction):
 
     def open_connection(self) -> "psycopg2.connection":
         self._conn = psycopg2.connect(
-                             dsn=self.credentials.to_native_representation(),
-                             options=f"-c search_path={self.fully_qualified_dataset_name()},public"
-                             )
+            dsn=self.credentials.to_native_representation(),
+            options=f"-c search_path={self.fully_qualified_dataset_name()},public",
+        )
         # we'll provide explicit transactions see _reset
         self._reset_connection()
         return self._conn
@@ -97,7 +105,7 @@ class Psycopg2SqlClient(SqlClientBase["psycopg2.connection"], DBTransaction):
 
     def execute_fragments(self, fragments: Sequence[AnyStr], *args: Any, **kwargs: Any) -> Optional[Sequence[Sequence[Any]]]:
         # compose the statements using psycopg2 library
-        composed =  Composed(sql if isinstance(sql, Composable) else SQL(sql) for sql in fragments)
+        composed = Composed(sql if isinstance(sql, Composable) else SQL(sql) for sql in fragments)
         return self.execute_sql(composed, *args, **kwargs)
 
     def fully_qualified_dataset_name(self, escape: bool = True) -> str:
@@ -112,7 +120,15 @@ class Psycopg2SqlClient(SqlClientBase["psycopg2.connection"], DBTransaction):
     def _make_database_exception(cls, ex: Exception) -> Exception:
         if isinstance(ex, (psycopg2.errors.UndefinedTable, psycopg2.errors.InvalidSchemaName)):
             raise DatabaseUndefinedRelation(ex)
-        if isinstance(ex, (psycopg2.OperationalError, psycopg2.InternalError, psycopg2.errors.SyntaxError, psycopg2.errors.UndefinedFunction)):
+        if isinstance(
+            ex,
+            (
+                psycopg2.OperationalError,
+                psycopg2.InternalError,
+                psycopg2.errors.SyntaxError,
+                psycopg2.errors.UndefinedFunction,
+            ),
+        ):
             term = cls._maybe_make_terminal_exception_from_data_error(ex)
             if term:
                 return term
@@ -129,7 +145,9 @@ class Psycopg2SqlClient(SqlClientBase["psycopg2.connection"], DBTransaction):
             return ex
 
     @staticmethod
-    def _maybe_make_terminal_exception_from_data_error(pg_ex: psycopg2.DataError) -> Optional[Exception]:
+    def _maybe_make_terminal_exception_from_data_error(
+        pg_ex: psycopg2.DataError,
+    ) -> Optional[Exception]:
         return None
 
     @staticmethod

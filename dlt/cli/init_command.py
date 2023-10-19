@@ -8,7 +8,12 @@ from importlib.metadata import version as pkg_version
 from dlt.common import git
 from dlt.common.configuration.paths import get_dlt_settings_dir, make_dlt_settings_path
 from dlt.common.configuration.specs import known_sections
-from dlt.common.configuration.providers import CONFIG_TOML, SECRETS_TOML, ConfigTomlProvider, SecretsTomlProvider
+from dlt.common.configuration.providers import (
+    CONFIG_TOML,
+    SECRETS_TOML,
+    ConfigTomlProvider,
+    SecretsTomlProvider,
+)
 from dlt.common.pipeline import get_dlt_repos_dir
 from dlt.common.source import _SOURCES
 from dlt.version import DLT_PKG_NAME, __version__
@@ -24,7 +29,11 @@ from dlt.reflection.script_inspector import inspect_pipeline_script, load_script
 from dlt.cli import echo as fmt, pipeline_files as files_ops, source_detection
 from dlt.cli import utils
 from dlt.cli.config_toml_writer import WritableConfigValue, write_values
-from dlt.cli.pipeline_files import VerifiedSourceFiles, TVerifiedSourceFileEntry, TVerifiedSourceFileIndex
+from dlt.cli.pipeline_files import (
+    VerifiedSourceFiles,
+    TVerifiedSourceFileEntry,
+    TVerifiedSourceFileIndex,
+)
 from dlt.cli.exceptions import CliCommandException
 from dlt.cli.requirements import SourceRequirements
 
@@ -48,7 +57,7 @@ def _select_source_files(
     remote_modified: Dict[str, TVerifiedSourceFileEntry],
     remote_deleted: Dict[str, TVerifiedSourceFileEntry],
     conflict_modified: Sequence[str],
-    conflict_deleted: Sequence[str]
+    conflict_deleted: Sequence[str],
 ) -> Tuple[str, Dict[str, TVerifiedSourceFileEntry], Dict[str, TVerifiedSourceFileEntry]]:
     # some files were changed and cannot be updated (or are created without index)
     fmt.echo("Existing files for %s source were changed and cannot be automatically updated" % fmt.bold(source_name))
@@ -63,7 +72,10 @@ def _select_source_files(
             fmt.echo("Following files can be automatically UPDATED: %s" % fmt.bold(", ".join(can_update_files)))
         if len(can_delete_files) > 0:
             fmt.echo("Following files can be automatically DELETED: %s" % fmt.bold(", ".join(can_delete_files)))
-        prompt = "Should incoming changes be Skipped, Applied (local changes will be lost) or Merged (%s UPDATED | %s DELETED | all local changes remain)?" % (fmt.bold(",".join(can_update_files)), fmt.bold(",".join(can_delete_files)))
+        prompt = "Should incoming changes be Skipped, Applied (local changes will be lost) or Merged (%s UPDATED | %s DELETED | all local changes remain)?" % (
+            fmt.bold(",".join(can_update_files)),
+            fmt.bold(",".join(can_delete_files)),
+        )
         choices = "sam"
     else:
         prompt = "Should incoming changes be Skipped or Applied?"
@@ -78,8 +90,8 @@ def _select_source_files(
     elif resolution == "m":
         # update what we can
         fmt.echo("Merging the incoming changes. No files with local changes were modified.")
-        remote_modified = {n:e for n, e in remote_modified.items() if n in can_update_files}
-        remote_deleted = {n:e for n, e in remote_deleted.items() if n in can_delete_files}
+        remote_modified = {n: e for n, e in remote_modified.items() if n in can_update_files}
+        remote_deleted = {n: e for n, e in remote_deleted.items() if n in can_delete_files}
     else:
         # fully overwrite, leave all files to be copied
         fmt.echo("Applying all incoming changes to local files.")
@@ -110,7 +122,13 @@ def _list_verified_sources(repo_location: str, branch: str = None) -> Dict[str, 
     return sources
 
 
-def _welcome_message(source_name: str, destination_name: str, source_files: VerifiedSourceFiles, dependency_system: str, is_new_source: bool) -> None:
+def _welcome_message(
+    source_name: str,
+    destination_name: str,
+    source_files: VerifiedSourceFiles,
+    dependency_system: str,
+    is_new_source: bool,
+) -> None:
     fmt.echo()
     if source_files.is_template:
         fmt.echo("Your new pipeline %s is ready to be customized!" % fmt.bold(source_name))
@@ -123,7 +141,13 @@ def _welcome_message(source_name: str, destination_name: str, source_files: Veri
             fmt.echo("Verified source %s was updated to the newest version!" % fmt.bold(source_name))
 
     if is_new_source:
-        fmt.echo("* Add credentials for %s and other secrets in %s" % (fmt.bold(destination_name), fmt.bold(make_dlt_settings_path(SECRETS_TOML))))
+        fmt.echo(
+            "* Add credentials for %s and other secrets in %s"
+            % (
+                fmt.bold(destination_name),
+                fmt.bold(make_dlt_settings_path(SECRETS_TOML)),
+            )
+        )
 
     if dependency_system:
         fmt.echo("* Add the required dependencies to %s:" % fmt.bold(dependency_system))
@@ -158,7 +182,13 @@ def list_verified_sources_command(repo_location: str, branch: str = None) -> Non
         fmt.echo(msg)
 
 
-def init_command(source_name: str, destination_name: str, use_generic_template: bool, repo_location: str, branch: str = None) -> None:
+def init_command(
+    source_name: str,
+    destination_name: str,
+    use_generic_template: bool,
+    repo_location: str,
+    branch: str = None,
+) -> None:
     # try to import the destination and get config spec
     destination_reference = DestinationReference.from_name(destination_name)
     destination_spec = destination_reference.spec()
@@ -192,7 +222,9 @@ def init_command(source_name: str, destination_name: str, use_generic_template: 
         source_files = files_ops.get_verified_source_files(sources_storage, source_name)
         # get file index from remote verified source files being copied
         remote_index = files_ops.get_remote_source_index(
-            source_files.storage.storage_path, source_files.files, source_files.requirements.dlt_version_constraint()
+            source_files.storage.storage_path,
+            source_files.files,
+            source_files.requirements.dlt_version_constraint(),
         )
         # diff local and remote index to get modified and deleted files
         remote_new, remote_modified, remote_deleted = files_ops.gen_index_diff(local_index, remote_index)
@@ -207,7 +239,7 @@ def init_command(source_name: str, destination_name: str, use_generic_template: 
                 remote_modified,
                 remote_deleted,
                 conflict_modified,
-                conflict_deleted
+                conflict_deleted,
             )
         if not remote_deleted and not remote_modified:
             fmt.echo("No files to update, exiting")
@@ -219,11 +251,18 @@ def init_command(source_name: str, destination_name: str, use_generic_template: 
         source_files.files.extend(template_files)
 
     else:
-
         if not is_valid_schema_name(source_name):
             raise InvalidSchemaName(source_name)
         dest_pipeline_script = source_name + ".py"
-        source_files = VerifiedSourceFiles(True, init_storage, pipeline_script, dest_pipeline_script, template_files, SourceRequirements([]), "")
+        source_files = VerifiedSourceFiles(
+            True,
+            init_storage,
+            pipeline_script,
+            dest_pipeline_script,
+            template_files,
+            SourceRequirements([]),
+            "",
+        )
         if dest_storage.has_file(dest_pipeline_script):
             fmt.warning("Pipeline script %s already exist, exiting" % dest_pipeline_script)
             return
@@ -236,32 +275,51 @@ def init_command(source_name: str, destination_name: str, use_generic_template: 
 
     # Check compatibility with installed dlt
     if not source_files.requirements.is_installed_dlt_compatible():
-        msg = f"This pipeline requires a newer version of dlt than your installed version ({source_files.requirements.current_dlt_version()}). " \
+        msg = (
+            f"This pipeline requires a newer version of dlt than your installed version ({source_files.requirements.current_dlt_version()}). "
             f"Pipeline requires '{source_files.requirements.dlt_requirement_base}'"
+        )
         fmt.warning(msg)
-        if not fmt.confirm("Would you like to continue anyway? (you can update dlt after this step)", default=True):
+        if not fmt.confirm(
+            "Would you like to continue anyway? (you can update dlt after this step)",
+            default=True,
+        ):
             fmt.echo(f'You can update dlt with: pip3 install -U "{source_files.requirements.dlt_requirement_base}"')
             return
 
     # read module source and parse it
-    visitor = utils.parse_init_script("init", source_files.storage.load(source_files.pipeline_script), source_files.pipeline_script)
+    visitor = utils.parse_init_script(
+        "init",
+        source_files.storage.load(source_files.pipeline_script),
+        source_files.pipeline_script,
+    )
     if visitor.is_destination_imported:
-        raise CliCommandException("init", f"The pipeline script {source_files.pipeline_script} import a destination from dlt.destinations. You should specify destinations by name when calling dlt.pipeline or dlt.run in init scripts.")
+        raise CliCommandException(
+            "init",
+            f"The pipeline script {source_files.pipeline_script} import a destination from dlt.destinations. You should specify destinations by name when calling dlt.pipeline or dlt.run in init scripts.",
+        )
     if n.PIPELINE not in visitor.known_calls:
-        raise CliCommandException("init", f"The pipeline script {source_files.pipeline_script} does not seem to initialize pipeline with dlt.pipeline. Please initialize pipeline explicitly in init scripts.")
+        raise CliCommandException(
+            "init",
+            f"The pipeline script {source_files.pipeline_script} does not seem to initialize pipeline with dlt.pipeline. Please initialize pipeline explicitly in init scripts.",
+        )
 
     # find all arguments in all calls to replace
     transformed_nodes = source_detection.find_call_arguments_to_replace(
         visitor,
-        [("destination", destination_name), ("pipeline_name", source_name), ("dataset_name", source_name + "_data")],
-        source_files.pipeline_script
+        [
+            ("destination", destination_name),
+            ("pipeline_name", source_name),
+            ("dataset_name", source_name + "_data"),
+        ],
+        source_files.pipeline_script,
     )
 
     # inspect the script
     inspect_pipeline_script(
         source_files.storage.storage_path,
         source_files.storage.to_relative_path(source_files.pipeline_script),
-        ignore_missing_imports=True
+        ignore_missing_imports=True,
     )
 
     # detect all the required secrets and configs that should go into tomls files
@@ -269,16 +327,27 @@ def init_command(source_name: str, destination_name: str, use_generic_template: 
         # replace destination, pipeline_name and dataset_name in templates
         transformed_nodes = source_detection.find_call_arguments_to_replace(
             visitor,
-            [("destination", destination_name), ("pipeline_name", source_name), ("dataset_name", source_name + "_data")],
-            source_files.pipeline_script
+            [
+                ("destination", destination_name),
+                ("pipeline_name", source_name),
+                ("dataset_name", source_name + "_data"),
+            ],
+            source_files.pipeline_script,
         )
         # template sources are always in module starting with "pipeline"
         # for templates, place config and secrets into top level section
-        required_secrets, required_config, checked_sources = source_detection.detect_source_configs(_SOURCES, "pipeline", ())
+        (
+            required_secrets,
+            required_config,
+            checked_sources,
+        ) = source_detection.detect_source_configs(_SOURCES, "pipeline", ())
         # template has a strict rules where sources are placed
         for source_q_name, source_config in checked_sources.items():
             if source_q_name not in visitor.known_sources_resources:
-                raise CliCommandException("init", f"The pipeline script {source_files.pipeline_script} imports a source/resource {source_config.f.__name__} from module {source_config.module.__name__}. In init scripts you must declare all sources and resources in single file.")
+                raise CliCommandException(
+                    "init",
+                    f"The pipeline script {source_files.pipeline_script} imports a source/resource {source_config.f.__name__} from module {source_config.module.__name__}. In init scripts you must declare all sources and resources in single file.",
+                )
         # rename sources and resources
         transformed_nodes.extend(source_detection.find_source_calls_to_replace(visitor, source_name))
     else:
@@ -286,15 +355,22 @@ def init_command(source_name: str, destination_name: str, use_generic_template: 
         transformed_nodes = source_detection.find_call_arguments_to_replace(visitor, [("destination", destination_name)], source_files.pipeline_script)
         # pipeline sources are in module with name starting from {pipeline_name}
         # for verified pipelines place in the specific source section
-        required_secrets, required_config, checked_sources = source_detection.detect_source_configs(_SOURCES, source_name, (known_sections.SOURCES, source_name))
+        (
+            required_secrets,
+            required_config,
+            checked_sources,
+        ) = source_detection.detect_source_configs(_SOURCES, source_name, (known_sections.SOURCES, source_name))
 
     if len(checked_sources) == 0:
-        raise CliCommandException("init", f"The pipeline script {source_files.pipeline_script} is not creating or importing any sources or resources")
+        raise CliCommandException(
+            "init",
+            f"The pipeline script {source_files.pipeline_script} is not creating or importing any sources or resources",
+        )
 
     # add destination spec to required secrets
     required_secrets["destinations:" + destination_name] = WritableConfigValue(destination_name, destination_spec, None, ("destination",))
     # add the global telemetry to required config
-    required_config["runtime.dlthub_telemetry"] = WritableConfigValue("dlthub_telemetry", bool, utils.get_telemetry_status(), ("runtime", ))
+    required_config["runtime.dlthub_telemetry"] = WritableConfigValue("dlthub_telemetry", bool, utils.get_telemetry_status(), ("runtime",))
 
     # modify the script
     script_lines = rewrite_python_script(visitor.source_lines, transformed_nodes)

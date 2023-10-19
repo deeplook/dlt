@@ -34,6 +34,7 @@ def lock_id(k: int = 4) -> str:
 
 class Heartbeat(Timer):
     """A thread designed to periodically execute a fn."""
+
     daemon = True
 
     def run(self) -> None:
@@ -102,7 +103,7 @@ class TransactionalFile:
             # Purge stale locks
             mtime = self.extract_mtime(lock)
             if now - mtime > timedelta(seconds=TransactionalFile.LOCK_TTL_SECONDS):
-                try: # Janitors can race, so we ignore errors
+                try:  # Janitors can race, so we ignore errors
                     self._fs.rm(name)
                 except OSError:
                     pass

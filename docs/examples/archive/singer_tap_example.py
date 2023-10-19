@@ -20,9 +20,7 @@ with Venv.create(mkdtemp(), ["git+https://github.com/MeltanoLabs/tap-csv.git"]) 
             {
                 "entity": "annotations_202205",
                 "path": os.path.abspath("examples/data/singer_taps/model_annotations.csv"),
-                "keys": [
-                    "message id"
-                ]
+                "keys": ["message id"],
             }
         ]
     }

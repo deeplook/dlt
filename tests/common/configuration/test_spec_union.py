@@ -5,13 +5,18 @@ from sqlalchemy.engine import Engine, create_engine
 from typing import Optional, Union, Any
 
 import dlt
-from dlt.common.configuration.exceptions import InvalidNativeValue, ConfigFieldMissingException
+from dlt.common.configuration.exceptions import (
+    InvalidNativeValue,
+    ConfigFieldMissingException,
+)
 from dlt.common.configuration.providers import EnvironProvider
 from dlt.common.configuration.specs import CredentialsConfiguration, BaseConfiguration
 from dlt.common.configuration import configspec, resolve_configuration
 from dlt.common.configuration.specs.gcp_credentials import GcpServiceAccountCredentials
 from dlt.common.typing import TSecretValue
-from dlt.common.configuration.specs.connection_string_credentials import ConnectionStringCredentials
+from dlt.common.configuration.specs.connection_string_credentials import (
+    ConnectionStringCredentials,
+)
 from dlt.common.configuration.resolve import initialize_credentials
 from dlt.common.configuration.specs.exceptions import NativeValueError
 
@@ -146,7 +151,12 @@ def test_unresolved_union() -> None:
     assert cfm_ex.value.fields == ["credentials"]
     # all the missing fields from all the union elements are present
     checked_keys = set(t.key for t in itertools.chain(*cfm_ex.value.traces.values()) if t.provider == EnvironProvider().name)
-    assert checked_keys == {"CREDENTIALS__EMAIL", "CREDENTIALS__PASSWORD", "CREDENTIALS__API_KEY", "CREDENTIALS__API_SECRET"}
+    assert checked_keys == {
+        "CREDENTIALS__EMAIL",
+        "CREDENTIALS__PASSWORD",
+        "CREDENTIALS__API_KEY",
+        "CREDENTIALS__API_SECRET",
+    }
 
 
 def test_union_decorator() -> None:
@@ -154,7 +164,10 @@ def test_union_decorator() -> None:
 
     # this will generate equivalent of ZenConfig
     @dlt.source
-    def zen_source(credentials: Union[ZenApiKeyCredentials, ZenEmailCredentials, str] = dlt.secrets.value, some_option: bool = False):
+    def zen_source(
+        credentials: Union[ZenApiKeyCredentials, ZenEmailCredentials, str] = dlt.secrets.value,
+        some_option: bool = False,
+    ):
         # depending on what the user provides in config, ZenApiKeyCredentials or ZenEmailCredentials will be injected in credentials
         # both classes implement `auth` so you can always call it
         credentials.auth()  # type: ignore[union-attr]
@@ -179,6 +192,7 @@ class GoogleAnalyticsCredentialsBase(CredentialsConfiguration):
     """
     The Base version of all the GoogleAnalyticsCredentials classes.
     """
+
     pass
 
 
@@ -187,6 +201,7 @@ class GoogleAnalyticsCredentialsOAuth(GoogleAnalyticsCredentialsBase):
     """
     This class is used to store credentials Google Analytics
     """
+
     client_id: str
     client_secret: TSecretValue
     project_id: TSecretValue
@@ -201,17 +216,17 @@ def google_analytics(credentials: Union[GoogleAnalyticsCredentialsOAuth, GcpServ
 
 def test_google_auth_union(environment: Any) -> None:
     info = {
-        "type" : "service_account",
-        "project_id" : "dlthub-analytics",
-        "private_key_id" : "45cbe97fbd3d756d55d4633a5a72d8530a05b993",
-        "private_key" : "-----BEGIN PRIVATE KEY-----\n\n-----END PRIVATE KEY-----\n",
-        "client_email" : "105150287833-compute@developer.gserviceaccount.com",
-        "client_id" : "106404499083406128146",
-        "auth_uri" : "https://accounts.google.com/o/oauth2/auth",
-        "token_uri" : "https://oauth2.googleapis.com/token",
-        "auth_provider_x509_cert_url" : "https://www.googleapis.com/oauth2/v1/certs",
-        "client_x509_cert_url" : "https://www.googleapis.com/robot/v1/metadata/x509/105150287833-compute%40developer.gserviceaccount.com"
-        }
+        "type": "service_account",
+        "project_id": "dlthub-analytics",
+        "private_key_id": "45cbe97fbd3d756d55d4633a5a72d8530a05b993",
+        "private_key": "-----BEGIN PRIVATE KEY-----\n\n-----END PRIVATE KEY-----\n",
+        "client_email": "105150287833-compute@developer.gserviceaccount.com",
+        "client_id": "106404499083406128146",
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+        "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/105150287833-compute%40developer.gserviceaccount.com",
+    }
 
     credentials = list(google_analytics(credentials=info))[0]  # type: ignore[arg-type]
     print(dict(credentials))
@@ -225,23 +240,23 @@ def sql_database(credentials: Union[ConnectionStringCredentials, Engine, str] = 
 
 def test_union_concrete_type(environment: Any) -> None:
     # we can pass engine explicitly
-    engine = create_engine('sqlite:///:memory:', echo=True)
+    engine = create_engine("sqlite:///:memory:", echo=True)
     db = sql_database(credentials=engine)
     creds = list(db)[0]
     assert isinstance(creds, Engine)
     # we can pass valid connection string explicitly
-    db = sql_database(credentials='sqlite://user@/:memory:')
+    db = sql_database(credentials="sqlite://user@/:memory:")
     creds = list(db)[0]
     # but it is used as native value
     assert isinstance(creds, ConnectionStringCredentials)
     # pass instance of credentials
-    cn = ConnectionStringCredentials('sqlite://user@/:memory:')
+    cn = ConnectionStringCredentials("sqlite://user@/:memory:")
     db = sql_database(credentials=cn)
     # exactly that instance is returned
     assert list(db)[0] is cn
     # invalid cn
     with pytest.raises(InvalidNativeValue):
-        db = sql_database(credentials='?')
+        db = sql_database(credentials="?")
     with pytest.raises(InvalidNativeValue):
         db = sql_database(credentials=123)  # type: ignore[arg-type]
 

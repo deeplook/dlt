@@ -25,14 +25,24 @@ from tests.load.pipeline.utils import destinations_configs, DestinationTestConfi
 # ACTIVE_DESTINATIONS += ["motherduck"]
 
 
-@pytest.mark.parametrize("destination_config", destinations_configs(default_sql_configs=True), ids=lambda x: x.name)
-def test_merge_on_keys_in_schema(destination_config: DestinationTestConfiguration) -> None:
+@pytest.mark.parametrize(
+    "destination_config",
+    destinations_configs(default_sql_configs=True),
+    ids=lambda x: x.name,
+)
+def test_merge_on_keys_in_schema(
+    destination_config: DestinationTestConfiguration,
+) -> None:
     p = destination_config.setup_pipeline("eth_2", full_refresh=True)
 
     with open("tests/common/cases/schemas/eth/ethereum_schema_v5.yml", "r", encoding="utf-8") as f:
         schema = dlt.Schema.from_dict(yaml.safe_load(f))
 
-    with open("tests/normalize/cases/ethereum.blocks.9c1d9b504ea240a482b007788d5cd61c_2.json", "r", encoding="utf-8") as f:
+    with open(
+        "tests/normalize/cases/ethereum.blocks.9c1d9b504ea240a482b007788d5cd61c_2.json",
+        "r",
+        encoding="utf-8",
+    ) as f:
         data = json.load(f)
 
     # take only the first block. the first block does not have uncles so this table should not be created and merged
@@ -59,11 +69,21 @@ def test_merge_on_keys_in_schema(destination_config: DestinationTestConfiguratio
     assert eth_2_counts == eth_3_counts
 
 
-@pytest.mark.parametrize("destination_config", destinations_configs(default_sql_configs=True), ids=lambda x: x.name)
-def test_merge_on_ad_hoc_primary_key(destination_config: DestinationTestConfiguration) -> None:
+@pytest.mark.parametrize(
+    "destination_config",
+    destinations_configs(default_sql_configs=True),
+    ids=lambda x: x.name,
+)
+def test_merge_on_ad_hoc_primary_key(
+    destination_config: DestinationTestConfiguration,
+) -> None:
     p = destination_config.setup_pipeline("github_1", full_refresh=True)
 
-    with open("tests/normalize/cases/github.issues.load_page_5_duck.json", "r", encoding="utf-8") as f:
+    with open(
+        "tests/normalize/cases/github.issues.load_page_5_duck.json",
+        "r",
+        encoding="utf-8",
+    ) as f:
         data = json.load(f)
     # note: NodeId will be normalized to "node_id" which exists in the schema
     info = p.run(data[:17], table_name="issues", write_disposition="merge", primary_key="NodeId")
@@ -89,17 +109,31 @@ def test_merge_on_ad_hoc_primary_key(destination_config: DestinationTestConfigur
 
 @dlt.source(root_key=True)
 def github():
-
-    @dlt.resource(table_name="issues", write_disposition="merge", primary_key="id", merge_key=("node_id", "url"))
+    @dlt.resource(
+        table_name="issues",
+        write_disposition="merge",
+        primary_key="id",
+        merge_key=("node_id", "url"),
+    )
     def load_issues():
-        with open("tests/normalize/cases/github.issues.load_page_5_duck.json", "r", encoding="utf-8") as f:
+        with open(
+            "tests/normalize/cases/github.issues.load_page_5_duck.json",
+            "r",
+            encoding="utf-8",
+        ) as f:
             yield from json.load(f)
 
     return load_issues
 
 
-@pytest.mark.parametrize("destination_config", destinations_configs(default_sql_configs=True), ids=lambda x: x.name)
-def test_merge_source_compound_keys_and_changes(destination_config: DestinationTestConfiguration) -> None:
+@pytest.mark.parametrize(
+    "destination_config",
+    destinations_configs(default_sql_configs=True),
+    ids=lambda x: x.name,
+)
+def test_merge_source_compound_keys_and_changes(
+    destination_config: DestinationTestConfiguration,
+) -> None:
     p = destination_config.setup_pipeline("github_3", full_refresh=True)
 
     info = p.run(github())
@@ -118,10 +152,10 @@ def test_merge_source_compound_keys_and_changes(destination_config: DestinationT
     assert p.default_schema.tables["issues"]["write_disposition"] == "append"
     # the counts of all tables must be double
     github_2_counts = load_table_counts(p, *[t["name"] for t in p.default_schema.data_tables()])
-    assert {k:v*2 for k, v in github_1_counts.items()} == github_2_counts
+    assert {k: v * 2 for k, v in github_1_counts.items()} == github_2_counts
 
     # now replace all resources
-    info = p.run(github(), write_disposition="replace" )
+    info = p.run(github(), write_disposition="replace")
     assert_load_info(info)
     assert p.default_schema.tables["issues"]["write_disposition"] == "replace"
     # assert p.default_schema.tables["issues__labels"]["write_disposition"] == "replace"
@@ -130,8 +164,14 @@ def test_merge_source_compound_keys_and_changes(destination_config: DestinationT
     assert github_1_counts == github_3_counts
 
 
-@pytest.mark.parametrize("destination_config", destinations_configs(default_sql_configs=True), ids=lambda x: x.name)
-def test_merge_no_child_tables(destination_config: DestinationTestConfiguration) -> None:
+@pytest.mark.parametrize(
+    "destination_config",
+    destinations_configs(default_sql_configs=True),
+    ids=lambda x: x.name,
+)
+def test_merge_no_child_tables(
+    destination_config: DestinationTestConfiguration,
+) -> None:
     p = destination_config.setup_pipeline("github_3", full_refresh=True)
     github_data = github()
     assert github_data.max_table_nesting is None
@@ -161,7 +201,11 @@ def test_merge_no_child_tables(destination_config: DestinationTestConfiguration)
     assert github_2_counts["issues"] == 100 if destination_config.supports_merge else 115
 
 
-@pytest.mark.parametrize("destination_config", destinations_configs(default_sql_configs=True), ids=lambda x: x.name)
+@pytest.mark.parametrize(
+    "destination_config",
+    destinations_configs(default_sql_configs=True),
+    ids=lambda x: x.name,
+)
 def test_merge_no_merge_keys(destination_config: DestinationTestConfiguration) -> None:
     p = destination_config.setup_pipeline("github_3", full_refresh=True)
     github_data = github()
@@ -187,12 +231,18 @@ def test_merge_no_merge_keys(destination_config: DestinationTestConfiguration) -
     assert github_1_counts["issues"] == 10 if destination_config.supports_merge else 100 - 45
 
 
-@pytest.mark.parametrize("destination_config", destinations_configs(default_sql_configs=True), ids=lambda x: x.name)
-def test_merge_keys_non_existing_columns(destination_config: DestinationTestConfiguration) -> None:
+@pytest.mark.parametrize(
+    "destination_config",
+    destinations_configs(default_sql_configs=True),
+    ids=lambda x: x.name,
+)
+def test_merge_keys_non_existing_columns(
+    destination_config: DestinationTestConfiguration,
+) -> None:
     p = destination_config.setup_pipeline("github_3", full_refresh=True)
     github_data = github()
     # set keys names that do not exist in the data
-    github_data.load_issues.apply_hints(merge_key=("mA1", "Ma2"), primary_key=("123-x", ))
+    github_data.load_issues.apply_hints(merge_key=("mA1", "Ma2"), primary_key=("123-x",))
     # skip first 45 rows
     github_data.load_issues.add_filter(skip_first(45))
     info = p.run(github_data)
@@ -207,7 +257,7 @@ def test_merge_keys_non_existing_columns(destination_config: DestinationTestConf
 
     # all the keys are invalid so the merge falls back to replace
     github_data = github()
-    github_data.load_issues.apply_hints(merge_key=("mA1", "Ma2"), primary_key=("123-x", ))
+    github_data.load_issues.apply_hints(merge_key=("mA1", "Ma2"), primary_key=("123-x",))
     github_data.load_issues.add_filter(take_first(1))
     info = p.run(github_data)
     assert_load_info(info)
@@ -219,15 +269,25 @@ def test_merge_keys_non_existing_columns(destination_config: DestinationTestConf
         assert "m_a1" not in table_schema  # unbound columns were not created
 
 
-@pytest.mark.parametrize("destination_config", destinations_configs(default_sql_configs=True, subset=["duckdb", "snowflake", "bigquery"]), ids=lambda x: x.name)
-def test_pipeline_load_parquet(destination_config: DestinationTestConfiguration) -> None:
+@pytest.mark.parametrize(
+    "destination_config",
+    destinations_configs(default_sql_configs=True, subset=["duckdb", "snowflake", "bigquery"]),
+    ids=lambda x: x.name,
+)
+def test_pipeline_load_parquet(
+    destination_config: DestinationTestConfiguration,
+) -> None:
     p = destination_config.setup_pipeline("github_3", full_refresh=True)
     github_data = github()
     # generate some complex types
     github_data.max_table_nesting = 2
     github_data_copy = github()
     github_data_copy.max_table_nesting = 2
-    info = p.run([github_data, github_data_copy], loader_file_format="parquet", write_disposition="merge")
+    info = p.run(
+        [github_data, github_data_copy],
+        loader_file_format="parquet",
+        write_disposition="merge",
+    )
     assert_load_info(info)
     # make sure it was parquet or sql transforms
     files = p.get_load_package_info(p.list_completed_load_packages()[0]).jobs["completed_jobs"]
@@ -250,22 +310,36 @@ def test_pipeline_load_parquet(destination_config: DestinationTestConfiguration)
     assert github_1_counts["issues"] == 100
 
 
-
-@dlt.transformer(name="github_repo_events", primary_key="id", write_disposition="merge", table_name=lambda i: i['type'])
-def github_repo_events(page: List[StrAny], last_created_at = dlt.sources.incremental("created_at", "1970-01-01T00:00:00Z")):
-    """A transformer taking a stream of github events and dispatching them to tables named by event type. Deduplicates be 'id'. Loads incrementally by 'created_at' """
+@dlt.transformer(
+    name="github_repo_events",
+    primary_key="id",
+    write_disposition="merge",
+    table_name=lambda i: i["type"],
+)
+def github_repo_events(
+    page: List[StrAny],
+    last_created_at=dlt.sources.incremental("created_at", "1970-01-01T00:00:00Z"),
+):
+    """A transformer taking a stream of github events and dispatching them to tables named by event type. Deduplicates be 'id'. Loads incrementally by 'created_at'"""
     yield page
 
 
 @dlt.transformer(name="github_repo_events", primary_key="id", write_disposition="merge")
-def github_repo_events_table_meta(page: List[StrAny], last_created_at = dlt.sources.incremental("created_at", "1970-01-01T00:00:00Z")):
-    """A transformer taking a stream of github events and dispatching them to tables using table meta. Deduplicates be 'id'. Loads incrementally by 'created_at' """
-    yield from [dlt.mark.with_table_name(p, p['type']) for p in page]
+def github_repo_events_table_meta(
+    page: List[StrAny],
+    last_created_at=dlt.sources.incremental("created_at", "1970-01-01T00:00:00Z"),
+):
+    """A transformer taking a stream of github events and dispatching them to tables using table meta. Deduplicates be 'id'. Loads incrementally by 'created_at'"""
+    yield from [dlt.mark.with_table_name(p, p["type"]) for p in page]
 
 
 @dlt.resource
 def _get_shuffled_events(shuffle: bool = dlt.secrets.value):
-    with open("tests/normalize/cases/github.events.load_page_1_duck.json", "r", encoding="utf-8") as f:
+    with open(
+        "tests/normalize/cases/github.events.load_page_1_duck.json",
+        "r",
+        encoding="utf-8",
+    ) as f:
         issues = json.load(f)
         # random order
         if shuffle:
@@ -273,17 +347,20 @@ def _get_shuffled_events(shuffle: bool = dlt.secrets.value):
         yield issues
 
 
-
-@pytest.mark.parametrize("destination_config", destinations_configs(default_sql_configs=True), ids=lambda x: x.name)
-@pytest.mark.parametrize("github_resource",[github_repo_events, github_repo_events_table_meta])
+@pytest.mark.parametrize(
+    "destination_config",
+    destinations_configs(default_sql_configs=True),
+    ids=lambda x: x.name,
+)
+@pytest.mark.parametrize("github_resource", [github_repo_events, github_repo_events_table_meta])
 def test_merge_with_dispatch_and_incremental(destination_config: DestinationTestConfiguration, github_resource: DltResource) -> None:
-    newest_issues = list(sorted(_get_shuffled_events(True), key = lambda x: x["created_at"], reverse=True))
+    newest_issues = list(sorted(_get_shuffled_events(True), key=lambda x: x["created_at"], reverse=True))
     newest_issue = newest_issues[0]
 
     @dlt.resource
     def _new_event(node_id):
         new_i = copy(newest_issue)
-        new_i["id"] = str(random.randint(0, 2^32))
+        new_i["id"] = str(random.randint(0, 2 ^ 32))
         new_i["created_at"] = pendulum.now().isoformat()
         new_i["node_id"] = node_id
         # yield pages
@@ -315,7 +392,10 @@ def test_merge_with_dispatch_and_incremental(destination_config: DestinationTest
     info = p.run(_get_shuffled_events(True) | github_resource)
     assert_load_info(info)
     # get top tables
-    counts = load_table_counts(p, *[t["name"] for t in p.default_schema.data_tables() if t.get("parent") is None])
+    counts = load_table_counts(
+        p,
+        *[t["name"] for t in p.default_schema.data_tables() if t.get("parent") is None],
+    )
     # total number of events in all top tables == 100
     assert sum(counts.values()) == 100
     # this should skip all events due to incremental load
@@ -326,10 +406,13 @@ def test_merge_with_dispatch_and_incremental(destination_config: DestinationTest
     # load one more event with a new id
     info = p.run(_new_event("new_node") | github_resource)
     assert_load_info(info)
-    counts = load_table_counts(p, *[t["name"] for t in p.default_schema.data_tables() if t.get("parent") is None])
+    counts = load_table_counts(
+        p,
+        *[t["name"] for t in p.default_schema.data_tables() if t.get("parent") is None],
+    )
     assert sum(counts.values()) == 101
     # all the columns have primary keys and merge disposition derived from resource
-    for table in  p.default_schema.data_tables():
+    for table in p.default_schema.data_tables():
         if table.get("parent") is None:
             assert table["write_disposition"] == "merge"
             assert table["columns"]["id"]["primary_key"] is True
@@ -338,7 +421,10 @@ def test_merge_with_dispatch_and_incremental(destination_config: DestinationTest
     info = p.run(_updated_event("new_node_X") | github_resource)
     assert_load_info(info)
     # still 101
-    counts = load_table_counts(p, *[t["name"] for t in p.default_schema.data_tables() if t.get("parent") is None])
+    counts = load_table_counts(
+        p,
+        *[t["name"] for t in p.default_schema.data_tables() if t.get("parent") is None],
+    )
     assert sum(counts.values()) == 101 if destination_config.supports_merge else 102
     # for non merge destinations we just check that the run passes
     if not destination_config.supports_merge:
@@ -350,13 +436,22 @@ def test_merge_with_dispatch_and_incremental(destination_config: DestinationTest
             assert len(list(q.fetchall())) == 1
 
 
-@pytest.mark.parametrize("destination_config", destinations_configs(default_sql_configs=True), ids=lambda x: x.name)
-def test_deduplicate_single_load(destination_config: DestinationTestConfiguration) -> None:
+@pytest.mark.parametrize(
+    "destination_config",
+    destinations_configs(default_sql_configs=True),
+    ids=lambda x: x.name,
+)
+def test_deduplicate_single_load(
+    destination_config: DestinationTestConfiguration,
+) -> None:
     p = destination_config.setup_pipeline("abstract", full_refresh=True)
 
     @dlt.resource(write_disposition="merge", primary_key="id")
     def duplicates():
-        yield [{"id": 1, "name": "row1", "child": [1, 2, 3]}, {"id": 1, "name": "row2", "child": [4, 5, 6]}]
+        yield [
+            {"id": 1, "name": "row1", "child": [1, 2, 3]},
+            {"id": 1, "name": "row2", "child": [4, 5, 6]},
+        ]
 
     info = p.run(duplicates())
     assert_load_info(info)
@@ -366,10 +461,12 @@ def test_deduplicate_single_load(destination_config: DestinationTestConfiguratio
     qual_name = p.sql_client().make_qualified_table_name("duplicates")
     select_data(p, f"SELECT * FROM {qual_name}")[0]
 
-
     @dlt.resource(write_disposition="merge", primary_key=("id", "subkey"))
     def duplicates_no_child():
-        yield [{"id": 1, "subkey": "AX", "name": "row1"}, {"id": 1, "subkey": "AX", "name": "row2"}]
+        yield [
+            {"id": 1, "subkey": "AX", "name": "row1"},
+            {"id": 1, "subkey": "AX", "name": "row2"},
+        ]
 
     info = p.run(duplicates_no_child())
     assert_load_info(info)
@@ -377,13 +474,22 @@ def test_deduplicate_single_load(destination_config: DestinationTestConfiguratio
     assert counts["duplicates_no_child"] == 1 if destination_config.supports_merge else 2
 
 
-@pytest.mark.parametrize("destination_config", destinations_configs(default_sql_configs=True), ids=lambda x: x.name)
-def test_no_deduplicate_only_merge_key(destination_config: DestinationTestConfiguration) -> None:
+@pytest.mark.parametrize(
+    "destination_config",
+    destinations_configs(default_sql_configs=True),
+    ids=lambda x: x.name,
+)
+def test_no_deduplicate_only_merge_key(
+    destination_config: DestinationTestConfiguration,
+) -> None:
     p = destination_config.setup_pipeline("abstract", full_refresh=True)
 
     @dlt.resource(write_disposition="merge", merge_key="id")
     def duplicates():
-        yield [{"id": 1, "name": "row1", "child": [1, 2, 3]}, {"id": 1, "name": "row2", "child": [4, 5, 6]}]
+        yield [
+            {"id": 1, "name": "row1", "child": [1, 2, 3]},
+            {"id": 1, "name": "row2", "child": [4, 5, 6]},
+        ]
 
     info = p.run(duplicates())
     assert_load_info(info)
@@ -391,10 +497,12 @@ def test_no_deduplicate_only_merge_key(destination_config: DestinationTestConfig
     assert counts["duplicates"] == 2
     assert counts["duplicates__child"] == 6
 
-
     @dlt.resource(write_disposition="merge", merge_key=("id", "subkey"))
     def duplicates_no_child():
-        yield [{"id": 1, "subkey": "AX", "name": "row1"}, {"id": 1, "subkey": "AX", "name": "row2"}]
+        yield [
+            {"id": 1, "subkey": "AX", "name": "row1"},
+            {"id": 1, "subkey": "AX", "name": "row2"},
+        ]
 
     info = p.run(duplicates_no_child())
     assert_load_info(info)

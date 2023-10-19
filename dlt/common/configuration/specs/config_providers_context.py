@@ -2,9 +2,21 @@ import contextlib
 import io
 from typing import List
 from dlt.common.configuration.exceptions import DuplicateConfigProviderException
-from dlt.common.configuration.providers import ConfigProvider, EnvironProvider, ContextProvider, SecretsTomlProvider, ConfigTomlProvider, GoogleSecretsProvider
+from dlt.common.configuration.providers import (
+    ConfigProvider,
+    EnvironProvider,
+    ContextProvider,
+    SecretsTomlProvider,
+    ConfigTomlProvider,
+    GoogleSecretsProvider,
+)
 from dlt.common.configuration.specs.base_configuration import ContainerInjectableContext
-from dlt.common.configuration.specs import GcpServiceAccountCredentials, BaseConfiguration, configspec, known_sections
+from dlt.common.configuration.specs import (
+    GcpServiceAccountCredentials,
+    BaseConfiguration,
+    configspec,
+    known_sections,
+)
 from dlt.common.runtime.exec_info import is_airflow_installed
 
 
@@ -21,6 +33,7 @@ class ConfigProvidersConfiguration(BaseConfiguration):
 @configspec
 class ConfigProvidersContext(ContainerInjectableContext):
     """Injectable list of providers used by the configuration `resolve` module"""
+
     providers: List[ConfigProvider]
     context_provider: ConfigProvider
 
@@ -70,13 +83,14 @@ def _initial_providers() -> List[ConfigProvider]:
     providers = [
         EnvironProvider(),
         SecretsTomlProvider(add_global_config=True),
-        ConfigTomlProvider(add_global_config=True)
+        ConfigTomlProvider(add_global_config=True),
     ]
     return providers
 
 
 def _extra_providers() -> List[ConfigProvider]:
     from dlt.common.configuration.resolve import resolve_configuration
+
     providers_config = resolve_configuration(ConfigProvidersConfiguration())
     extra_providers = []
     if providers_config.enable_airflow_secrets:
@@ -89,7 +103,10 @@ def _extra_providers() -> List[ConfigProvider]:
 def _google_secrets_provider(only_secrets: bool = True, only_toml_fragments: bool = True) -> ConfigProvider:
     from dlt.common.configuration.resolve import resolve_configuration
 
-    c = resolve_configuration(GcpServiceAccountCredentials(), sections=(known_sections.PROVIDERS, "google_secrets"))
+    c = resolve_configuration(
+        GcpServiceAccountCredentials(),
+        sections=(known_sections.PROVIDERS, "google_secrets"),
+    )
     return GoogleSecretsProvider(c, only_secrets=only_secrets, only_toml_fragments=only_toml_fragments)
 
 
@@ -112,10 +129,14 @@ def _airflow_providers() -> List[ConfigProvider]:
         # hide stdio. airflow typically dumps tons of warnings and deprecations to stdout and stderr
         with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
             # try to get dlt secrets variable. many broken Airflow installations break here. in that case do not create
-            from airflow.models import Variable, TaskInstance # noqa
-            from dlt.common.configuration.providers.airflow import AirflowSecretsTomlProvider
+            from airflow.models import Variable, TaskInstance  # noqa
+            from dlt.common.configuration.providers.airflow import (
+                AirflowSecretsTomlProvider,
+            )
+
             # probe if Airflow variable containing all secrets is present
             from dlt.common.configuration.providers.toml import SECRETS_TOML_KEY
+
             secrets_toml_var = Variable.get(SECRETS_TOML_KEY, default_var=None)
 
             # providers can be returned - mind that AirflowSecretsTomlProvider() requests the variable above immediately
@@ -123,13 +144,16 @@ def _airflow_providers() -> List[ConfigProvider]:
 
             # check if we are in task context and provide more info
             from airflow.operators.python import get_current_context  # noqa
+
             ti: TaskInstance = get_current_context()["ti"]  # type: ignore
 
         # log outside of stderr/out redirect
         if secrets_toml_var is None:
-            message = f"Airflow variable '{SECRETS_TOML_KEY}' was not found. " + \
-                "This Airflow variable is a recommended place to hold the content of secrets.toml." + \
-                "If you do not use Airflow variables to hold dlt configuration or use variables with other names you can ignore this warning."
+            message = (
+                f"Airflow variable '{SECRETS_TOML_KEY}' was not found. "
+                + "This Airflow variable is a recommended place to hold the content of secrets.toml."
+                + "If you do not use Airflow variables to hold dlt configuration or use variables with other names you can ignore this warning."
+            )
             ti.log.warning(message)
 
     except Exception:

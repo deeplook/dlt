@@ -7,11 +7,25 @@ from dlt.common import json
 from dlt.common.schema.schema import Schema
 from dlt.common.schema.typing import TStoredSchema
 from dlt.common.schema.utils import explicit_normalizers
-from dlt.common.storages.exceptions import InStorageSchemaModified, SchemaNotFoundError, UnexpectedSchemaName
-from dlt.common.storages import SchemaStorageConfiguration, SchemaStorage, LiveSchemaStorage, FileStorage
+from dlt.common.storages.exceptions import (
+    InStorageSchemaModified,
+    SchemaNotFoundError,
+    UnexpectedSchemaName,
+)
+from dlt.common.storages import (
+    SchemaStorageConfiguration,
+    SchemaStorage,
+    LiveSchemaStorage,
+    FileStorage,
+)
 
 from tests.utils import autouse_test_storage, TEST_STORAGE_ROOT
-from tests.common.utils import load_yml_case, yml_case_path, COMMON_TEST_CASES_PATH, IMPORTED_VERSION_HASH_ETH_V6
+from tests.common.utils import (
+    load_yml_case,
+    yml_case_path,
+    COMMON_TEST_CASES_PATH,
+    IMPORTED_VERSION_HASH_ETH_V6,
+)
 
 
 @pytest.fixture
@@ -22,13 +36,23 @@ def storage() -> SchemaStorage:
 @pytest.fixture
 def synced_storage() -> SchemaStorage:
     # will be created in /schemas
-    return init_storage(SchemaStorageConfiguration(import_schema_path=TEST_STORAGE_ROOT + "/import", export_schema_path=TEST_STORAGE_ROOT + "/import"))
+    return init_storage(
+        SchemaStorageConfiguration(
+            import_schema_path=TEST_STORAGE_ROOT + "/import",
+            export_schema_path=TEST_STORAGE_ROOT + "/import",
+        )
+    )
 
 
 @pytest.fixture
 def ie_storage() -> SchemaStorage:
     # will be created in /schemas
-    return init_storage(SchemaStorageConfiguration(import_schema_path=TEST_STORAGE_ROOT + "/import", export_schema_path=TEST_STORAGE_ROOT + "/export"))
+    return init_storage(
+        SchemaStorageConfiguration(
+            import_schema_path=TEST_STORAGE_ROOT + "/import",
+            export_schema_path=TEST_STORAGE_ROOT + "/export",
+        )
+    )
 
 
 def init_storage(C: SchemaStorageConfiguration) -> SchemaStorage:
@@ -247,16 +271,28 @@ def test_schema_from_file() -> None:
     schema = SchemaStorage.load_schema_file(os.path.join(COMMON_TEST_CASES_PATH, "schemas/local"), "event")
     assert schema.name == "event"
 
-    schema = SchemaStorage.load_schema_file(os.path.join(COMMON_TEST_CASES_PATH, "schemas/local"), "event", extensions=("yaml",))
+    schema = SchemaStorage.load_schema_file(
+        os.path.join(COMMON_TEST_CASES_PATH, "schemas/local"),
+        "event",
+        extensions=("yaml",),
+    )
     assert schema.name == "event"
     assert "blocks" in schema.tables
 
     with pytest.raises(SchemaNotFoundError):
-        SchemaStorage.load_schema_file(os.path.join(COMMON_TEST_CASES_PATH, "schemas/local"), "eth", extensions=("yaml",))
+        SchemaStorage.load_schema_file(
+            os.path.join(COMMON_TEST_CASES_PATH, "schemas/local"),
+            "eth",
+            extensions=("yaml",),
+        )
 
     # file name and schema content mismatch
     with pytest.raises(UnexpectedSchemaName):
-        SchemaStorage.load_schema_file(os.path.join(COMMON_TEST_CASES_PATH, "schemas/local"), "name_mismatch", extensions=("yaml",))
+        SchemaStorage.load_schema_file(
+            os.path.join(COMMON_TEST_CASES_PATH, "schemas/local"),
+            "name_mismatch",
+            extensions=("yaml",),
+        )
 
 
 # def test_save_empty_schema_name(storage: SchemaStorage) -> None:
@@ -269,7 +305,10 @@ def test_schema_from_file() -> None:
 
 
 def prepare_import_folder(storage: SchemaStorage) -> None:
-    shutil.copy(yml_case_path("schemas/eth/ethereum_schema_v6"), os.path.join(storage.storage.storage_path, "../import/ethereum.schema.yaml"))
+    shutil.copy(
+        yml_case_path("schemas/eth/ethereum_schema_v6"),
+        os.path.join(storage.storage.storage_path, "../import/ethereum.schema.yaml"),
+    )
 
 
 def assert_schema_imported(synced_storage: SchemaStorage, storage: SchemaStorage) -> Schema:

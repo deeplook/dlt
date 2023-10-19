@@ -12,7 +12,10 @@ from dlt.common import pipeline as state_module
 from dlt.common.utils import uniq_id
 from dlt.destinations.job_client_impl import SqlJobClientBase
 
-from dlt.pipeline.exceptions import PipelineStateEngineNoUpgradePathException, PipelineStepFailed
+from dlt.pipeline.exceptions import (
+    PipelineStateEngineNoUpgradePathException,
+    PipelineStepFailed,
+)
 from dlt.pipeline.pipeline import Pipeline
 from dlt.pipeline.state_sync import migrate_state, STATE_ENGINE_VERSION
 
@@ -23,19 +26,24 @@ from tests.pipeline.utils import json_case_path, load_json_case, airtable_emojis
 @dlt.resource()
 def some_data():
     last_value = dlt.current.source_state().get("last_value", 0)
-    yield [1,2,3]
+    yield [1, 2, 3]
     dlt.current.source_state()["last_value"] = last_value + 1
 
 
 @dlt.resource()
 def some_data_resource_state():
     last_value = dlt.current.resource_state().get("last_value", 0)
-    yield [1,2,3]
+    yield [1, 2, 3]
     dlt.current.resource_state()["last_value"] = last_value + 1
 
 
 def test_restore_state_props() -> None:
-    p = dlt.pipeline(pipeline_name="restore_state_props", destination="redshift", staging="filesystem", dataset_name="the_dataset")
+    p = dlt.pipeline(
+        pipeline_name="restore_state_props",
+        destination="redshift",
+        staging="filesystem",
+        dataset_name="the_dataset",
+    )
     p.extract(some_data())
     state = p.state
     assert state["dataset_name"] == "the_dataset"
@@ -115,7 +123,6 @@ def test_no_active_pipeline_required_for_resource() -> None:
 
 
 def test_active_pipeline_required_for_source() -> None:
-
     @dlt.source
     def some_source():
         dlt.current.source_state().get("last_value", 0)
@@ -135,6 +142,7 @@ def test_active_pipeline_required_for_source() -> None:
     p.deactivate()
     list(s)
 
+
 def test_source_state_iterator():
     os.environ["COMPLETED_PROB"] = "1.0"
     pipeline_name = "pipe_" + uniq_id()
@@ -147,7 +155,7 @@ def test_source_state_iterator():
         # increase the multiplier each time state is obtained
         state["mark"] *= 2
         yield [1, 2, 3]
-        assert dlt.current.source_state()["mark"] == mark*2
+        assert dlt.current.source_state()["mark"] == mark * 2
 
     @dlt.transformer(data_from=main)
     def feeding(item):
@@ -155,7 +163,7 @@ def test_source_state_iterator():
         assert dlt.current.source_state()["mark"] > 1
         print(f"feeding state {dlt.current.source_state()}")
         mark = dlt.current.source_state()["mark"]
-        yield from map(lambda i: i*mark, item)
+        yield from map(lambda i: i * mark, item)
 
     @dlt.source
     def pass_the_state():
@@ -189,6 +197,7 @@ def test_unmanaged_state() -> None:
     def _gen_inner():
         dlt.state()["gen"] = True
         yield 1
+
     list(dlt.resource(_gen_inner))
     list(dlt.resource(_gen_inner()))
     assert state_module._last_full_state["sources"]["unmanaged"]["gen"] is True
@@ -281,7 +290,6 @@ def test_resource_state_in_pipeline() -> None:
 
     # get resource state in defer function
     def _gen_inner_defer(tv="df"):
-
         @dlt.defer
         def _run():
             dlt.current.resource_state()["gen"] = tv
@@ -297,7 +305,6 @@ def test_resource_state_in_pipeline() -> None:
 
     # get resource state in defer explicitly
     def _gen_inner_defer_explicit_name(resource_name, tv="df"):
-
         @dlt.defer
         def _run():
             dlt.current.resource_state(resource_name)["gen"] = tv
@@ -312,7 +319,6 @@ def test_resource_state_in_pipeline() -> None:
 
     # get resource state in yielding defer (which btw is invalid and will be resolved in main thread)
     def _gen_inner_defer_yielding(tv="yielding"):
-
         @dlt.defer
         def _run():
             dlt.current.resource_state()["gen"] = tv
@@ -327,7 +333,6 @@ def test_resource_state_in_pipeline() -> None:
 
     # get resource state in async function
     def _gen_inner_async(tv="async"):
-
         async def _run():
             dlt.current.resource_state()["gen"] = tv
             return 1
@@ -351,7 +356,11 @@ def test_transformer_state_write() -> None:
 
     # p = dlt.pipeline()
     # p.extract(dlt.transformer(_gen_inner, data_from=r, name="tx_other_name"))
-    assert list(dlt.transformer(_gen_inner, data_from=r, name="tx_other_name")) == [2, 4, 6]
+    assert list(dlt.transformer(_gen_inner, data_from=r, name="tx_other_name")) == [
+        2,
+        4,
+        6,
+    ]
     assert state_module._last_full_state["sources"]["test_pipeline_state"]["resources"]["some_data_resource_state"]["last_value"] == 1
     assert state_module._last_full_state["sources"]["test_pipeline_state"]["resources"]["tx_other_name"]["gen"] is True
 
@@ -401,7 +410,7 @@ def test_transform_function_state_write() -> None:
     # transform executed within the same thread
     def transform(item):
         dlt.current.resource_state()["form"] = item
-        return item*2
+        return item * 2
 
     r.add_map(transform)
     assert list(r) == [2, 4, 6]
@@ -410,20 +419,33 @@ def test_transform_function_state_write() -> None:
 
 def test_migrate_state(test_storage: FileStorage) -> None:
     state_v1 = load_json_case("state/state.v1")
-    state = migrate_state("test_pipeline", state_v1, state_v1["_state_engine_version"], STATE_ENGINE_VERSION)
+    state = migrate_state(
+        "test_pipeline",
+        state_v1,
+        state_v1["_state_engine_version"],
+        STATE_ENGINE_VERSION,
+    )
     assert state["_state_engine_version"] == STATE_ENGINE_VERSION
     assert "_local" in state
 
     with pytest.raises(PipelineStateEngineNoUpgradePathException) as py_ex:
         state_v1 = load_json_case("state/state.v1")
-        migrate_state("test_pipeline", state_v1, state_v1["_state_engine_version"], STATE_ENGINE_VERSION + 1)
+        migrate_state(
+            "test_pipeline",
+            state_v1,
+            state_v1["_state_engine_version"],
+            STATE_ENGINE_VERSION + 1,
+        )
     assert py_ex.value.init_engine == state_v1["_state_engine_version"]
     assert py_ex.value.from_engine == STATE_ENGINE_VERSION
     assert py_ex.value.to_engine == STATE_ENGINE_VERSION + 1
 
     # also test pipeline init where state is old
     test_storage.create_folder("debug_pipeline")
-    shutil.copy(json_case_path("state/state.v1"), test_storage.make_full_path(f"debug_pipeline/{Pipeline.STATE_FILE}"))
+    shutil.copy(
+        json_case_path("state/state.v1"),
+        test_storage.make_full_path(f"debug_pipeline/{Pipeline.STATE_FILE}"),
+    )
     p = dlt.attach(pipeline_name="debug_pipeline", pipelines_dir=test_storage.storage_path)
     assert p.dataset_name == "debug_pipeline_data"
     assert p.default_schema_name == "example_source"
@@ -439,6 +461,7 @@ def test_resource_state_name_not_normalized() -> None:
 
     # get state from destination
     from dlt.pipeline.state_sync import load_state_from_destination
+
     client: SqlJobClientBase
     with pipeline.destination_client() as client:  # type: ignore[assignment]
         state = load_state_from_destination(pipeline.pipeline_name, client)

@@ -13,13 +13,16 @@ class InvalidSchemaName(ValueError, SchemaException):
 
     def __init__(self, name: str) -> None:
         self.name = name
-        super().__init__(f"{name} is an invalid schema/source name. The source or schema name must be a valid Python identifier ie. a snake case function name and have maximum {self.MAXIMUM_SCHEMA_NAME_LENGTH} characters. Ideally should contain only small letters, numbers and underscores.")
+        super().__init__(
+            f"{name} is an invalid schema/source name. The source or schema name must be a valid Python identifier ie. a snake case function name and have maximum {self.MAXIMUM_SCHEMA_NAME_LENGTH} characters. Ideally should contain only small letters, numbers and underscores."
+        )
 
 
 # class InvalidDatasetName(ValueError, SchemaException):
 #     def __init__(self, name: str, normalized_name: str) -> None:
 #         self.name = name
 #         super().__init__(f"{name} is an invalid dataset name. The dataset name must conform to wide range of destinations and ideally should contain only small letters, numbers and underscores. Try {normalized_name} instead as suggested by current naming module.")
+
 
 class InvalidDatasetName(ValueError, SchemaException):
     def __init__(self, destination_name: str) -> None:
@@ -28,7 +31,14 @@ class InvalidDatasetName(ValueError, SchemaException):
 
 
 class CannotCoerceColumnException(SchemaException):
-    def __init__(self, table_name: str, column_name: str, from_type: TDataType, to_type: TDataType, coerced_value: Any) -> None:
+    def __init__(
+        self,
+        table_name: str,
+        column_name: str,
+        from_type: TDataType,
+        to_type: TDataType,
+        coerced_value: Any,
+    ) -> None:
         self.table_name = table_name
         self.column_name = column_name
         self.from_type = from_type
@@ -69,6 +79,7 @@ class SchemaEngineNoUpgradePathException(SchemaException):
         self.from_engine = from_engine
         self.to_engine = to_engine
         super().__init__(f"No engine upgrade path in schema {schema_name} from {init_engine} to {to_engine}, stopped at {from_engine}")
+
 
 class UnknownTableException(SchemaException):
     def __init__(self, table_name: str) -> None:

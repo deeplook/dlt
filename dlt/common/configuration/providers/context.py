@@ -8,7 +8,6 @@ from .provider import ConfigProvider
 
 
 class ContextProvider(ConfigProvider):
-
     NAME: ClassVar[str] = "Injectable Context"
 
     def __init__(self) -> None:

@@ -10,7 +10,6 @@ import dlt.reflection.names as n
 
 
 class PipelineScriptVisitor(NodeVisitor):
-
     def __init__(self, source: str):
         self.source = source
         self.source_lines: List[str] = ast._splitlines_no_ff(source)  # type: ignore
@@ -96,7 +95,7 @@ class PipelineScriptVisitor(NodeVisitor):
                 sig = n.SIGNATURES[fn]
                 try:
                     # bind the signature where the argument values are the corresponding ast nodes
-                    bound_args = sig.bind(*node.args, **{str(kwd.arg):kwd.value for kwd in node.keywords})
+                    bound_args = sig.bind(*node.args, **{str(kwd.arg): kwd.value for kwd in node.keywords})
                     bound_args.apply_defaults()
                     # print(f"ALIAS: {alias_name} of {self.func_aliases.get(alias_name)} with {bound_args}")
                     fun_calls = self.known_calls.setdefault(fn, [])

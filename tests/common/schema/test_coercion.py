@@ -30,9 +30,10 @@ def test_coerce_type_to_text() -> None:
     # double into text
     assert coerce_value("text", "double", -1726.1288) == "-1726.1288"
     # bytes to text (base64)
-    assert coerce_value("text", "binary", b'binary string') == "YmluYXJ5IHN0cmluZw=="
+    assert coerce_value("text", "binary", b"binary string") == "YmluYXJ5IHN0cmluZw=="
     # HexBytes to text (hex with prefix)
-    assert coerce_value("text", "binary", HexBytes(b'binary string')) == "0x62696e61727920737472696e67"
+    assert coerce_value("text", "binary", HexBytes(b"binary string")) == "0x62696e61727920737472696e67"
+
     # Str enum value
     class StrEnum(Enum):
         a = "a_value"
@@ -42,6 +43,7 @@ def test_coerce_type_to_text() -> None:
     # Make sure we get the bare str value, not the enum instance
     assert not isinstance(str_enum_result, Enum)
     assert str_enum_result == "b_value"
+
     # Mixed enum value
     class MixedEnum(Enum):
         a = "a_value"
@@ -68,7 +70,7 @@ def test_coerce_type_to_bool() -> None:
     with pytest.raises(ValueError):
         coerce_value("bool", "complex", {"a": True})
     with pytest.raises(ValueError):
-        coerce_value("bool", "binary", b'True')
+        coerce_value("bool", "binary", b"True")
     with pytest.raises(ValueError):
         coerce_value("bool", "timestamp", pendulum.now())
 
@@ -79,7 +81,7 @@ def test_coerce_type_to_double() -> None:
     # text into double if parsable
     assert coerce_value("double", "text", " -1726.1288 ") == -1726.1288
     # hex text into double
-    assert coerce_value("double", "text",  "0xff") == 255.0
+    assert coerce_value("double", "text", "0xff") == 255.0
     # wei, decimal to double
     assert coerce_value("double", "wei", Wei.from_int256(2137, decimals=2)) == 21.37
     assert coerce_value("double", "decimal", Decimal("-1121.11")) == -1121.11
@@ -123,10 +125,7 @@ def test_coerce_type_to_bigint() -> None:
     assert int_enum_result == 2
 
 
-@pytest.mark.parametrize("dec_cls,data_type", [
-    (Decimal, "decimal"),
-    (Wei, "wei")
-])
+@pytest.mark.parametrize("dec_cls,data_type", [(Decimal, "decimal"), (Wei, "wei")])
 def test_coerce_to_numeric(dec_cls: Type[Any], data_type: TDataType) -> None:
     v = coerce_value(data_type, "text", " -1726.839283 ")
     assert type(v) is dec_cls
@@ -236,7 +235,7 @@ def test_coerce_type_to_date() -> None:
     assert coerce_value("date", "text", "2022-04-26 10:36+02") == pendulum.parse("2022-04-26", exact=True)
     assert coerce_value("date", "text", "2022-04-26 10:36") == pendulum.parse("2022-04-26", exact=True)
 
-        # iso time string fails
+    # iso time string fails
     with pytest.raises(ValueError):
         coerce_value("timestamp", "text", "03:41:31.466")
 
@@ -269,9 +268,9 @@ def test_coerce_type_to_time() -> None:
 
 def test_coerce_type_to_binary() -> None:
     # from hex string
-    assert coerce_value("binary", "text", "0x30") == b'0'
+    assert coerce_value("binary", "text", "0x30") == b"0"
     # from base64
-    assert coerce_value("binary", "text", "YmluYXJ5IHN0cmluZw==") == b'binary string'
+    assert coerce_value("binary", "text", "YmluYXJ5IHN0cmluZw==") == b"binary string"
     # int into bytes
     assert coerce_value("binary", "bigint", 15) == b"\x0f"
     # can't into double
@@ -344,8 +343,16 @@ def test_coerce_type_complex() -> None:
 
 
 def test_coerce_type_complex_with_pua() -> None:
-    v_dict = {"list": [1, Wei.from_int256(10**18), f"{_DATETIME}2022-05-10T01:41:31.466Z"], "str": "complex", "pua_date": f"{_DATETIME}2022-05-10T01:41:31.466Z"}
-    exp_v = {"list":[1, Wei.from_int256(10**18), "2022-05-10T01:41:31.466Z"],"str":"complex","pua_date":"2022-05-10T01:41:31.466Z"}
+    v_dict = {
+        "list": [1, Wei.from_int256(10**18), f"{_DATETIME}2022-05-10T01:41:31.466Z"],
+        "str": "complex",
+        "pua_date": f"{_DATETIME}2022-05-10T01:41:31.466Z",
+    }
+    exp_v = {
+        "list": [1, Wei.from_int256(10**18), "2022-05-10T01:41:31.466Z"],
+        "str": "complex",
+        "pua_date": "2022-05-10T01:41:31.466Z",
+    }
     assert coerce_value("complex", "complex", copy(v_dict)) == exp_v
     assert coerce_value("text", "complex", copy(v_dict)) == json.dumps(exp_v)
     # also decode recursively

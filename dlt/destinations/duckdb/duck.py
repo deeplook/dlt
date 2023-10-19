@@ -18,9 +18,7 @@ from dlt.destinations.duckdb.configuration import DuckDbClientConfiguration
 from dlt.destinations.type_mapping import TypeMapper
 
 
-HINT_TO_POSTGRES_ATTR: Dict[TColumnHint, str] = {
-    "unique": "UNIQUE"
-}
+HINT_TO_POSTGRES_ATTR: Dict[TColumnHint, str] = {"unique": "UNIQUE"}
 
 # duckdb cannot load PARQUET to the same table in parallel. so serialize it per table
 PARQUET_TABLE_LOCK = threading.Lock()
@@ -38,7 +36,7 @@ class DuckDbTypeMapper(TypeMapper):
         "timestamp": "TIMESTAMP WITH TIME ZONE",
         "bigint": "BIGINT",
         "binary": "BLOB",
-        "time": "TIME"
+        "time": "TIME",
     }
 
     sct_to_dbt = {
@@ -127,22 +125,18 @@ class DuckDbCopyJob(LoadJob, FollowupJob):
             with sql_client.begin_transaction():
                 sql_client.execute_sql(f"COPY {qualified_table_name} FROM '{file_path}' ( FORMAT {source_format} {options});")
 
-
     def state(self) -> TLoadJobState:
         return "completed"
 
     def exception(self) -> str:
         raise NotImplementedError()
 
-class DuckDbClient(InsertValuesJobClient):
 
+class DuckDbClient(InsertValuesJobClient):
     capabilities: ClassVar[DestinationCapabilitiesContext] = capabilities()
 
     def __init__(self, schema: Schema, config: DuckDbClientConfiguration) -> None:
-        sql_client = DuckDbSqlClient(
-            config.normalize_dataset_name(schema),
-            config.credentials
-        )
+        sql_client = DuckDbSqlClient(config.normalize_dataset_name(schema), config.credentials)
         super().__init__(schema, config, sql_client)
         self.config: DuckDbClientConfiguration = config
         self.sql_client: DuckDbSqlClient = sql_client  # type: ignore

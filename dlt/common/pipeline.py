@@ -2,7 +2,20 @@ import os
 import datetime  # noqa: 251
 import humanize
 import contextlib
-from typing import Any, Callable, ClassVar, Dict, List, NamedTuple, Optional, Protocol, Sequence, TYPE_CHECKING, Tuple, TypedDict
+from typing import (
+    Any,
+    Callable,
+    ClassVar,
+    Dict,
+    List,
+    NamedTuple,
+    Optional,
+    Protocol,
+    Sequence,
+    TYPE_CHECKING,
+    Tuple,
+    TypedDict,
+)
 from typing_extensions import NotRequired
 
 from dlt.common import pendulum, logger
@@ -15,7 +28,12 @@ from dlt.common.configuration.specs.config_section_context import ConfigSectionC
 from dlt.common.configuration.paths import get_dlt_data_dir
 from dlt.common.configuration.specs import RunConfiguration
 from dlt.common.destination import DestinationReference, TDestinationReferenceArg
-from dlt.common.exceptions import DestinationHasFailedJobs, PipelineStateNotAvailable, ResourceNameNotAvailable, SourceSectionNotAvailable
+from dlt.common.exceptions import (
+    DestinationHasFailedJobs,
+    PipelineStateNotAvailable,
+    ResourceNameNotAvailable,
+    SourceSectionNotAvailable,
+)
 from dlt.common.schema import Schema
 from dlt.common.schema.typing import TColumnNames, TColumnSchema, TWriteDisposition
 from dlt.common.source import get_current_pipe_name
@@ -72,6 +90,7 @@ class NormalizeInfo(NamedTuple):
 
 class LoadInfo(NamedTuple):
     """A tuple holding the information on recently loaded packages. Returned by pipeline `run` and `load` methods"""
+
     pipeline: "SupportsPipeline"
     destination_name: str
     destination_displayable_credentials: str
@@ -89,9 +108,7 @@ class LoadInfo(NamedTuple):
     def asdict(self) -> DictStrAny:
         """A dictionary representation of LoadInfo that can be loaded with `dlt`"""
         d = self._asdict()
-        d["pipeline"] = {
-            "pipeline_name": self.pipeline.pipeline_name
-        }
+        d["pipeline"] = {"pipeline_name": self.pipeline.pipeline_name}
         d["load_packages"] = [package.asdict() for package in self.load_packages]
         return d
 
@@ -140,6 +157,7 @@ class LoadInfo(NamedTuple):
     def __str__(self) -> str:
         return self.asstr(verbosity=1)
 
+
 class TPipelineLocalState(TypedDict, total=False):
     first_run: bool
     """Indicates a first run of the pipeline, where run ends with successful loading of data"""
@@ -149,6 +167,7 @@ class TPipelineLocalState(TypedDict, total=False):
 
 class TPipelineState(TypedDict, total=False):
     """Schema for a pipeline state that is stored within the pipeline working directory"""
+
     pipeline_name: str
     dataset_name: str
     default_schema_name: Optional[str]
@@ -173,6 +192,7 @@ class TSourceState(TPipelineState):
 
 class SupportsPipeline(Protocol):
     """A protocol with core pipeline operations that lets high level abstractions ie. sources to access pipeline methods and properties"""
+
     pipeline_name: str
     """Name of the pipeline"""
     default_schema_name: str
@@ -212,8 +232,8 @@ class SupportsPipeline(Protocol):
         columns: Sequence[TColumnSchema] = None,
         primary_key: TColumnNames = None,
         schema: Schema = None,
-        loader_file_format: TLoaderFileFormat = None
-        ) -> LoadInfo:
+        loader_file_format: TLoaderFileFormat = None,
+    ) -> LoadInfo:
         ...
 
     def _set_context(self, is_active: bool) -> None:
@@ -234,7 +254,7 @@ class SupportsPipelineRun(Protocol):
         write_disposition: TWriteDisposition = None,
         columns: Sequence[TColumnSchema] = None,
         schema: Schema = None,
-        loader_file_format: TLoaderFileFormat = None
+        loader_file_format: TLoaderFileFormat = None,
     ) -> LoadInfo:
         ...
 
@@ -281,6 +301,7 @@ class StateInjectableContext(ContainerInjectableContext):
     can_create_default: ClassVar[bool] = False
 
     if TYPE_CHECKING:
+
         def __init__(self, state: TPipelineState = None) -> None:
             ...
 
@@ -288,10 +309,10 @@ class StateInjectableContext(ContainerInjectableContext):
 def pipeline_state(container: Container, initial_default: TPipelineState = None) -> Tuple[TPipelineState, bool]:
     """Gets value of the state from context or active pipeline, if none found returns `initial_default`
 
-        Injected state is called "writable": it is injected by the `Pipeline` class and all the changes will be persisted.
-        The state coming from pipeline context or `initial_default` is called "read only" and all the changes to it will be discarded
+    Injected state is called "writable": it is injected by the `Pipeline` class and all the changes will be persisted.
+    The state coming from pipeline context or `initial_default` is called "read only" and all the changes to it will be discarded
 
-        Returns tuple (state, writable)
+    Returns tuple (state, writable)
     """
     try:
         # get injected state if present. injected state is typically "managed" so changes will be persisted
@@ -421,7 +442,7 @@ def resource_state(resource_name: str = None, source_state_: Optional[DictStrAny
         resource_name = get_current_pipe_name()
     if not resource_name:
         raise ResourceNameNotAvailable()
-    return state_.setdefault('resources', {}).setdefault(resource_name, {})  # type: ignore
+    return state_.setdefault("resources", {}).setdefault(resource_name, {})  # type: ignore
 
 
 def reset_resource_state(resource_name: str, source_state_: Optional[DictStrAny] = None, /) -> None:
@@ -445,10 +466,10 @@ def _get_matching_resources(pattern: REPattern, source_state_: Optional[DictStrA
 
 
 def get_dlt_pipelines_dir() -> str:
-    """ Gets default directory where pipelines' data will be stored
-        1. in user home directory ~/.dlt/pipelines/
-        2. if current user is root in /var/dlt/pipelines
-        3. if current user does not have a home directory in /tmp/dlt/pipelines
+    """Gets default directory where pipelines' data will be stored
+    1. in user home directory ~/.dlt/pipelines/
+    2. if current user is root in /var/dlt/pipelines
+    3. if current user does not have a home directory in /tmp/dlt/pipelines
     """
     return os.path.join(get_dlt_data_dir(), "pipelines")
 

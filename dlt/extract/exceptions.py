@@ -52,7 +52,10 @@ class InvalidStepFunctionArguments(PipeException):
     def __init__(self, pipe_name: str, func_name: str, sig: Signature, call_error: str) -> None:
         self.func_name = func_name
         self.sig = sig
-        super().__init__(pipe_name, f"Unable to call {func_name}: {call_error}. The mapping/filtering function {func_name} requires first argument to take data item and optional second argument named 'meta', but the signature is {sig}")
+        super().__init__(
+            pipe_name,
+            f"Unable to call {func_name}: {call_error}. The mapping/filtering function {func_name} requires first argument to take data item and optional second argument named 'meta', but the signature is {sig}",
+        )
 
 
 class ResourceExtractionError(PipeException):
@@ -60,7 +63,10 @@ class ResourceExtractionError(PipeException):
         self.msg = msg
         self.kind = kind
         self.func_name = gen.__name__ if isgenerator(gen) else get_callable_name(gen) if callable(gen) else str(gen)
-        super().__init__(pipe_name, f"extraction of resource {pipe_name} in {kind} {self.func_name} caused an exception: {msg}")
+        super().__init__(
+            pipe_name,
+            f"extraction of resource {pipe_name} in {kind} {self.func_name} caused an exception: {msg}",
+        )
 
 
 class PipeGenInvalid(PipeException):
@@ -79,13 +85,20 @@ class PipeGenInvalid(PipeException):
 
 class ResourceNameMissing(DltResourceException):
     def __init__(self) -> None:
-        super().__init__(None, """Resource name is missing. If you create a resource directly from data ie. from a list you must pass the name explicitly in `name` argument.
-        Please note that for resources created from functions or generators, the name is the function name by default.""")
+        super().__init__(
+            None,
+            """Resource name is missing. If you create a resource directly from data ie. from a list you must pass the name explicitly in `name` argument.
+        Please note that for resources created from functions or generators, the name is the function name by default.""",
+        )
 
 
 class DynamicNameNotStandaloneResource(DltResourceException):
     def __init__(self, resource_name: str) -> None:
-        super().__init__(resource_name, "You must set the resource as standalone to be able to dynamically set its name based on call arguments")
+        super().__init__(
+            resource_name,
+            "You must set the resource as standalone to be able to dynamically set its name based on call arguments",
+        )
+
 
 # class DependentResourceIsNotCallable(DltResourceException):
 #     def __init__(self, resource_name: str) -> None:
@@ -93,42 +106,72 @@ class DynamicNameNotStandaloneResource(DltResourceException):
 
 
 class ResourceNotFoundError(DltResourceException, KeyError):
-      def __init__(self, resource_name: str, context: str) -> None:
-          self.resource_name = resource_name
-          super().__init__(resource_name, f"Resource with a name {resource_name} could not be found. {context}")
+    def __init__(self, resource_name: str, context: str) -> None:
+        self.resource_name = resource_name
+        super().__init__(
+            resource_name,
+            f"Resource with a name {resource_name} could not be found. {context}",
+        )
 
 
 class InvalidResourceDataType(DltResourceException):
     def __init__(self, resource_name: str, item: Any, _typ: Type[Any], msg: str) -> None:
         self.item = item
         self._typ = _typ
-        super().__init__(resource_name, f"Cannot create resource {resource_name} from specified data. " + msg)
+        super().__init__(
+            resource_name,
+            f"Cannot create resource {resource_name} from specified data. " + msg,
+        )
 
 
 class InvalidResourceDataTypeAsync(InvalidResourceDataType):
-    def __init__(self, resource_name: str, item: Any,_typ: Type[Any]) -> None:
-        super().__init__(resource_name, item, _typ, "Async iterators and generators are not valid resources. Please use standard iterators and generators that yield Awaitables instead (for example by yielding from async function without await")
+    def __init__(self, resource_name: str, item: Any, _typ: Type[Any]) -> None:
+        super().__init__(
+            resource_name,
+            item,
+            _typ,
+            "Async iterators and generators are not valid resources. Please use standard iterators and generators that yield Awaitables instead (for example by yielding from async function without await",
+        )
 
 
 class InvalidResourceDataTypeBasic(InvalidResourceDataType):
-    def __init__(self, resource_name: str, item: Any,_typ: Type[Any]) -> None:
-        super().__init__(resource_name, item, _typ, f"Resources cannot be strings or dictionaries but {_typ.__name__} was provided. Please pass your data in a list or as a function yielding items. If you want to process just one data item, enclose it in a list.")
+    def __init__(self, resource_name: str, item: Any, _typ: Type[Any]) -> None:
+        super().__init__(
+            resource_name,
+            item,
+            _typ,
+            f"Resources cannot be strings or dictionaries but {_typ.__name__} was provided. Please pass your data in a list or as a function yielding items. If you want to process just one data item, enclose it in a list.",
+        )
 
 
 class InvalidResourceDataTypeFunctionNotAGenerator(InvalidResourceDataType):
-    def __init__(self, resource_name: str, item: Any,_typ: Type[Any]) -> None:
-        super().__init__(resource_name, item, _typ, "Please make sure that function decorated with @dlt.resource uses 'yield' to return the data.")
+    def __init__(self, resource_name: str, item: Any, _typ: Type[Any]) -> None:
+        super().__init__(
+            resource_name,
+            item,
+            _typ,
+            "Please make sure that function decorated with @dlt.resource uses 'yield' to return the data.",
+        )
 
 
 class InvalidResourceDataTypeMultiplePipes(InvalidResourceDataType):
-    def __init__(self, resource_name: str, item: Any,_typ: Type[Any]) -> None:
-        super().__init__(resource_name, item, _typ, "Resources with multiple parallel data pipes are not yet supported. This problem most often happens when you are creating a source with @dlt.source decorator that has several resources with the same name.")
+    def __init__(self, resource_name: str, item: Any, _typ: Type[Any]) -> None:
+        super().__init__(
+            resource_name,
+            item,
+            _typ,
+            "Resources with multiple parallel data pipes are not yet supported. This problem most often happens when you are creating a source with @dlt.source decorator that has several resources with the same name.",
+        )
 
 
 class InvalidTransformerDataTypeGeneratorFunctionRequired(InvalidResourceDataType):
     def __init__(self, resource_name: str, item: Any, _typ: Type[Any]) -> None:
-        super().__init__(resource_name, item, _typ,
-            "Transformer must be a function decorated with @dlt.transformer that takes data item as its first argument. Only first argument may be 'positional only'.")
+        super().__init__(
+            resource_name,
+            item,
+            _typ,
+            "Transformer must be a function decorated with @dlt.transformer that takes data item as its first argument. Only first argument may be 'positional only'.",
+        )
 
 
 class InvalidTransformerGeneratorFunction(DltResourceException):
@@ -156,23 +199,41 @@ class ResourceInnerCallableConfigWrapDisallowed(DltResourceException):
 
 class InvalidResourceDataTypeIsNone(InvalidResourceDataType):
     def __init__(self, resource_name: str, item: Any, _typ: Type[Any]) -> None:
-        super().__init__(resource_name, item, _typ, "Resource data missing. Did you forget the return statement in @dlt.resource decorated function?")
+        super().__init__(
+            resource_name,
+            item,
+            _typ,
+            "Resource data missing. Did you forget the return statement in @dlt.resource decorated function?",
+        )
 
 
 class ResourceFunctionExpected(InvalidResourceDataType):
     def __init__(self, resource_name: str, item: Any, _typ: Type[Any]) -> None:
-        super().__init__(resource_name, item, _typ, f"Expected function or callable as first parameter to resource {resource_name} but {_typ.__name__} found. Please decorate a function with @dlt.resource")
+        super().__init__(
+            resource_name,
+            item,
+            _typ,
+            f"Expected function or callable as first parameter to resource {resource_name} but {_typ.__name__} found. Please decorate a function with @dlt.resource",
+        )
 
 
 class InvalidParentResourceDataType(InvalidResourceDataType):
-    def __init__(self, resource_name: str, item: Any,_typ: Type[Any]) -> None:
-        super().__init__(resource_name, item, _typ, f"A parent resource of {resource_name} is of type {_typ.__name__}. Did you forget to use '@dlt.resource` decorator or `resource` function?")
+    def __init__(self, resource_name: str, item: Any, _typ: Type[Any]) -> None:
+        super().__init__(
+            resource_name,
+            item,
+            _typ,
+            f"A parent resource of {resource_name} is of type {_typ.__name__}. Did you forget to use '@dlt.resource` decorator or `resource` function?",
+        )
 
 
 class InvalidParentResourceIsAFunction(DltResourceException):
     def __init__(self, resource_name: str, func_name: str) -> None:
         self.func_name = func_name
-        super().__init__(resource_name, f"A data source {func_name} of a transformer {resource_name} is an undecorated function. Please decorate it with '@dlt.resource' or pass to 'resource' function.")
+        super().__init__(
+            resource_name,
+            f"A data source {func_name} of a transformer {resource_name} is an undecorated function. Please decorate it with '@dlt.resource' or pass to 'resource' function.",
+        )
 
 
 class DeletingResourcesNotSupported(DltResourceException):
@@ -208,8 +269,11 @@ class InconsistentTableTemplate(DltSourceException):
 
 class DataItemRequiredForDynamicTableHints(DltResourceException):
     def __init__(self, resource_name: str) -> None:
-        super().__init__(resource_name, f"""An instance of resource's data required to generate table schema in resource {resource_name}.
-        One of table hints for that resource (typically table name) is a function and hint is computed separately for each instance of data extracted from that resource.""")
+        super().__init__(
+            resource_name,
+            f"""An instance of resource's data required to generate table schema in resource {resource_name}.
+        One of table hints for that resource (typically table name) is a function and hint is computed separately for each instance of data extracted from that resource.""",
+        )
 
 
 class SourceDataIsNone(DltSourceException):
@@ -225,7 +289,12 @@ class SourceExhausted(DltSourceException):
 
 
 class ResourcesNotFoundError(DltSourceException):
-    def __init__(self, source_name: str, available_resources: Set[str], requested_resources: Set[str]) -> None:
+    def __init__(
+        self,
+        source_name: str,
+        available_resources: Set[str],
+        requested_resources: Set[str],
+    ) -> None:
         self.source_name = source_name
         self.available_resources = available_resources
         self.requested_resources = requested_resources
@@ -243,10 +312,12 @@ class SourceNotAFunction(DltSourceException):
 
 
 class SourceIsAClassTypeError(DltSourceException):
-    def __init__(self, source_name: str,  _typ: Type[Any]) -> None:
+    def __init__(self, source_name: str, _typ: Type[Any]) -> None:
         self.source_name = source_name
         self.typ = _typ
-        super().__init__(f"First parameter to the source {source_name} is a class {_typ.__name__}. Do not decorate classes with @dlt.source. Instead implement __call__ in your class and pass instance of such class to dlt.source() directly")
+        super().__init__(
+            f"First parameter to the source {source_name} is a class {_typ.__name__}. Do not decorate classes with @dlt.source. Instead implement __call__ in your class and pass instance of such class to dlt.source() directly"
+        )
 
 
 class SourceSchemaNotAvailable(DltSourceException):
@@ -263,11 +334,19 @@ class ExplicitSourceNameInvalid(DltSourceException):
 
 class IncrementalUnboundError(DltResourceException):
     def __init__(self, cursor_path: str) -> None:
-        super().__init__("", f"The incremental definition with cursor path {cursor_path} is used without being bound to the resource. This most often happens when you create dynamic resource from a generator function that uses incremental. See https://dlthub.com/docs/general-usage/incremental-loading#incremental-loading-with-last-value for an example.")
+        super().__init__(
+            "",
+            f"The incremental definition with cursor path {cursor_path} is used without being bound to the resource. This most often happens when you create dynamic resource from a generator function that uses incremental. See https://dlthub.com/docs/general-usage/incremental-loading#incremental-loading-with-last-value for an example.",
+        )
 
 
 class ValidationError(ValueError, DltException):
-    def __init__(self, validator: ValidateItem, data_item: TDataItems, original_exception: Exception) ->None:
+    def __init__(
+        self,
+        validator: ValidateItem,
+        data_item: TDataItems,
+        original_exception: Exception,
+    ) -> None:
         self.original_exception = original_exception
         self.validator = validator
         self.data_item = data_item

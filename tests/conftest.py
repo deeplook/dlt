@@ -4,12 +4,26 @@ import logging
 from typing import List
 
 # patch which providers to enable
-from dlt.common.configuration.providers import ConfigProvider, EnvironProvider, SecretsTomlProvider, ConfigTomlProvider
-from dlt.common.configuration.specs.config_providers_context import ConfigProvidersContext, ConfigProvidersConfiguration
+from dlt.common.configuration.providers import (
+    ConfigProvider,
+    EnvironProvider,
+    SecretsTomlProvider,
+    ConfigTomlProvider,
+)
+from dlt.common.configuration.specs.config_providers_context import (
+    ConfigProvidersContext,
+    ConfigProvidersConfiguration,
+)
+
 
 def initial_providers() -> List[ConfigProvider]:
     # do not read the global config
-    return [EnvironProvider(), SecretsTomlProvider(project_dir="tests/.dlt", add_global_config=False), ConfigTomlProvider(project_dir="tests/.dlt", add_global_config=False)]
+    return [
+        EnvironProvider(),
+        SecretsTomlProvider(project_dir="tests/.dlt", add_global_config=False),
+        ConfigTomlProvider(project_dir="tests/.dlt", add_global_config=False),
+    ]
+
 
 ConfigProvidersContext.initial_providers = initial_providers  # type: ignore[method-assign]
 # also disable extras
@@ -45,10 +59,8 @@ def pytest_configure(config):
     delattr(storage_configuration.SchemaStorageConfiguration, "__init__")
     storage_configuration.SchemaStorageConfiguration = dataclasses.dataclass(storage_configuration.SchemaStorageConfiguration, init=True, repr=False)  # type: ignore[misc, call-overload]
 
-
     assert run_configuration.RunConfiguration.config_files_storage_path == os.path.join(test_storage_root, "config/")
     assert run_configuration.RunConfiguration().config_files_storage_path == os.path.join(test_storage_root, "config/")
-
 
     # path pipeline instance id up to millisecond
     from dlt.common import pendulum
@@ -62,7 +74,12 @@ def pytest_configure(config):
     os.environ["RUNTIME__SENTRY_DSN"] = "https://6f6f7b6f8e0f458a89be4187603b55fe@o1061158.ingest.sentry.io/4504819859914752"
 
     # disable sqlfluff logging
-    for log in ["sqlfluff.parser", "sqlfluff.linter", "sqlfluff.templater", "sqlfluff.lexer"]:
+    for log in [
+        "sqlfluff.parser",
+        "sqlfluff.linter",
+        "sqlfluff.templater",
+        "sqlfluff.lexer",
+    ]:
         logging.getLogger(log).setLevel("ERROR")
 
     # disable snowflake logging

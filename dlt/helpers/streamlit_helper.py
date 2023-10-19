@@ -11,14 +11,22 @@ from dlt.common.destination.reference import WithStateSync
 
 from dlt.helpers.pandas_helper import pd
 from dlt.pipeline import Pipeline
-from dlt.pipeline.exceptions import CannotRestorePipelineException, SqlClientNotAvailable
+from dlt.pipeline.exceptions import (
+    CannotRestorePipelineException,
+    SqlClientNotAvailable,
+)
 from dlt.pipeline.state_sync import load_state_from_destination
 
 try:
     import streamlit as st
+
     # from streamlit import SECRETS_FILE_LOC, secrets
 except ModuleNotFoundError:
-    raise MissingDependencyException("DLT Streamlit Helpers", ["streamlit"], "DLT Helpers for Streamlit should be run within a streamlit app.")
+    raise MissingDependencyException(
+        "DLT Streamlit Helpers",
+        ["streamlit"],
+        "DLT Helpers for Streamlit should be run within a streamlit app.",
+    )
 
 
 # use right caching function to disable deprecation message
@@ -117,18 +125,18 @@ def write_load_status_page(pipeline: Pipeline) -> None:
     try:
         st.header("Pipeline info")
         credentials = pipeline.sql_client().credentials
-        st.markdown(f"""
+        st.markdown(
+            f"""
         * pipeline name: **{pipeline.pipeline_name}**
         * destination: **{str(credentials)}** in **{pipeline.destination.__name__}**
         * dataset name: **{pipeline.dataset_name}**
         * default schema name: **{pipeline.default_schema_name}**
-        """)
+        """
+        )
 
         st.header("Last load info")
         col1, col2, col3 = st.columns(3)
-        loads_df = _query_data_live(
-            f"SELECT load_id, inserted_at FROM {pipeline.default_schema.loads_table_name} WHERE status = 0 ORDER BY inserted_at DESC LIMIT 101 "
-        )
+        loads_df = _query_data_live(f"SELECT load_id, inserted_at FROM {pipeline.default_schema.loads_table_name} WHERE status = 0 ORDER BY inserted_at DESC LIMIT 101 ")
         loads_no = loads_df.shape[0]
         if loads_df.shape[0] > 0:
             rel_time = humanize.naturaldelta(pendulum.now() - pendulum.from_timestamp(loads_df.iloc[0, 1].timestamp())) + " ago"
@@ -164,9 +172,7 @@ def write_load_status_page(pipeline: Pipeline) -> None:
         st.dataframe(loads_df)
 
         st.header("Schema updates")
-        schemas_df = _query_data_live(
-            f"SELECT schema_name, inserted_at, version, version_hash FROM {pipeline.default_schema.version_table_name} ORDER BY inserted_at DESC LIMIT 101 "
-            )
+        schemas_df = _query_data_live(f"SELECT schema_name, inserted_at, version, version_hash FROM {pipeline.default_schema.version_table_name} ORDER BY inserted_at DESC LIMIT 101 ")
         st.markdown("**100 recent schema updates**")
         st.dataframe(schemas_df)
 
@@ -201,8 +207,13 @@ def write_load_status_page(pipeline: Pipeline) -> None:
         st.exception(ex)
 
 
-
-def write_data_explorer_page(pipeline: Pipeline, schema_name: str = None, show_dlt_tables: bool = False, example_query: str = "", show_charts: bool = True) -> None:
+def write_data_explorer_page(
+    pipeline: Pipeline,
+    schema_name: str = None,
+    show_dlt_tables: bool = False,
+    example_query: str = "",
+    show_charts: bool = True,
+) -> None:
     """Writes Streamlit app page with a schema and live data preview.
 
     #### Args:
@@ -224,7 +235,6 @@ def write_data_explorer_page(pipeline: Pipeline, schema_name: str = None, show_d
                     return curr.df(chunk_size=chunk_size)
         except SqlClientNotAvailable:
             st.error("Cannot load data - SqlClient not available")
-
 
     if schema_name:
         schema = pipeline.schemas[schema_name]
@@ -248,7 +258,7 @@ def write_data_explorer_page(pipeline: Pipeline, schema_name: str = None, show_d
         st.markdown(" | ".join(table_hints))
 
         # table schema contains various hints (like clustering or partition options) that we do not want to show in basic view
-        essentials_f = lambda c: {k:v for k, v in c.items() if k in ["name", "data_type", "nullable"]}
+        essentials_f = lambda c: {k: v for k, v in c.items() if k in ["name", "data_type", "nullable"]}
 
         st.table(map(essentials_f, table["columns"].values()))
         # add a button that when pressed will show the full content of a table
@@ -283,7 +293,6 @@ def write_data_explorer_page(pipeline: Pipeline, schema_name: str = None, show_d
                             # try barchart
                             st.bar_chart(df)
                         if df.dtypes.shape[0] == 2 and show_charts:
-
                             # try to import altair charts
                             try:
                                 import altair as alt
@@ -291,13 +300,17 @@ def write_data_explorer_page(pipeline: Pipeline, schema_name: str = None, show_d
                                 raise MissingDependencyException(
                                     "DLT Streamlit Helpers",
                                     ["altair"],
-                                    "DLT Helpers for Streamlit should be run within a streamlit app."
+                                    "DLT Helpers for Streamlit should be run within a streamlit app.",
                                 )
 
                             # try altair
-                            bar_chart = alt.Chart(df).mark_bar().encode(
-                                x=f'{df.columns[1]}:Q',
-                                y=alt.Y(f'{df.columns[0]}:N', sort='-x')
+                            bar_chart = (
+                                alt.Chart(df)
+                                .mark_bar()
+                                .encode(
+                                    x=f"{df.columns[1]}:Q",
+                                    y=alt.Y(f"{df.columns[0]}:N", sort="-x"),
+                                )
                             )
                             st.altair_chart(bar_chart, use_container_width=True)
                     except Exception as ex:

@@ -29,11 +29,15 @@ def test_pipeline_merge_write_disposition(all_buckets_env: str) -> None:
     """
     import pyarrow.parquet as pq  # Module is evaluated by other tests
 
-    pipeline = dlt.pipeline(pipeline_name='test_' + uniq_id(), destination="filesystem", dataset_name='test_' + uniq_id())
+    pipeline = dlt.pipeline(
+        pipeline_name="test_" + uniq_id(),
+        destination="filesystem",
+        dataset_name="test_" + uniq_id(),
+    )
 
-    @dlt.resource(primary_key='id')
+    @dlt.resource(primary_key="id")
     def some_data():
-        yield [{'id': 1}, {'id': 2}, {'id': 3}]
+        yield [{"id": 1}, {"id": 2}, {"id": 3}]
 
     @dlt.resource
     def other_data():
@@ -43,8 +47,8 @@ def test_pipeline_merge_write_disposition(all_buckets_env: str) -> None:
     def some_source():
         return [some_data(), other_data()]
 
-    info1 = pipeline.run(some_source(), write_disposition='merge')
-    info2 = pipeline.run(some_source(), write_disposition='merge')
+    info1 = pipeline.run(some_source(), write_disposition="merge")
+    info2 = pipeline.run(some_source(), write_disposition="merge")
 
     client: FilesystemClient = pipeline.destination_client()  # type: ignore[assignment]
     layout = client.config.layout
@@ -71,10 +75,9 @@ def test_pipeline_merge_write_disposition(all_buckets_env: str) -> None:
     # Verify file contents
     assert info2.load_packages
     for pkg in info2.load_packages:
-        assert pkg.jobs['completed_jobs']
-        for job in pkg.jobs['completed_jobs']:
-            assert_file_matches(layout, job, pkg.load_id,  client)
-
+        assert pkg.jobs["completed_jobs"]
+        for job in pkg.jobs["completed_jobs"]:
+            assert_file_matches(layout, job, pkg.load_id, client)
 
     complete_fn = f"{client.schema.name}.{LOADS_TABLE_NAME}.%s"
 
@@ -83,7 +86,7 @@ def test_pipeline_merge_write_disposition(all_buckets_env: str) -> None:
     assert client.fs_client.isfile(posixpath.join(client.dataset_path, complete_fn % load_id2))
 
     # Force replace
-    pipeline.run(some_source(), write_disposition='replace')
+    pipeline.run(some_source(), write_disposition="replace")
     append_files = client.fs_client.ls(append_glob, detail=False, refresh=True)
     replace_files = client.fs_client.ls(replace_glob, detail=False, refresh=True)
     assert len(append_files) == 1
@@ -91,16 +94,19 @@ def test_pipeline_merge_write_disposition(all_buckets_env: str) -> None:
 
 
 def test_pipeline_parquet_filesystem_destination() -> None:
-
     import pyarrow.parquet as pq  # Module is evaluated by other tests
 
     # store locally
-    os.environ['DESTINATION__FILESYSTEM__BUCKET_URL'] = "file://_storage"
-    pipeline = dlt.pipeline(pipeline_name='parquet_test_' + uniq_id(), destination="filesystem",  dataset_name='parquet_test_' + uniq_id())
+    os.environ["DESTINATION__FILESYSTEM__BUCKET_URL"] = "file://_storage"
+    pipeline = dlt.pipeline(
+        pipeline_name="parquet_test_" + uniq_id(),
+        destination="filesystem",
+        dataset_name="parquet_test_" + uniq_id(),
+    )
 
-    @dlt.resource(primary_key='id')
+    @dlt.resource(primary_key="id")
     def some_data():
-        yield [{'id': 1}, {'id': 2}, {'id': 3}]
+        yield [{"id": 1}, {"id": 2}, {"id": 3}]
 
     @dlt.resource
     def other_data():
@@ -119,8 +125,8 @@ def test_pipeline_parquet_filesystem_destination() -> None:
     assert len(package_info.jobs["completed_jobs"]) == 3
 
     client: FilesystemClient = pipeline.destination_client()  # type: ignore[assignment]
-    some_data_glob = posixpath.join(client.dataset_path, 'some_data/*')
-    other_data_glob = posixpath.join(client.dataset_path, 'other_data/*')
+    some_data_glob = posixpath.join(client.dataset_path, "some_data/*")
+    other_data_glob = posixpath.join(client.dataset_path, "other_data/*")
 
     some_data_files = client.fs_client.glob(some_data_glob)
     other_data_files = client.fs_client.glob(other_data_glob)

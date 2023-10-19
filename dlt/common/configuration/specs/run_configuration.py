@@ -4,8 +4,15 @@ from pathlib import Path
 from typing import Any, Optional, Tuple, IO
 from dlt.common.typing import TSecretStrValue
 
-from dlt.common.utils import encoding_for_mode, main_module_file_path, reveal_pseudo_secret
-from dlt.common.configuration.specs.base_configuration import BaseConfiguration, configspec
+from dlt.common.utils import (
+    encoding_for_mode,
+    main_module_file_path,
+    reveal_pseudo_secret,
+)
+from dlt.common.configuration.specs.base_configuration import (
+    BaseConfiguration,
+    configspec,
+)
 from dlt.common.configuration.exceptions import ConfigFileNotFoundException
 
 
@@ -16,7 +23,7 @@ class RunConfiguration(BaseConfiguration):
     slack_incoming_hook: Optional[TSecretStrValue] = None
     dlthub_telemetry: bool = True  # enable or disable dlthub telemetry
     dlthub_telemetry_segment_write_key: str = "a1F2gc6cNYw2plyAt02sZouZcsRjG7TD"
-    log_format: str = '{asctime}|[{levelname:<21}]|{process}|{name}|{filename}|{funcName}:{lineno}|{message}'
+    log_format: str = "{asctime}|[{levelname:<21}]|{process}|{name}|{filename}|{funcName}:{lineno}|{message}"
     log_level: str = "WARNING"
     request_timeout: float = 60
     """Timeout for http requests"""

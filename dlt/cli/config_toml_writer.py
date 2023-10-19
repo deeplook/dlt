@@ -5,7 +5,11 @@ from tomlkit.container import Container as TOMLContainer
 from collections.abc import Sequence as C_Sequence
 
 from dlt.common import pendulum
-from dlt.common.configuration.specs import BaseConfiguration, is_base_configuration_inner_hint, extract_inner_hint
+from dlt.common.configuration.specs import (
+    BaseConfiguration,
+    is_base_configuration_inner_hint,
+    extract_inner_hint,
+)
 from dlt.common.data_types import py_type_to_sc_type
 from dlt.common.typing import AnyType, is_final_type, is_optional_type
 
@@ -53,7 +57,7 @@ def write_value(
     hint: AnyType,
     overwrite_existing: bool,
     default_value: Any = None,
-    is_default_of_interest: bool = False
+    is_default_of_interest: bool = False,
 ) -> None:
     # skip if table contains the name already
     if name in toml_table and not overwrite_existing:
@@ -84,7 +88,14 @@ def write_spec(toml_table: TOMLTable, config: BaseConfiguration, overwrite_exist
         default_value = getattr(config, name, None)
         # check if field is of particular interest and should be included if it has default
         is_default_of_interest = name in config.__config_gen_annotations__
-        write_value(toml_table, name, hint, overwrite_existing, default_value=default_value, is_default_of_interest=is_default_of_interest)
+        write_value(
+            toml_table,
+            name,
+            hint,
+            overwrite_existing,
+            default_value=default_value,
+            is_default_of_interest=is_default_of_interest,
+        )
 
 
 def write_values(toml: TOMLContainer, values: Iterable[WritableConfigValue], overwrite_existing: bool) -> None:
@@ -98,4 +109,11 @@ def write_values(toml: TOMLContainer, values: Iterable[WritableConfigValue], ove
             else:
                 toml_table = toml_table[section]  # type: ignore
 
-        write_value(toml_table, value.name, value.hint, overwrite_existing, default_value=value.default_value, is_default_of_interest=True)
+        write_value(
+            toml_table,
+            value.name,
+            value.hint,
+            overwrite_existing,
+            default_value=value.default_value,
+            is_default_of_interest=True,
+        )

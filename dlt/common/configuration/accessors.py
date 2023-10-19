@@ -6,17 +6,22 @@ from typing import Any, ClassVar, List, Sequence, Tuple, Type, TypeVar
 from dlt.common.configuration.container import Container
 from dlt.common.configuration.exceptions import ConfigFieldMissingException, LookupTrace
 from dlt.common.configuration.providers.provider import ConfigProvider
-from dlt.common.configuration.specs import BaseConfiguration, is_base_configuration_inner_hint
+from dlt.common.configuration.specs import (
+    BaseConfiguration,
+    is_base_configuration_inner_hint,
+)
 from dlt.common.configuration.utils import deserialize_value, log_traces, auto_cast
-from dlt.common.configuration.specs.config_providers_context import ConfigProvidersContext
+from dlt.common.configuration.specs.config_providers_context import (
+    ConfigProvidersContext,
+)
 from dlt.common.typing import AnyType, ConfigValue, TSecretValue
 
 DLT_SECRETS_VALUE = "secrets.value"
 DLT_CONFIG_VALUE = "config.value"
 TConfigAny = TypeVar("TConfigAny", bound=Any)
 
-class _Accessor(abc.ABC):
 
+class _Accessor(abc.ABC):
     def __getitem__(self, field: str) -> Any:
         value, traces = self._get_value(field)
         if value is None:

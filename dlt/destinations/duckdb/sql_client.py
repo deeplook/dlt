@@ -4,9 +4,18 @@ from contextlib import contextmanager
 from typing import Any, AnyStr, ClassVar, Iterator, Optional, Sequence
 from dlt.common.destination import DestinationCapabilitiesContext
 
-from dlt.destinations.exceptions import DatabaseTerminalException, DatabaseTransientException, DatabaseUndefinedRelation
+from dlt.destinations.exceptions import (
+    DatabaseTerminalException,
+    DatabaseTransientException,
+    DatabaseUndefinedRelation,
+)
 from dlt.destinations.typing import DBApi, DBApiCursor, DBTransaction, DataFrame
-from dlt.destinations.sql_client import SqlClientBase, DBApiCursorImpl, raise_database_error, raise_open_connection_error
+from dlt.destinations.sql_client import (
+    SqlClientBase,
+    DBApiCursorImpl,
+    raise_database_error,
+    raise_open_connection_error,
+)
 
 from dlt.destinations.duckdb import capabilities
 from dlt.destinations.duckdb.configuration import DuckDbBaseCredentials
@@ -14,6 +23,7 @@ from dlt.destinations.duckdb.configuration import DuckDbBaseCredentials
 
 class DuckDBDBApiCursorImpl(DBApiCursorImpl):
     """Use native BigQuery data frame support if available"""
+
     native_cursor: duckdb.DuckDBPyConnection  # type: ignore
     vector_size: ClassVar[int] = 2048
 
@@ -30,7 +40,6 @@ class DuckDBDBApiCursorImpl(DBApiCursorImpl):
 
 
 class DuckDbSqlClient(SqlClientBase[duckdb.DuckDBPyConnection], DBTransaction):
-
     dbapi: ClassVar[DBApi] = duckdb
     capabilities: ClassVar[DestinationCapabilitiesContext] = capabilities()
 
@@ -44,11 +53,11 @@ class DuckDbSqlClient(SqlClientBase[duckdb.DuckDBPyConnection], DBTransaction):
         self._conn = self.credentials.borrow_conn(read_only=self.credentials.read_only)
         # TODO: apply config settings from credentials
         self._conn.execute("PRAGMA enable_checkpoint_on_shutdown;")
-        config={
+        config = {
             "search_path": self.fully_qualified_dataset_name(),
             "TimeZone": "UTC",
-            "checkpoint_threshold": "1gb"
-            }
+            "checkpoint_threshold": "1gb",
+        }
         if config:
             for k, v in config.items():
                 try:
@@ -144,7 +153,15 @@ class DuckDbSqlClient(SqlClientBase[duckdb.DuckDBPyConnection], DBTransaction):
                 raise DatabaseUndefinedRelation(ex)
             # duckdb raises TypeError on malformed query parameters
             return DatabaseTransientException(duckdb.ProgrammingError(ex))
-        elif isinstance(ex, (duckdb.OperationalError, duckdb.InternalError, duckdb.SyntaxException, duckdb.ParserException)):
+        elif isinstance(
+            ex,
+            (
+                duckdb.OperationalError,
+                duckdb.InternalError,
+                duckdb.SyntaxException,
+                duckdb.ParserException,
+            ),
+        ):
             term = cls._maybe_make_terminal_exception_from_data_error(ex)
             if term:
                 return term
@@ -158,7 +175,9 @@ class DuckDbSqlClient(SqlClientBase[duckdb.DuckDBPyConnection], DBTransaction):
             return ex
 
     @staticmethod
-    def _maybe_make_terminal_exception_from_data_error(pg_ex: duckdb.Error) -> Optional[Exception]:
+    def _maybe_make_terminal_exception_from_data_error(
+        pg_ex: duckdb.Error,
+    ) -> Optional[Exception]:
         return None
 
     @staticmethod

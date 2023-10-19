@@ -33,7 +33,7 @@ def iter_stdout(venv: Venv, command: str, *script_args: Any) -> Iterator[str]:
 
         def _r_stderr() -> None:
             nonlocal stderr
-            for line in iter(process.stderr.readline, ''):
+            for line in iter(process.stderr.readline, ""):
                 stderr.append(line)
 
         # read stderr with a thread, selectors do not work on windows
@@ -41,7 +41,7 @@ def iter_stdout(venv: Venv, command: str, *script_args: Any) -> Iterator[str]:
         t.start()
 
         # read stdout with
-        for line in iter(process.stdout.readline, ''):
+        for line in iter(process.stdout.readline, ""):
             if line.endswith("\n"):
                 yield line[:-1]
             else:
@@ -59,7 +59,7 @@ def iter_stdout(venv: Venv, command: str, *script_args: Any) -> Iterator[str]:
 
 def iter_stdout_with_result(venv: Venv, command: str, *script_args: Any) -> Generator[str, None, Any]:
     """Yields stdout lines coming from remote process and returns the last result decoded with decode_obj. In case of exit code != 0 if exception is decoded
-       it will be raised, otherwise CalledProcessError is raised"""
+    it will be raised, otherwise CalledProcessError is raised"""
     last_result: Any = None
     try:
         for line in iter_stdout(venv, command, *script_args):

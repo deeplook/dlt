@@ -9,7 +9,12 @@ from dlt.common.exceptions import IdentifierTooLongException
 from dlt.common.schema.typing import LOADS_TABLE_NAME, VERSION_TABLE_NAME
 from dlt.common.storages import FileStorage
 from dlt.common.utils import derives_from_class_of_name, uniq_id
-from dlt.destinations.exceptions import DatabaseException, DatabaseTerminalException, DatabaseTransientException, DatabaseUndefinedRelation
+from dlt.destinations.exceptions import (
+    DatabaseException,
+    DatabaseTerminalException,
+    DatabaseTransientException,
+    DatabaseUndefinedRelation,
+)
 
 from dlt.destinations.sql_client import DBApiCursor, SqlClientBase
 from dlt.destinations.job_client_impl import SqlJobClientBase
@@ -25,11 +30,18 @@ from tests.load.pipeline.utils import destinations_configs
 def file_storage() -> FileStorage:
     return FileStorage(TEST_STORAGE_ROOT, file_type="b", makedirs=True)
 
+
 @pytest.fixture(scope="function")
 def client(request) -> Iterator[SqlJobClientBase]:
     yield from yield_client_with_storage(request.param.destination)
 
-@pytest.mark.parametrize("client", destinations_configs(default_sql_configs=True, exclude=["mssql"]), indirect=True, ids=lambda x: x.name)
+
+@pytest.mark.parametrize(
+    "client",
+    destinations_configs(default_sql_configs=True, exclude=["mssql"]),
+    indirect=True,
+    ids=lambda x: x.name,
+)
 def test_sql_client_default_dataset_unqualified(client: SqlJobClientBase) -> None:
     client.update_stored_schema()
     load_id = "182879721.182912"
@@ -48,7 +60,12 @@ def test_sql_client_default_dataset_unqualified(client: SqlJobClientBase) -> Non
         assert curr.fetchall() == data
 
 
-@pytest.mark.parametrize("client", destinations_configs(default_sql_configs=True), indirect=True, ids=lambda x: x.name)
+@pytest.mark.parametrize(
+    "client",
+    destinations_configs(default_sql_configs=True),
+    indirect=True,
+    ids=lambda x: x.name,
+)
 def test_malformed_query_parameters(client: SqlJobClientBase) -> None:
     client.update_stored_schema()
     loads_table_name = client.sql_client.make_qualified_table_name(LOADS_TABLE_NAME)
@@ -65,7 +82,11 @@ def test_malformed_query_parameters(client: SqlJobClientBase) -> None:
 
         # too many parameters
         with pytest.raises(DatabaseTransientException) as term_ex:
-            with client.sql_client.execute_query(f"SELECT * FROM {loads_table_name} WHERE inserted_at = {placeholder}", pendulum.now(), 10):
+            with client.sql_client.execute_query(
+                f"SELECT * FROM {loads_table_name} WHERE inserted_at = {placeholder}",
+                pendulum.now(),
+                10,
+            ):
                 pass
         assert client.sql_client.is_dbapi_exception(term_ex.value.dbapi_exception)
 
@@ -77,7 +98,12 @@ def test_malformed_query_parameters(client: SqlJobClientBase) -> None:
         assert client.sql_client.is_dbapi_exception(term_ex.value.dbapi_exception)
 
 
-@pytest.mark.parametrize("client", destinations_configs(default_sql_configs=True), indirect=True, ids=lambda x: x.name)
+@pytest.mark.parametrize(
+    "client",
+    destinations_configs(default_sql_configs=True),
+    indirect=True,
+    ids=lambda x: x.name,
+)
 def test_malformed_execute_parameters(client: SqlJobClientBase) -> None:
     client.update_stored_schema()
     loads_table_name = client.sql_client.make_qualified_table_name(LOADS_TABLE_NAME)
@@ -93,7 +119,11 @@ def test_malformed_execute_parameters(client: SqlJobClientBase) -> None:
 
         # too many parameters
         with pytest.raises(DatabaseTransientException) as term_ex:
-            client.sql_client.execute_sql(f"SELECT * FROM {loads_table_name} WHERE inserted_at = {placeholder}", pendulum.now(), 10)
+            client.sql_client.execute_sql(
+                f"SELECT * FROM {loads_table_name} WHERE inserted_at = {placeholder}",
+                pendulum.now(),
+                10,
+            )
         assert client.sql_client.is_dbapi_exception(term_ex.value.dbapi_exception)
 
     # unknown named parameter
@@ -103,7 +133,12 @@ def test_malformed_execute_parameters(client: SqlJobClientBase) -> None:
         assert client.sql_client.is_dbapi_exception(term_ex.value.dbapi_exception)
 
 
-@pytest.mark.parametrize("client", destinations_configs(default_sql_configs=True), indirect=True, ids=lambda x: x.name)
+@pytest.mark.parametrize(
+    "client",
+    destinations_configs(default_sql_configs=True),
+    indirect=True,
+    ids=lambda x: x.name,
+)
 def test_execute_sql(client: SqlJobClientBase) -> None:
     client.update_stored_schema()
     # ask with datetime
@@ -113,7 +148,10 @@ def test_execute_sql(client: SqlJobClientBase) -> None:
     rows = client.sql_client.execute_sql(f"SELECT schema_name, inserted_at FROM {version_table_name}")
     assert len(rows) == 1
     assert rows[0][0] == "event"
-    rows = client.sql_client.execute_sql(f"SELECT schema_name, inserted_at FROM {version_table_name} WHERE schema_name = %s", "event")
+    rows = client.sql_client.execute_sql(
+        f"SELECT schema_name, inserted_at FROM {version_table_name} WHERE schema_name = %s",
+        "event",
+    )
     assert len(rows) == 1
     # print(rows)
     assert rows[0][0] == "event"
@@ -122,18 +160,32 @@ def test_execute_sql(client: SqlJobClientBase) -> None:
     # print(rows[0][1])
     # print(type(rows[0][1]))
     # convert to pendulum to make sure it is supported by dbapi
-    rows = client.sql_client.execute_sql(f"SELECT schema_name, inserted_at FROM {version_table_name} WHERE inserted_at = %s", ensure_pendulum_datetime(rows[0][1]))
+    rows = client.sql_client.execute_sql(
+        f"SELECT schema_name, inserted_at FROM {version_table_name} WHERE inserted_at = %s",
+        ensure_pendulum_datetime(rows[0][1]),
+    )
     assert len(rows) == 1
     # use rows in subsequent test
     if client.sql_client.dbapi.paramstyle == "pyformat":
-        rows = client.sql_client.execute_sql(f"SELECT schema_name, inserted_at FROM {version_table_name} WHERE inserted_at = %(date)s", date=rows[0][1])
+        rows = client.sql_client.execute_sql(
+            f"SELECT schema_name, inserted_at FROM {version_table_name} WHERE inserted_at = %(date)s",
+            date=rows[0][1],
+        )
         assert len(rows) == 1
         assert rows[0][0] == "event"
-        rows = client.sql_client.execute_sql(f"SELECT schema_name, inserted_at FROM {version_table_name} WHERE inserted_at = %(date)s", date=pendulum.now().add(seconds=1))
+        rows = client.sql_client.execute_sql(
+            f"SELECT schema_name, inserted_at FROM {version_table_name} WHERE inserted_at = %(date)s",
+            date=pendulum.now().add(seconds=1),
+        )
         assert len(rows) == 0
 
 
-@pytest.mark.parametrize("client", destinations_configs(default_sql_configs=True), indirect=True, ids=lambda x: x.name)
+@pytest.mark.parametrize(
+    "client",
+    destinations_configs(default_sql_configs=True),
+    indirect=True,
+    ids=lambda x: x.name,
+)
 def test_execute_ddl(client: SqlJobClientBase) -> None:
     uniq_suffix = uniq_id()
     client.update_stored_schema()
@@ -149,7 +201,12 @@ def test_execute_ddl(client: SqlJobClientBase) -> None:
     assert rows[0][0] == Decimal("1.0")
 
 
-@pytest.mark.parametrize("client", destinations_configs(default_sql_configs=True), indirect=True, ids=lambda x: x.name)
+@pytest.mark.parametrize(
+    "client",
+    destinations_configs(default_sql_configs=True),
+    indirect=True,
+    ids=lambda x: x.name,
+)
 def test_execute_query(client: SqlJobClientBase) -> None:
     client.update_stored_schema()
     version_table_name = client.sql_client.make_qualified_table_name(VERSION_TABLE_NAME)
@@ -157,25 +214,42 @@ def test_execute_query(client: SqlJobClientBase) -> None:
         rows = curr.fetchall()
         assert len(rows) == 1
         assert rows[0][0] == "event"
-    with client.sql_client.execute_query(f"SELECT schema_name, inserted_at FROM {version_table_name} WHERE schema_name = %s", "event") as curr:
+    with client.sql_client.execute_query(
+        f"SELECT schema_name, inserted_at FROM {version_table_name} WHERE schema_name = %s",
+        "event",
+    ) as curr:
         rows = curr.fetchall()
         assert len(rows) == 1
         assert rows[0][0] == "event"
         assert isinstance(rows[0][1], datetime.datetime)
-    with client.sql_client.execute_query(f"SELECT schema_name, inserted_at FROM {version_table_name} WHERE inserted_at = %s", rows[0][1]) as curr:
+    with client.sql_client.execute_query(
+        f"SELECT schema_name, inserted_at FROM {version_table_name} WHERE inserted_at = %s",
+        rows[0][1],
+    ) as curr:
         rows = curr.fetchall()
         assert len(rows) == 1
         assert rows[0][0] == "event"
-    with client.sql_client.execute_query(f"SELECT schema_name, inserted_at FROM {version_table_name} WHERE inserted_at = %s", pendulum.now().add(seconds=1)) as curr:
+    with client.sql_client.execute_query(
+        f"SELECT schema_name, inserted_at FROM {version_table_name} WHERE inserted_at = %s",
+        pendulum.now().add(seconds=1),
+    ) as curr:
         rows = curr.fetchall()
         assert len(rows) == 0
     if client.sql_client.dbapi.paramstyle == "pyformat":
-        with client.sql_client.execute_query(f"SELECT schema_name, inserted_at FROM {version_table_name} WHERE inserted_at = %(date)s", date=pendulum.now().add(seconds=1)) as curr:
+        with client.sql_client.execute_query(
+            f"SELECT schema_name, inserted_at FROM {version_table_name} WHERE inserted_at = %(date)s",
+            date=pendulum.now().add(seconds=1),
+        ) as curr:
             rows = curr.fetchall()
             assert len(rows) == 0
 
 
-@pytest.mark.parametrize("client", destinations_configs(default_sql_configs=True), indirect=True, ids=lambda x: x.name)
+@pytest.mark.parametrize(
+    "client",
+    destinations_configs(default_sql_configs=True),
+    indirect=True,
+    ids=lambda x: x.name,
+)
 def test_execute_df(client: SqlJobClientBase) -> None:
     if client.config.destination_name == "bigquery":
         chunk_size = 50
@@ -214,7 +288,12 @@ def test_execute_df(client: SqlJobClientBase) -> None:
     assert df_3 is None
 
 
-@pytest.mark.parametrize("client", destinations_configs(default_sql_configs=True), indirect=True, ids=lambda x: x.name)
+@pytest.mark.parametrize(
+    "client",
+    destinations_configs(default_sql_configs=True),
+    indirect=True,
+    ids=lambda x: x.name,
+)
 def test_database_exceptions(client: SqlJobClientBase) -> None:
     client.update_stored_schema()
     term_ex: Any
@@ -272,7 +351,12 @@ def test_database_exceptions(client: SqlJobClientBase) -> None:
         assert client.sql_client.is_dbapi_exception(term_ex.value.dbapi_exception)
 
 
-@pytest.mark.parametrize("client", destinations_configs(default_sql_configs=True), indirect=True, ids=lambda x: x.name)
+@pytest.mark.parametrize(
+    "client",
+    destinations_configs(default_sql_configs=True),
+    indirect=True,
+    ids=lambda x: x.name,
+)
 def test_commit_transaction(client: SqlJobClientBase) -> None:
     table_name = prepare_temp_table(client)
     f_q_table_name = client.sql_client.make_qualified_table_name(table_name)
@@ -293,7 +377,12 @@ def test_commit_transaction(client: SqlJobClientBase) -> None:
     assert len(rows) == 0
 
 
-@pytest.mark.parametrize("client", destinations_configs(default_sql_configs=True), indirect=True, ids=lambda x: x.name)
+@pytest.mark.parametrize(
+    "client",
+    destinations_configs(default_sql_configs=True),
+    indirect=True,
+    ids=lambda x: x.name,
+)
 def test_rollback_transaction(client: SqlJobClientBase) -> None:
     if client.capabilities.supports_transactions is False:
         pytest.skip("Destination does not support tx")
@@ -335,7 +424,12 @@ def test_rollback_transaction(client: SqlJobClientBase) -> None:
     #     tx.rollback_transaction()
 
 
-@pytest.mark.parametrize("client", destinations_configs(default_sql_configs=True), indirect=True, ids=lambda x: x.name)
+@pytest.mark.parametrize(
+    "client",
+    destinations_configs(default_sql_configs=True),
+    indirect=True,
+    ids=lambda x: x.name,
+)
 def test_transaction_isolation(client: SqlJobClientBase) -> None:
     if client.capabilities.supports_transactions is False:
         pytest.skip("Destination does not support tx")
@@ -374,7 +468,12 @@ def test_transaction_isolation(client: SqlJobClientBase) -> None:
     assert rows[0][0] == Decimal("2.0")
 
 
-@pytest.mark.parametrize("client", destinations_configs(default_sql_configs=True), indirect=True, ids=lambda x: x.name)
+@pytest.mark.parametrize(
+    "client",
+    destinations_configs(default_sql_configs=True),
+    indirect=True,
+    ids=lambda x: x.name,
+)
 def test_max_table_identifier_length(client: SqlJobClientBase) -> None:
     if client.capabilities.max_identifier_length >= 65536:
         pytest.skip(f"destination {client.config.destination_name} has no table name length restriction")
@@ -397,7 +496,12 @@ def test_max_table_identifier_length(client: SqlJobClientBase) -> None:
     # assert exists is True
 
 
-@pytest.mark.parametrize("client", destinations_configs(default_sql_configs=True), indirect=True, ids=lambda x: x.name)
+@pytest.mark.parametrize(
+    "client",
+    destinations_configs(default_sql_configs=True),
+    indirect=True,
+    ids=lambda x: x.name,
+)
 def test_max_column_identifier_length(client: SqlJobClientBase) -> None:
     if client.capabilities.max_column_identifier_length >= 65536:
         pytest.skip(f"destination {client.config.destination_name} has no column name length restriction")
@@ -414,7 +518,12 @@ def test_max_column_identifier_length(client: SqlJobClientBase) -> None:
     # assert long_column_name[:client.capabilities.max_column_identifier_length] in table_def
 
 
-@pytest.mark.parametrize("client", destinations_configs(default_sql_configs=True), indirect=True, ids=lambda x: x.name)
+@pytest.mark.parametrize(
+    "client",
+    destinations_configs(default_sql_configs=True),
+    indirect=True,
+    ids=lambda x: x.name,
+)
 def test_recover_on_explicit_tx(client: SqlJobClientBase) -> None:
     if client.capabilities.supports_transactions is False:
         pytest.skip("Destination does not support tx")
@@ -432,7 +541,11 @@ def test_recover_on_explicit_tx(client: SqlJobClientBase) -> None:
     assert_load_id(client.sql_client, "ABC")
 
     # syntax error within tx
-    statements = ["BEGIN TRANSACTION;", f"INVERT INTO {version_table} VALUES(1);", "COMMIT;"]
+    statements = [
+        "BEGIN TRANSACTION;",
+        f"INVERT INTO {version_table} VALUES(1);",
+        "COMMIT;",
+    ]
     with pytest.raises(DatabaseTransientException):
         client.sql_client.execute_fragments(statements)
     # assert derives_from_class_of_name(term_ex.value.dbapi_exception, "ProgrammingError")
@@ -441,7 +554,11 @@ def test_recover_on_explicit_tx(client: SqlJobClientBase) -> None:
     assert_load_id(client.sql_client, "EFG")
 
     # wrong value inserted
-    statements = ["BEGIN TRANSACTION;", f"INSERT INTO {version_table}(version) VALUES(1);", "COMMIT;"]
+    statements = [
+        "BEGIN TRANSACTION;",
+        f"INSERT INTO {version_table}(version) VALUES(1);",
+        "COMMIT;",
+    ]
     # cannot insert NULL value
     with pytest.raises(DatabaseTerminalException):
         client.sql_client.execute_fragments(statements)

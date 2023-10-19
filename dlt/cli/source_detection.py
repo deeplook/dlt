@@ -14,7 +14,11 @@ from dlt.cli.exceptions import CliCommandException
 from dlt.reflection.script_visitor import PipelineScriptVisitor
 
 
-def find_call_arguments_to_replace(visitor: PipelineScriptVisitor, replace_nodes: List[Tuple[str, str]], init_script_name: str) -> List[Tuple[ast.AST, ast.AST]]:
+def find_call_arguments_to_replace(
+    visitor: PipelineScriptVisitor,
+    replace_nodes: List[Tuple[str, str]],
+    init_script_name: str,
+) -> List[Tuple[ast.AST, ast.AST]]:
     # the input tuple (call argument name, replacement value)
     # the returned tuple (node, replacement value, node type)
     transformed_nodes: List[Tuple[ast.AST, ast.AST]] = []
@@ -26,7 +30,10 @@ def find_call_arguments_to_replace(visitor: PipelineScriptVisitor, replace_nodes
                 dn_node: ast.AST = args.arguments.get(t_arg_name)
                 if dn_node is not None:
                     if not isinstance(dn_node, ast.Constant) or not isinstance(dn_node.value, str):
-                        raise CliCommandException("init", f"The pipeline script {init_script_name} must pass the {t_arg_name} as string to '{arg_name}' function in line {dn_node.lineno}")
+                        raise CliCommandException(
+                            "init",
+                            f"The pipeline script {init_script_name} must pass the {t_arg_name} as string to '{arg_name}' function in line {dn_node.lineno}",
+                        )
                     else:
                         transformed_nodes.append((dn_node, ast.Constant(value=t_value, kind=None)))
                         replaced_args.add(t_arg_name)
@@ -34,7 +41,10 @@ def find_call_arguments_to_replace(visitor: PipelineScriptVisitor, replace_nodes
     # there was at least one replacement
     for t_arg_name, _ in replace_nodes:
         if t_arg_name not in replaced_args:
-            raise CliCommandException("init", f"The pipeline script {init_script_name} is not explicitly passing the '{t_arg_name}' argument to 'pipeline' or 'run' function. In init script the default and configured values are not accepted.")
+            raise CliCommandException(
+                "init",
+                f"The pipeline script {init_script_name} is not explicitly passing the '{t_arg_name}' argument to 'pipeline' or 'run' function. In init script the default and configured values are not accepted.",
+            )
     return transformed_nodes
 
 
@@ -42,7 +52,12 @@ def find_source_calls_to_replace(visitor: PipelineScriptVisitor, pipeline_name: 
     transformed_nodes: List[Tuple[ast.AST, ast.AST]] = []
     for source_def in visitor.known_sources_resources.values():
         # append function name to be replaced
-        transformed_nodes.append((creates_func_def_name_node(source_def, visitor.source_lines), ast.Name(id=pipeline_name + "_" + source_def.name)))
+        transformed_nodes.append(
+            (
+                creates_func_def_name_node(source_def, visitor.source_lines),
+                ast.Name(id=pipeline_name + "_" + source_def.name),
+            )
+        )
 
     for calls in visitor.known_sources_resources_calls.values():
         for call in calls:
@@ -52,10 +67,8 @@ def find_source_calls_to_replace(visitor: PipelineScriptVisitor, pipeline_name: 
 
 
 def detect_source_configs(
-    sources: Dict[str, SourceInfo],
-    module_prefix: str,
-    section: Tuple[str, ...]
-) -> Tuple[Dict[str, WritableConfigValue], Dict[str, WritableConfigValue], Dict[str, SourceInfo]]:
+    sources: Dict[str, SourceInfo], module_prefix: str, section: Tuple[str, ...]
+) -> Tuple[Dict[str, WritableConfigValue], Dict[str, WritableConfigValue], Dict[str, SourceInfo],]:
     # all detected secrets with sections
     required_secrets: Dict[str, WritableConfigValue] = {}
     # all detected configs with sections

@@ -27,7 +27,11 @@ def dbt_venv() -> Iterator[Venv]:
         yield venv
 
 
-@pytest.mark.parametrize("destination_config", destinations_configs(default_sql_configs=True), ids=lambda x: x.name)
+@pytest.mark.parametrize(
+    "destination_config",
+    destinations_configs(default_sql_configs=True),
+    ids=lambda x: x.name,
+)
 def test_run_jaffle_package(destination_config: DestinationTestConfiguration, dbt_venv: Venv) -> None:
     if destination_config.destination == "athena":
         pytest.skip("dbt-athena requires database to be created and we don't do it in case of Jaffle")
@@ -55,9 +59,14 @@ def test_run_jaffle_package(destination_config: DestinationTestConfiguration, db
     assert len(orders) == 99
 
 
-@pytest.mark.parametrize("destination_config", destinations_configs(default_sql_configs=True), ids=lambda x: x.name)
+@pytest.mark.parametrize(
+    "destination_config",
+    destinations_configs(default_sql_configs=True),
+    ids=lambda x: x.name,
+)
 def test_run_chess_dbt(destination_config: DestinationTestConfiguration, dbt_venv: Venv) -> None:
     from docs.examples.chess.chess import chess
+
     if not destination_config.supports_dbt:
         pytest.skip("dbt is not supported for this destination configuration")
 
@@ -94,9 +103,14 @@ def test_run_chess_dbt(destination_config: DestinationTestConfiguration, dbt_ven
     assert view_player_games == new_view_player_games
 
 
-@pytest.mark.parametrize("destination_config", destinations_configs(default_sql_configs=True), ids=lambda x: x.name)
+@pytest.mark.parametrize(
+    "destination_config",
+    destinations_configs(default_sql_configs=True),
+    ids=lambda x: x.name,
+)
 def test_run_chess_dbt_to_other_dataset(destination_config: DestinationTestConfiguration, dbt_venv: Venv) -> None:
     from docs.examples.chess.chess import chess
+
     if not destination_config.supports_dbt:
         pytest.skip("dbt is not supported for this destination configuration")
 
@@ -131,7 +145,11 @@ def test_run_chess_dbt_to_other_dataset(destination_config: DestinationTestConfi
     # status is 0, no more entries
     assert load_ids[0][2] == 0
     # get from destination dataset
-    load_ids = select_data(pipeline, "SELECT load_id, schema_name, status FROM _dlt_loads ORDER BY status", schema_name=test_suffix)
+    load_ids = select_data(
+        pipeline,
+        "SELECT load_id, schema_name, status FROM _dlt_loads ORDER BY status",
+        schema_name=test_suffix,
+    )
     # TODO: the package is not finished, both results should be here
     assert len(load_ids) == 1
     # status is 1, no more entries

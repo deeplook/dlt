@@ -9,24 +9,33 @@ from dlt.common import logger
 from dlt.common.schema import Schema, TSchemaTables, TTableSchema
 from dlt.common.storages import FileStorage, LoadStorage, fsspec_from_config
 from dlt.common.destination import DestinationCapabilitiesContext
-from dlt.common.destination.reference import NewLoadJob, TLoadJobState, LoadJob, JobClientBase, FollowupJob, WithStagingDataset
+from dlt.common.destination.reference import (
+    NewLoadJob,
+    TLoadJobState,
+    LoadJob,
+    JobClientBase,
+    FollowupJob,
+    WithStagingDataset,
+)
 
 from dlt.destinations.job_impl import EmptyLoadJob
 from dlt.destinations.filesystem import capabilities
-from dlt.destinations.filesystem.configuration import FilesystemDestinationClientConfiguration
+from dlt.destinations.filesystem.configuration import (
+    FilesystemDestinationClientConfiguration,
+)
 from dlt.destinations.job_impl import NewReferenceJob
 from dlt.destinations import path_utils
 
 
 class LoadFilesystemJob(LoadJob):
     def __init__(
-            self,
-            local_path: str,
-            dataset_path: str,
-            *,
-            config: FilesystemDestinationClientConfiguration,
-            schema_name: str,
-            load_id: str
+        self,
+        local_path: str,
+        dataset_path: str,
+        *,
+        config: FilesystemDestinationClientConfiguration,
+        schema_name: str,
+        load_id: str,
     ) -> None:
         file_name = FileStorage.get_file_name_from_file_path(local_path)
         self.config = config
@@ -43,12 +52,14 @@ class LoadFilesystemJob(LoadJob):
     @staticmethod
     def make_destination_filename(layout: str, file_name: str, schema_name: str, load_id: str) -> str:
         job_info = LoadStorage.parse_job_file_name(file_name)
-        return path_utils.create_path(layout,
-                                      schema_name=schema_name,
-                                      table_name=job_info.table_name,
-                                      load_id=load_id,
-                                      file_id=job_info.file_id,
-                                      ext=job_info.file_format)
+        return path_utils.create_path(
+            layout,
+            schema_name=schema_name,
+            table_name=job_info.table_name,
+            load_id=load_id,
+            file_id=job_info.file_id,
+            ext=job_info.file_format,
+        )
 
     def make_remote_path(self) -> str:
         return f"{self.config.protocol}://{posixpath.join(self.dataset_path, self.destination_file_name)}"
@@ -64,7 +75,11 @@ class FollowupFilesystemJob(FollowupJob, LoadFilesystemJob):
     def create_followup_jobs(self, next_state: str) -> List[NewLoadJob]:
         jobs = super().create_followup_jobs(next_state)
         if next_state == "completed":
-            ref_job = NewReferenceJob(file_name=self.file_name(), status="running", remote_path=self.make_remote_path())
+            ref_job = NewReferenceJob(
+                file_name=self.file_name(),
+                status="running",
+                remote_path=self.make_remote_path(),
+            )
             jobs.append(ref_job)
         return jobs
 
@@ -92,7 +107,6 @@ class FilesystemClient(JobClientBase, WithStagingDataset):
     @property
     def dataset_path(self) -> str:
         return posixpath.join(self.fs_path, self._dataset_path)
-
 
     @contextmanager
     def with_staging_dataset(self) -> Iterator["FilesystemClient"]:
@@ -164,7 +178,7 @@ class FilesystemClient(JobClientBase, WithStagingDataset):
             self.dataset_path,
             config=self.config,
             schema_name=self.schema.name,
-            load_id=load_id
+            load_id=load_id,
         )
 
     def restore_file_load(self, file_path: str) -> LoadJob:
@@ -179,7 +193,12 @@ class FilesystemClient(JobClientBase, WithStagingDataset):
     def __enter__(self) -> "FilesystemClient":
         return self
 
-    def __exit__(self, exc_type: Type[BaseException], exc_val: BaseException, exc_tb: TracebackType) -> None:
+    def __exit__(
+        self,
+        exc_type: Type[BaseException],
+        exc_val: BaseException,
+        exc_tb: TracebackType,
+    ) -> None:
         pass
 
     def should_load_data_to_staging_dataset(self, table: TTableSchema) -> bool:

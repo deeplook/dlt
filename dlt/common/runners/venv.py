@@ -19,7 +19,7 @@ class DLTEnvBuilder(venv.EnvBuilder):
         self.context = context
 
 
-class Venv():
+class Venv:
     """Creates and wraps the Python Virtual Environment to allow for code execution"""
 
     def __init__(self, context: types.SimpleNamespace, current: bool = False) -> None:
@@ -59,6 +59,7 @@ class Venv():
             venv = cls.restore(os.environ["VIRTUAL_ENV"], current=True)
         except KeyError:
             import sys
+
             # do not set bin path because it is not known
             context = types.SimpleNamespace(bin_path="", env_exe=sys.executable)
             venv = cls(context, current=True)
@@ -69,7 +70,12 @@ class Venv():
             raise NotImplementedError("Context manager does not work with current venv")
         return self
 
-    def __exit__(self, exc_type: Type[BaseException], exc_val: BaseException, exc_tb: types.TracebackType) -> None:
+    def __exit__(
+        self,
+        exc_type: Type[BaseException],
+        exc_val: BaseException,
+        exc_tb: types.TracebackType,
+    ) -> None:
         self.delete_environment()
 
     def delete_environment(self) -> None:
@@ -119,7 +125,6 @@ class Venv():
             subprocess.check_output(cmd + dependencies, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as exc:
             raise CannotInstallDependencies(dependencies, context.env_exe, exc.output)
-
 
     @staticmethod
     def is_virtual_env() -> bool:

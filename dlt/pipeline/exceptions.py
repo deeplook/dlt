@@ -6,11 +6,20 @@ from dlt.pipeline.typing import TPipelineStep
 
 class InvalidPipelineName(PipelineException, ValueError):
     def __init__(self, pipeline_name: str, details: str) -> None:
-        super().__init__(pipeline_name, f"The pipeline name {pipeline_name} contains invalid characters. The pipeline name is used to create a pipeline working directory and must be a valid directory name. The actual error is: {details}")
+        super().__init__(
+            pipeline_name,
+            f"The pipeline name {pipeline_name} contains invalid characters. The pipeline name is used to create a pipeline working directory and must be a valid directory name. The actual error is: {details}",
+        )
 
 
 class PipelineConfigMissing(PipelineException):
-    def __init__(self, pipeline_name: str, config_elem: str, step: TPipelineStep, _help: str = None) -> None:
+    def __init__(
+        self,
+        pipeline_name: str,
+        config_elem: str,
+        step: TPipelineStep,
+        _help: str = None,
+    ) -> None:
         self.config_elem = config_elem
         self.step = step
         msg = f"Configuration element {config_elem} was not provided and {step} step cannot be executed"
@@ -26,17 +35,29 @@ class CannotRestorePipelineException(PipelineException):
 
 
 class SqlClientNotAvailable(PipelineException):
-    def __init__(self, pipeline_name: str,destination_name: str) -> None:
-        super().__init__(pipeline_name, f"SQL Client not available for destination {destination_name} in pipeline {pipeline_name}")
+    def __init__(self, pipeline_name: str, destination_name: str) -> None:
+        super().__init__(
+            pipeline_name,
+            f"SQL Client not available for destination {destination_name} in pipeline {pipeline_name}",
+        )
 
 
 class PipelineStepFailed(PipelineException):
-    def __init__(self, pipeline: SupportsPipeline, step: TPipelineStep, exception: BaseException, step_info: Any = None) -> None:
+    def __init__(
+        self,
+        pipeline: SupportsPipeline,
+        step: TPipelineStep,
+        exception: BaseException,
+        step_info: Any = None,
+    ) -> None:
         self.pipeline = pipeline
         self.step = step
         self.exception = exception
         self.step_info = step_info
-        super().__init__(pipeline.pipeline_name, f"Pipeline execution failed at stage {step} with exception:\n\n{type(exception)}\n{exception}")
+        super().__init__(
+            pipeline.pipeline_name,
+            f"Pipeline execution failed at stage {step} with exception:\n\n{type(exception)}\n{exception}",
+        )
 
 
 class PipelineStateEngineNoUpgradePathException(PipelineException):
@@ -44,7 +65,10 @@ class PipelineStateEngineNoUpgradePathException(PipelineException):
         self.init_engine = init_engine
         self.from_engine = from_engine
         self.to_engine = to_engine
-        super().__init__(pipeline_name, f"No engine upgrade path for state in pipeline {pipeline_name} from {init_engine} to {to_engine}, stopped at {from_engine}")
+        super().__init__(
+            pipeline_name,
+            f"No engine upgrade path for state in pipeline {pipeline_name} from {init_engine} to {to_engine}, stopped at {from_engine}",
+        )
 
 
 class PipelineHasPendingDataException(PipelineException):
@@ -58,4 +82,7 @@ class PipelineHasPendingDataException(PipelineException):
 
 class PipelineNotActive(PipelineException):
     def __init__(self, pipeline_name: str) -> None:
-        super().__init__(pipeline_name, f"Pipeline {pipeline_name} is not active so it cannot be deactivated")
+        super().__init__(
+            pipeline_name,
+            f"Pipeline {pipeline_name} is not active so it cannot be deactivated",
+        )

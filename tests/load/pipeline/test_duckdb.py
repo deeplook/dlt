@@ -6,10 +6,18 @@ from dlt.destinations.exceptions import DatabaseTerminalException
 from dlt.pipeline.exceptions import PipelineStepFailed
 
 from tests.pipeline.utils import airtable_emojis
-from tests.load.pipeline.utils import destinations_configs, DestinationTestConfiguration, load_table_counts
+from tests.load.pipeline.utils import (
+    destinations_configs,
+    DestinationTestConfiguration,
+    load_table_counts,
+)
 
 
-@pytest.mark.parametrize("destination_config", destinations_configs(default_sql_configs=True, subset=["duckdb"]), ids=lambda x: x.name)
+@pytest.mark.parametrize(
+    "destination_config",
+    destinations_configs(default_sql_configs=True, subset=["duckdb"]),
+    ids=lambda x: x.name,
+)
 def test_duck_case_names(destination_config: DestinationTestConfiguration) -> None:
     # we want to have nice tables
     # dlt.config["schema.naming"] = "duck_case"
@@ -22,10 +30,10 @@ def test_duck_case_names(destination_config: DestinationTestConfiguration) -> No
     assert table_counts == {
         "📆 Schedule": 3,
         "🦚Peacock": 1,
-        '🦚Peacock__peacock': 3,
-        '🦚Peacocks🦚': 1,
-        '🦚WidePeacock': 1,
-        '🦚WidePeacock__peacock': 3
+        "🦚Peacock__peacock": 3,
+        "🦚Peacocks🦚": 1,
+        "🦚WidePeacock": 1,
+        "🦚WidePeacock__peacock": 3,
     }
 
     # this will fail - duckdb preserves case but is case insensitive when comparing identifiers
@@ -37,6 +45,10 @@ def test_duck_case_names(destination_config: DestinationTestConfiguration) -> No
     with pipeline.sql_client() as client:
         with client.execute_query("DESCRIBE 🦚peacocks🦚;") as q:
             tables = q.df()
-    assert tables["column_name"].tolist() == ["🐾Feet", "1+1", "hey", "_dlt_load_id", "_dlt_id"]
-
-
+    assert tables["column_name"].tolist() == [
+        "🐾Feet",
+        "1+1",
+        "hey",
+        "_dlt_load_id",
+        "_dlt_id",
+    ]

@@ -4,13 +4,24 @@ from dlt.common.schema.schema import Schema
 from dlt.common.configuration import with_config, known_sections
 from dlt.common.configuration.accessors import config
 from dlt.common.destination import DestinationCapabilitiesContext
-from dlt.common.destination.reference import JobClientBase, DestinationClientConfiguration
+from dlt.common.destination.reference import (
+    JobClientBase,
+    DestinationClientConfiguration,
+)
 
 from dlt.destinations.dummy.configuration import DummyClientConfiguration
 
 
-@with_config(spec=DummyClientConfiguration, sections=(known_sections.DESTINATION, "dummy",))
-def _configure(config: DummyClientConfiguration = config.value) -> DummyClientConfiguration:
+@with_config(
+    spec=DummyClientConfiguration,
+    sections=(
+        known_sections.DESTINATION,
+        "dummy",
+    ),
+)
+def _configure(
+    config: DummyClientConfiguration = config.value,
+) -> DummyClientConfiguration:
     return config
 
 

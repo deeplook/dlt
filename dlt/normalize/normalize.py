@@ -14,7 +14,13 @@ from dlt.common.runtime.collector import Collector, NULL_COLLECTOR
 from dlt.common.schema.typing import TStoredSchema, TTableSchemaColumns
 from dlt.common.schema.utils import merge_schema_updates
 from dlt.common.storages.exceptions import SchemaNotFoundError
-from dlt.common.storages import NormalizeStorage, SchemaStorage, LoadStorage, LoadStorageConfiguration, NormalizeStorageConfiguration
+from dlt.common.storages import (
+    NormalizeStorage,
+    SchemaStorage,
+    LoadStorage,
+    LoadStorageConfiguration,
+    NormalizeStorageConfiguration,
+)
 from dlt.common.typing import TDataItem
 from dlt.common.schema import TSchemaUpdate, Schema
 from dlt.common.schema.exceptions import CannotCoerceColumnException
@@ -23,7 +29,11 @@ from dlt.common.pipeline import NormalizeInfo
 from dlt.common.utils import chunks, TRowCount, merge_row_count, increase_row_count
 
 from dlt.normalize.configuration import NormalizeConfiguration
-from dlt.normalize.items_normalizers import ParquetItemsNormalizer, JsonLItemsNormalizer, ItemsNormalizer
+from dlt.normalize.items_normalizers import (
+    ParquetItemsNormalizer,
+    JsonLItemsNormalizer,
+    ItemsNormalizer,
+)
 
 # normalize worker wrapping function (map_parallel, map_single) return type
 TMapFuncRV = Tuple[Sequence[TSchemaUpdate], TRowCount]
@@ -34,9 +44,13 @@ TWorkerRV = Tuple[List[TSchemaUpdate], int, List[str], TRowCount]
 
 
 class Normalize(Runnable[ProcessPool]):
-
     @with_config(spec=NormalizeConfiguration, sections=(known_sections.NORMALIZE,))
-    def __init__(self, collector: Collector = NULL_COLLECTOR, schema_storage: SchemaStorage = None, config: NormalizeConfiguration = config.value) -> None:
+    def __init__(
+        self,
+        collector: Collector = NULL_COLLECTOR,
+        schema_storage: SchemaStorage = None,
+        config: NormalizeConfiguration = config.value,
+    ) -> None:
         self.config = config
         self.collector = collector
         self.pool: ProcessPool = None
@@ -54,7 +68,12 @@ class Normalize(Runnable[ProcessPool]):
         # pass initial normalize storage config embedded in normalize config
         self.normalize_storage = NormalizeStorage(True, config=self.config._normalize_storage_config)
         # normalize saves in preferred format but can read all supported formats
-        self.load_storage = LoadStorage(True, self.config.destination_capabilities.preferred_loader_file_format, LoadStorage.ALL_SUPPORTED_FILE_FORMATS, config=self.config._load_storage_config)
+        self.load_storage = LoadStorage(
+            True,
+            self.config.destination_capabilities.preferred_loader_file_format,
+            LoadStorage.ALL_SUPPORTED_FILE_FORMATS,
+            config=self.config._load_storage_config,
+        )
 
     @staticmethod
     def load_or_create_schema(schema_storage: SchemaStorage, schema_name: str) -> Schema:
@@ -76,7 +95,6 @@ class Normalize(Runnable[ProcessPool]):
         load_id: str,
         extracted_items_files: Sequence[str],
     ) -> TWorkerRV:
-
         schema_updates: List[TSchemaUpdate] = []
         total_items = 0
         row_counts: TRowCount = {}
@@ -91,10 +109,12 @@ class Normalize(Runnable[ProcessPool]):
             supported_formats = list(set(destination_caps.supported_loader_file_formats or []) | set(destination_caps.supported_staging_file_formats or []))
             if file_format not in supported_formats:
                 if file_format == "parquet":  # Give users a helpful error message for parquet
-                    raise TerminalValueError((
-                        "The destination doesn't support direct loading of arrow tables. "
-                        "Either use a different destination with parquet support or yield dicts instead of pyarrow tables/pandas dataframes from your sources."
-                    ))
+                    raise TerminalValueError(
+                        (
+                            "The destination doesn't support direct loading of arrow tables. "
+                            "Either use a different destination with parquet support or yield dicts instead of pyarrow tables/pandas dataframes from your sources."
+                        )
+                    )
             # Load storage throws a generic error for other unsupported formats, normally that shouldn't happen
             storage = load_storages[file_format] = LoadStorage(False, file_format, supported_formats, loader_storage_config)
             return storage
@@ -122,7 +142,14 @@ class Normalize(Runnable[ProcessPool]):
                         normalizer = ParquetItemsNormalizer()
                     else:
                         normalizer = JsonLItemsNormalizer()
-                    partial_updates, items_count, r_counts = normalizer(extracted_items_file, load_storage, normalize_storage, schema, load_id, root_table_name)
+                    partial_updates, items_count, r_counts = normalizer(
+                        extracted_items_file,
+                        load_storage,
+                        normalize_storage,
+                        schema,
+                        load_id,
+                        root_table_name,
+                    )
                     schema_updates.extend(partial_updates)
                     total_items += items_count
                     merge_row_count(row_counts, r_counts)
@@ -169,7 +196,7 @@ class Normalize(Runnable[ProcessPool]):
         while remainder_l > 0:
             for idx, file in enumerate(reversed(chunk_files.pop())):
                 chunk_files[-l_idx - idx - remainder_l].append(file)  # type: ignore
-            remainder_l -=1
+            remainder_l -= 1
             l_idx = idx + 1
         return chunk_files
 
@@ -177,7 +204,12 @@ class Normalize(Runnable[ProcessPool]):
         workers = self.pool._processes  # type: ignore
         chunk_files = self.group_worker_files(files, workers)
         schema_dict: TStoredSchema = schema.to_dict()
-        config_tuple = (self.normalize_storage.config, self.load_storage.config, self.config.destination_capabilities, schema_dict)
+        config_tuple = (
+            self.normalize_storage.config,
+            self.load_storage.config,
+            self.config.destination_capabilities,
+            schema_dict,
+        )
         param_chunk = [[*config_tuple, load_id, files] for files in chunk_files]
         tasks: List[Tuple[AsyncResult[TWorkerRV], List[Any]]] = []
         row_counts: TRowCount = {}

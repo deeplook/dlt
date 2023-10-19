@@ -23,31 +23,15 @@ STATE_ENGINE_VERSION = 2
 
 # state table columns
 STATE_TABLE_COLUMNS: TTableSchemaColumns = {
-    "version": {
-        "name": "version",
-        "data_type": "bigint",
-        "nullable": False
-    },
+    "version": {"name": "version", "data_type": "bigint", "nullable": False},
     "engine_version": {
         "name": "engine_version",
         "data_type": "bigint",
-        "nullable": False
+        "nullable": False,
     },
-    "pipeline_name": {
-        "name": "pipeline_name",
-        "data_type": "text",
-        "nullable": False
-    },
-    "state": {
-        "name": "state",
-        "data_type": "text",
-        "nullable": False
-    },
-    "created_at": {
-        "name": "created_at",
-        "data_type": "timestamp",
-        "nullable": False
-    }
+    "pipeline_name": {"name": "pipeline_name", "data_type": "text", "nullable": False},
+    "state": {"name": "state", "data_type": "text", "nullable": False},
+    "created_at": {"name": "created_at", "data_type": "timestamp", "nullable": False},
 }
 
 
@@ -89,10 +73,15 @@ def state_resource(state: TPipelineState) -> DltResource:
         "version": state["_state_version"],
         "engine_version": state["_state_engine_version"],
         "pipeline_name": state["pipeline_name"],
-        "state":  state_str,
-        "created_at": pendulum.now()
+        "state": state_str,
+        "created_at": pendulum.now(),
     }
-    return dlt.resource([state_doc], name=STATE_TABLE_NAME, write_disposition="append", columns=STATE_TABLE_COLUMNS)
+    return dlt.resource(
+        [state_doc],
+        name=STATE_TABLE_NAME,
+        write_disposition="append",
+        columns=STATE_TABLE_COLUMNS,
+    )
 
 
 def load_state_from_destination(pipeline_name: str, client: WithStateSync) -> TPipelineState:

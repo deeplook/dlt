@@ -3,8 +3,12 @@ import string
 from typing import List, Type
 
 from dlt.common.normalizers.naming import NamingConvention
-from dlt.common.normalizers.naming.snake_case import NamingConvention as SnakeCaseNamingConvention
-from dlt.common.normalizers.naming.direct import NamingConvention as DirectNamingConvention
+from dlt.common.normalizers.naming.snake_case import (
+    NamingConvention as SnakeCaseNamingConvention,
+)
+from dlt.common.normalizers.naming.direct import (
+    NamingConvention as DirectNamingConvention,
+)
 from dlt.common.typing import DictStrStr
 from dlt.common.utils import uniq_id
 
@@ -15,11 +19,17 @@ LONG_IDENT = 10 * string.printable
 IDENT_20_CHARS = "she played cello well"
 RAW_IDENT = ".\n'played CELLO🚧_"
 RAW_IDENT_W_SPACES = f"  {RAW_IDENT} \t\n"
-RAW_IDENT_2 = "123.\"\rhello😄!"
+RAW_IDENT_2 = '123."\rhello😄!'
 RAW_IDENT_2_W_SPACES = f"\n  {RAW_IDENT_2} \t "
 RAW_PATH = [RAW_IDENT, RAW_IDENT_2_W_SPACES, RAW_IDENT_2, RAW_IDENT_2_W_SPACES]
 EMPTY_IDENT = "   \t\n "
-RAW_PATH_WITH_EMPTY_IDENT = [RAW_IDENT, RAW_IDENT_2_W_SPACES, EMPTY_IDENT, RAW_IDENT_2, RAW_IDENT_2_W_SPACES]
+RAW_PATH_WITH_EMPTY_IDENT = [
+    RAW_IDENT,
+    RAW_IDENT_2_W_SPACES,
+    EMPTY_IDENT,
+    RAW_IDENT_2,
+    RAW_IDENT_2_W_SPACES,
+]
 
 
 def test_tag_collisions() -> None:
@@ -34,7 +44,7 @@ def test_tag_collisions() -> None:
             collisions += 1
         else:
             tags[tag] = tag
-    assert collisions/generations < 0.001
+    assert collisions / generations < 0.001
 
 
 def test_tag_generation() -> None:
@@ -47,26 +57,26 @@ def test_tag_generation() -> None:
         assert content_tag == tag
 
     fixture = [
-        ('3f17271231504b8cf65690bcdc379df8a3b8aabe12efe1ea82848ec5f497cb69', 'gds0iw'),
-        ('58e5c351b53ffe1233e0656a532a721ae1d2ac7af71b6cfec8ceb64c63b10721', 'uyboiq'),
-        ('e3f34629839cedcabba95354e48a78dc80b0cd35c02ddfbbf20196ba7f968866', '51wdcg'),
-        ('f0f22b8e8c58389a6c21dbcc1e261ee0354704e24996a0ec541276f58d1f2f52', 'bpm7ca'),
-        ('0d0de95c7c12ceee919d28d22c970285d80a36dea4fe32dbdd667a888ae6d47f', 'doqcuq'),
-        ('4973509ea648ddfbaf6c50e1fef33c3b0a3d1c1a82dff543a8255e60b6572567', 'cl7rpq'),
-        ('877c89f0dcbd24b8c3f787624ddca09deb6a44e4a72f12527209d78e4d9ed247', 'xrnycg'),
-        ('064df58cd3a51c50dbf30e975e63961a501212ff8e8ca544ab396727f4b8a367', 'kgiizq'),
-        ('c8f7da1b5c44c1ca10da67c1514c4cf365e4d5912685b25a39206d5c8c1966a1', 'dj9zqq'),
-        ('222d42333592ea87823fd2e7868d59fb0aded20603f433319691918299513cb6', 'futp4w'),
-        ('757d64eb242a91b494ec9e2661a7946410d68144d33860d6f4154092d65d5009', 'wetlpg'),
-        ('3c7348d43478292b4c4e0689d41a536fc8ccabdbd9fb9d0dfbe757a83d34cebe', 'avxagg'),
-        ('6896fac1546c201d4dc91d2c51bdcd9c820fe92fd0555947e59fdc89ca6f045d', 'wbaj3w'),
-        ('b4def322a4487dd90fcc4abd2f1efde0cdce81d8e0a580fd1897203ab4ebcebe', 'whojmw'),
-        ('07d974124b92adafc90473a3968ceb5e8329d815e0e48260473d70a781adb8ae', 'aiqcea'),
-        ('c67183a762e379290652cc26a786b21eff347643b1cc9012138f460901ce5d53', 'zfztpg'),
-        ('430976db5adef67d0009aa3cd9a2daca106829b36a7232732c5d694e7197c6d1', 'evr7rq'),
-        ('c1c8c0ff6933fa4e23fab5605139124b2c6cda0150a412daaea274818ee46e35', 'er0nxq'),
-        ('0060c538b6ce02b8d8e2c85b4e2810c58b846f4096ed7ab871fc092c45ac09d9', 'zh9xgg'),
-        ('4d4b99ff5d2a3d5cd076782c9cd088cd85d5c789d7de6bdc19c1d206b687d485', '2vvr5a')
+        ("3f17271231504b8cf65690bcdc379df8a3b8aabe12efe1ea82848ec5f497cb69", "gds0iw"),
+        ("58e5c351b53ffe1233e0656a532a721ae1d2ac7af71b6cfec8ceb64c63b10721", "uyboiq"),
+        ("e3f34629839cedcabba95354e48a78dc80b0cd35c02ddfbbf20196ba7f968866", "51wdcg"),
+        ("f0f22b8e8c58389a6c21dbcc1e261ee0354704e24996a0ec541276f58d1f2f52", "bpm7ca"),
+        ("0d0de95c7c12ceee919d28d22c970285d80a36dea4fe32dbdd667a888ae6d47f", "doqcuq"),
+        ("4973509ea648ddfbaf6c50e1fef33c3b0a3d1c1a82dff543a8255e60b6572567", "cl7rpq"),
+        ("877c89f0dcbd24b8c3f787624ddca09deb6a44e4a72f12527209d78e4d9ed247", "xrnycg"),
+        ("064df58cd3a51c50dbf30e975e63961a501212ff8e8ca544ab396727f4b8a367", "kgiizq"),
+        ("c8f7da1b5c44c1ca10da67c1514c4cf365e4d5912685b25a39206d5c8c1966a1", "dj9zqq"),
+        ("222d42333592ea87823fd2e7868d59fb0aded20603f433319691918299513cb6", "futp4w"),
+        ("757d64eb242a91b494ec9e2661a7946410d68144d33860d6f4154092d65d5009", "wetlpg"),
+        ("3c7348d43478292b4c4e0689d41a536fc8ccabdbd9fb9d0dfbe757a83d34cebe", "avxagg"),
+        ("6896fac1546c201d4dc91d2c51bdcd9c820fe92fd0555947e59fdc89ca6f045d", "wbaj3w"),
+        ("b4def322a4487dd90fcc4abd2f1efde0cdce81d8e0a580fd1897203ab4ebcebe", "whojmw"),
+        ("07d974124b92adafc90473a3968ceb5e8329d815e0e48260473d70a781adb8ae", "aiqcea"),
+        ("c67183a762e379290652cc26a786b21eff347643b1cc9012138f460901ce5d53", "zfztpg"),
+        ("430976db5adef67d0009aa3cd9a2daca106829b36a7232732c5d694e7197c6d1", "evr7rq"),
+        ("c1c8c0ff6933fa4e23fab5605139124b2c6cda0150a412daaea274818ee46e35", "er0nxq"),
+        ("0060c538b6ce02b8d8e2c85b4e2810c58b846f4096ed7ab871fc092c45ac09d9", "zh9xgg"),
+        ("4d4b99ff5d2a3d5cd076782c9cd088cd85d5c789d7de6bdc19c1d206b687d485", "2vvr5a"),
     ]
 
     for content, expected_tag in fixture:
@@ -74,6 +84,7 @@ def test_tag_generation() -> None:
         assert len(tag) == 6
         assert tag == expected_tag
         # print(f"('{content}', '{tag}'),")
+
 
 def test_tag_placement() -> None:
     # tags are placed in the middle of string and that must happen deterministically
@@ -99,7 +110,7 @@ def test_tag_placement() -> None:
 
 def test_shorten_identifier() -> None:
     # no limit
-    long_ident = 8*LONG_PATH
+    long_ident = 8 * LONG_PATH
     assert NamingConvention.shorten_identifier(long_ident, long_ident, None) == long_ident
     # within limit
     assert NamingConvention.shorten_identifier("012345678", "xxx012345678xxx", 10) == "012345678"

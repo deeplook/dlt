@@ -1,6 +1,17 @@
 import inspect
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Generic, Iterator, Literal, Optional, Protocol, TypeVar, Union, Awaitable
+from typing import (
+    Any,
+    Callable,
+    Generic,
+    Iterator,
+    Literal,
+    Optional,
+    Protocol,
+    TypeVar,
+    Union,
+    Awaitable,
+)
 
 from dlt.common.typing import TAny, TDataItem, TDataItems
 
@@ -37,10 +48,12 @@ class TableNameMeta:
 
 class SupportsPipe(Protocol):
     """A protocol with the core Pipe properties and operations"""
+
     name: str
     """Pipe name which is inherited by a resource"""
     parent: "SupportsPipe"
     """A parent of the current pipe"""
+
     @property
     def has_parent(self) -> bool:
         """Checks if pipe is connected to parent pipe from which it takes data items. Connected pipes are created from transformer resources"""
@@ -50,6 +63,7 @@ class SupportsPipe(Protocol):
 ItemTransformFunctionWithMeta = Callable[[TDataItem, str], TAny]
 ItemTransformFunctionNoMeta = Callable[[TDataItem], TAny]
 ItemTransformFunc = Union[ItemTransformFunctionWithMeta[TAny], ItemTransformFunctionNoMeta[TAny]]
+
 
 class ItemTransform(ABC, Generic[TAny]):
     _f_meta: ItemTransformFunctionWithMeta[TAny] = None
@@ -114,7 +128,7 @@ class MapItem(ItemTransform[TDataItem]):
 
 
 class YieldMapItem(ItemTransform[Iterator[TDataItem]]):
-     # mypy needs those to type correctly
+    # mypy needs those to type correctly
     _f_meta: ItemTransformFunctionWithMeta[TDataItem]
     _f: ItemTransformFunctionNoMeta[TDataItem]
 

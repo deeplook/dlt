@@ -2,7 +2,11 @@ from typing import Optional, Dict, Any
 
 from dlt.common.exceptions import MissingDependencyException
 from dlt.common.typing import TSecretStrValue
-from dlt.common.configuration.specs import CredentialsConfiguration, CredentialsWithDefault, configspec
+from dlt.common.configuration.specs import (
+    CredentialsConfiguration,
+    CredentialsWithDefault,
+    configspec,
+)
 from dlt.common.configuration.specs.exceptions import InvalidBoto3Session
 from dlt import version
 
@@ -22,7 +26,7 @@ class AwsCredentialsWithoutDefaults(CredentialsConfiguration):
             key=self.aws_access_key_id,
             secret=self.aws_secret_access_key,
             token=self.aws_session_token,
-            profile=self.profile_name
+            profile=self.profile_name,
         )
 
     def to_native_representation(self) -> Dict[str, Optional[str]]:
@@ -32,7 +36,6 @@ class AwsCredentialsWithoutDefaults(CredentialsConfiguration):
 
 @configspec
 class AwsCredentials(AwsCredentialsWithoutDefaults, CredentialsWithDefault):
-
     def on_partial(self) -> None:
         # Try get default credentials
         session = self._to_botocore_session()
@@ -48,26 +51,29 @@ class AwsCredentials(AwsCredentialsWithoutDefaults, CredentialsWithDefault):
         # taken from boto3 Session
         session = botocore.session.get_session()
         if self.profile_name is not None:
-            session.set_config_variable('profile', self.profile_name)
+            session.set_config_variable("profile", self.profile_name)
 
         if self.aws_access_key_id or self.aws_secret_access_key or self.aws_session_token:
             session.set_credentials(
-                self.aws_access_key_id, self.aws_secret_access_key, self.aws_session_token
+                self.aws_access_key_id,
+                self.aws_secret_access_key,
+                self.aws_session_token,
             )
         if self.region_name is not None:
-            session.set_config_variable('region', self.region_name)
+            session.set_config_variable("region", self.region_name)
         return session
 
     def _from_session(self, session: Any) -> Any:
         """Sets the credentials properties from botocore or boto3 `session` and return session's credentials if found"""
         import botocore.session
+
         if not isinstance(session, botocore.session.Session):
             # assume this is boto3 session
             session = session._session
         # NOTE: we do not set profile name from boto3 session
         # we either pass it explicitly in `_to_session` so we know it is identical
         # this is what boto3 does: return self._session.profile or 'default' which is obviously wrong (returning default when there's no session)
-        self.region_name = session.get_config_variable('region')
+        self.region_name = session.get_config_variable("region")
         default = session.get_credentials()
         if not default:
             return None

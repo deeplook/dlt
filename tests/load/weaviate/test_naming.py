@@ -5,9 +5,10 @@ from dlt.destinations.weaviate.ci_naming import NamingConvention as CINamingConv
 
 from tests.common.utils import load_yml_case
 
+
 @dlt.source
 def small():
-    return dlt.resource([1,2,3], name="table")
+    return dlt.resource([1, 2, 3], name="table")
 
 
 @pytest.mark.parametrize("n", [NamingConvention(), CINamingConvention()], ids=["naming", "ci_naming"])

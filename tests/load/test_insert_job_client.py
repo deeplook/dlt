@@ -7,7 +7,11 @@ from dlt.common.arithmetics import numeric_default_context
 from dlt.common.storages import FileStorage
 from dlt.common.utils import uniq_id
 
-from dlt.destinations.exceptions import DatabaseTerminalException, DatabaseTransientException, DatabaseUndefinedRelation
+from dlt.destinations.exceptions import (
+    DatabaseTerminalException,
+    DatabaseTransientException,
+    DatabaseUndefinedRelation,
+)
 from dlt.destinations.insert_job_client import InsertValuesJobClient
 
 from tests.utils import TEST_STORAGE_ROOT, autouse_test_storage, skipifpypy
@@ -16,22 +20,30 @@ from tests.load.pipeline.utils import destinations_configs, DestinationTestConfi
 
 DEFAULT_SUBSET = ["duckdb", "redshift", "postgres"]
 
+
 @pytest.fixture
 def file_storage() -> FileStorage:
     return FileStorage(TEST_STORAGE_ROOT, file_type="b", makedirs=True)
+
 
 @pytest.fixture(scope="function")
 def client(request) -> Iterator[InsertValuesJobClient]:
     yield from yield_client_with_storage(request.param.destination)  # type: ignore[misc]
 
-@pytest.mark.parametrize("client", destinations_configs(default_sql_configs=True, subset=DEFAULT_SUBSET), indirect=True, ids=lambda x: x.name)
+
+@pytest.mark.parametrize(
+    "client",
+    destinations_configs(default_sql_configs=True, subset=DEFAULT_SUBSET),
+    indirect=True,
+    ids=lambda x: x.name,
+)
 def test_simple_load(client: InsertValuesJobClient, file_storage: FileStorage) -> None:
     user_table_name = prepare_table(client)
     canonical_name = client.sql_client.make_qualified_table_name(user_table_name)
     # create insert
     insert_sql = "INSERT INTO {}(_dlt_id, _dlt_root_id, sender_id, timestamp)\nVALUES\n"
     insert_values = f"('{uniq_id()}', '{uniq_id()}', '90238094809sajlkjxoiewjhduuiuehd', '{str(pendulum.now())}')"
-    expect_load_file(client, file_storage, insert_sql+insert_values+";", user_table_name)
+    expect_load_file(client, file_storage, insert_sql + insert_values + ";", user_table_name)
     rows_count = client.sql_client.execute_sql(f"SELECT COUNT(1) FROM {canonical_name}")[0][0]
     assert rows_count == 1
     # insert 100 more rows
@@ -42,13 +54,18 @@ def test_simple_load(client: InsertValuesJobClient, file_storage: FileStorage) -
     # insert null value
     insert_sql_nc = "INSERT INTO {}(_dlt_id, _dlt_root_id, sender_id, timestamp, text)\nVALUES\n"
     insert_values_nc = f"('{uniq_id()}', '{uniq_id()}', '90238094809sajlkjxoiewjhduuiuehd', '{str(pendulum.now())}', NULL);"
-    expect_load_file(client, file_storage, insert_sql_nc+insert_values_nc, user_table_name)
+    expect_load_file(client, file_storage, insert_sql_nc + insert_values_nc, user_table_name)
     rows_count = client.sql_client.execute_sql(f"SELECT COUNT(1) FROM {canonical_name}")[0][0]
     assert rows_count == 102
 
 
 @skipifpypy
-@pytest.mark.parametrize("client", destinations_configs(default_sql_configs=True, subset=DEFAULT_SUBSET), indirect=True, ids=lambda x: x.name)
+@pytest.mark.parametrize(
+    "client",
+    destinations_configs(default_sql_configs=True, subset=DEFAULT_SUBSET),
+    indirect=True,
+    ids=lambda x: x.name,
+)
 def test_loading_errors(client: InsertValuesJobClient, file_storage: FileStorage) -> None:
     # test expected dbiapi exceptions for supported destinations
     import duckdb
@@ -66,51 +83,57 @@ def test_loading_errors(client: InsertValuesJobClient, file_storage: FileStorage
         TNotNullViolation = duckdb.ConstraintException
         TNumericValueOutOfRange = TDatatypeMismatch = duckdb.ConversionException
 
-
     user_table_name = prepare_table(client)
     # insert into unknown column
     insert_sql = "INSERT INTO {}(_dlt_id, _dlt_root_id, sender_id, timestamp, _unk_)\nVALUES\n"
     insert_values = f"('{uniq_id()}', '{uniq_id()}', '90238094809sajlkjxoiewjhduuiuehd', '{str(pendulum.now())}', NULL);"
     with pytest.raises(DatabaseTerminalException) as exv:
-        expect_load_file(client, file_storage, insert_sql+insert_values, user_table_name)
+        expect_load_file(client, file_storage, insert_sql + insert_values, user_table_name)
     assert type(exv.value.dbapi_exception) is TUndefinedColumn
     # insert null value
     insert_sql = "INSERT INTO {}(_dlt_id, _dlt_root_id, sender_id, timestamp)\nVALUES\n"
     insert_values = f"('{uniq_id()}', '{uniq_id()}', '90238094809sajlkjxoiewjhduuiuehd', NULL);"
     with pytest.raises(DatabaseTerminalException) as exv:
-        expect_load_file(client, file_storage, insert_sql+insert_values, user_table_name)
+        expect_load_file(client, file_storage, insert_sql + insert_values, user_table_name)
     assert type(exv.value.dbapi_exception) is TNotNullViolation
     # insert wrong type
     insert_sql = "INSERT INTO {}(_dlt_id, _dlt_root_id, sender_id, timestamp)\nVALUES\n"
     insert_values = f"('{uniq_id()}', '{uniq_id()}', '90238094809sajlkjxoiewjhduuiuehd', TRUE);"
     with pytest.raises(DatabaseTerminalException) as exv:
-        expect_load_file(client, file_storage, insert_sql+insert_values, user_table_name)
+        expect_load_file(client, file_storage, insert_sql + insert_values, user_table_name)
     assert type(exv.value.dbapi_exception) is TDatatypeMismatch
     # numeric overflow on bigint
     insert_sql = "INSERT INTO {}(_dlt_id, _dlt_root_id, sender_id, timestamp, metadata__rasa_x_id)\nVALUES\n"
     # 2**64//2 - 1 is a maximum bigint value
     insert_values = f"('{uniq_id()}', '{uniq_id()}', '90238094809sajlkjxoiewjhduuiuehd', '{str(pendulum.now())}', {2**64//2});"
     with pytest.raises(DatabaseTerminalException) as exv:
-        expect_load_file(client, file_storage, insert_sql+insert_values, user_table_name)
-    assert type(exv.value.dbapi_exception) in (TNumericValueOutOfRange, )
+        expect_load_file(client, file_storage, insert_sql + insert_values, user_table_name)
+    assert type(exv.value.dbapi_exception) in (TNumericValueOutOfRange,)
     # numeric overflow on NUMERIC
     insert_sql = "INSERT INTO {}(_dlt_id, _dlt_root_id, sender_id, timestamp, parse_data__intent__id)\nVALUES\n"
     # default decimal is (38, 9) (128 bit), use local context to generate decimals with 38 precision
     with numeric_default_context():
-        below_limit = Decimal(10**29) - Decimal('0.001')
+        below_limit = Decimal(10**29) - Decimal("0.001")
         above_limit = Decimal(10**29)
     # this will pass
     insert_values = f"('{uniq_id()}', '{uniq_id()}', '90238094809sajlkjxoiewjhduuiuehd', '{str(pendulum.now())}', {below_limit});"
-    expect_load_file(client, file_storage, insert_sql+insert_values, user_table_name)
+    expect_load_file(client, file_storage, insert_sql + insert_values, user_table_name)
     # this will raise
     insert_values = f"('{uniq_id()}', '{uniq_id()}', '90238094809sajlkjxoiewjhduuiuehd', '{str(pendulum.now())}', {above_limit});"
     with pytest.raises(DatabaseTerminalException) as exv:
-        expect_load_file(client, file_storage, insert_sql+insert_values, user_table_name)
-    assert type(exv.value.dbapi_exception) in (TNumericValueOutOfRange, psycopg2.errors.InternalError_)
+        expect_load_file(client, file_storage, insert_sql + insert_values, user_table_name)
+    assert type(exv.value.dbapi_exception) in (
+        TNumericValueOutOfRange,
+        psycopg2.errors.InternalError_,
+    )
 
 
-
-@pytest.mark.parametrize("client", destinations_configs(default_sql_configs=True, subset=DEFAULT_SUBSET), indirect=True, ids=lambda x: x.name)
+@pytest.mark.parametrize(
+    "client",
+    destinations_configs(default_sql_configs=True, subset=DEFAULT_SUBSET),
+    indirect=True,
+    ids=lambda x: x.name,
+)
 def test_query_split(client: InsertValuesJobClient, file_storage: FileStorage) -> None:
     mocked_caps = client.sql_client.__class__.capabilities
     insert_sql = prepare_insert_statement(10)
@@ -123,14 +146,14 @@ def test_query_split(client: InsertValuesJobClient, file_storage: FileStorage) -
     # split in 10 lines
     assert mocked_fragments.call_count == 10
     for idx, call in enumerate(mocked_fragments.call_args_list):
-        fragment:List[str] = call.args[0]
+        fragment: List[str] = call.args[0]
         # last elem of fragment is a data list, first element is id, and must end with ;\n
         assert fragment[-1].startswith(f"'{idx}'")
         assert fragment[-1].endswith(");")
     assert_load_with_max_query(client, file_storage, 10, 2)
 
     start_idx = insert_sql.find("S\n(")
-    idx = insert_sql.find("),\n", len(insert_sql)//2)
+    idx = insert_sql.find("),\n", len(insert_sql) // 2)
 
     # set query length so it reads data until "," (followed by \n)
     query_length = (idx - start_idx - 1) * 2
@@ -157,7 +180,12 @@ def test_query_split(client: InsertValuesJobClient, file_storage: FileStorage) -
     assert mocked_fragments.call_count == 1
 
 
-def assert_load_with_max_query(client: InsertValuesJobClient, file_storage: FileStorage, insert_lines: int, max_query_length: int) -> None:
+def assert_load_with_max_query(
+    client: InsertValuesJobClient,
+    file_storage: FileStorage,
+    insert_lines: int,
+    max_query_length: int,
+) -> None:
     # load and check for real
     mocked_caps = client.sql_client.__class__.capabilities
     with patch.object(mocked_caps, "max_query_length", max_query_length):
@@ -177,7 +205,7 @@ def assert_load_with_max_query(client: InsertValuesJobClient, file_storage: File
 def prepare_insert_statement(lines: int) -> str:
     insert_sql = "INSERT INTO {}(_dlt_id, _dlt_root_id, sender_id, timestamp)\nVALUES\n"
     insert_values = "('{}', '{}', '90238094809sajlkjxoiewjhduuiuehd', '{}')"
-    #ids = []
+    # ids = []
     for i in range(lines):
         # id_ = uniq_id()
         # ids.append(id_)

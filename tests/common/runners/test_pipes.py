@@ -27,6 +27,7 @@ class _TestPickler(NamedTuple):
 #         self.s1 = s1
 #         self.s2 = s2
 
+
 class _TestClassUnkField:
     pass
     # def __init__(self, s1: _TestPicklex, s2: str) -> None:
@@ -61,13 +62,17 @@ def test_synth_pickler_unknown_types() -> None:
     assert not isinstance(obj, tuple)
 
     # synth unknown class containing other unknown types
-    obj = decode_obj("Koyo502yl4IKMqIxUTJFgASVbQAAAAAAAACMH3Rlc3RzLmNvbW1vbi5ydW5uZXJzLnRlc3RfcGlwZXOUjApfVGVzdENsYXNzlJOUKYGUfZQojAJzMZRoAIwMX1Rlc3RQaWNrbGV4lJOUjAFZlEsXhpSBlIwCczKUjAFVlIwDX3MzlEsDdWIu")
+    obj = decode_obj(
+        "Koyo502yl4IKMqIxUTJFgASVbQAAAAAAAACMH3Rlc3RzLmNvbW1vbi5ydW5uZXJzLnRlc3RfcGlwZXOUjApfVGVzdENsYXNzlJOUKYGUfZQojAJzMZRoAIwMX1Rlc3RQaWNrbGV4lJOUjAFZlEsXhpSBlIwCczKUjAFVlIwDX3MzlEsDdWIu"
+    )
     assert type(obj).__name__.endswith("_TestClass")
     # tuple inside will be synthesized as well
     assert type(obj.s1).__name__.endswith("_TestPicklex")
 
     # known class containing unknown types
-    obj = decode_obj("PozhjHuf2oS7jPcRxKoagASVbQAAAAAAAACMH3Rlc3RzLmNvbW1vbi5ydW5uZXJzLnRlc3RfcGlwZXOUjBJfVGVzdENsYXNzVW5rRmllbGSUk5QpgZR9lCiMAnMxlGgAjAxfVGVzdFBpY2tsZXiUk5SMAVmUSxeGlIGUjAJzMpSMAVWUdWIu")
+    obj = decode_obj(
+        "PozhjHuf2oS7jPcRxKoagASVbQAAAAAAAACMH3Rlc3RzLmNvbW1vbi5ydW5uZXJzLnRlc3RfcGlwZXOUjBJfVGVzdENsYXNzVW5rRmllbGSUk5QpgZR9lCiMAnMxlGgAjAxfVGVzdFBpY2tsZXiUk5SMAVmUSxeGlIGUjAJzMpSMAVWUdWIu"
+    )
     assert isinstance(obj, _TestClassUnkField)
     assert type(obj.s1).__name__.endswith("_TestPicklex")  # type: ignore[attr-defined]
 
@@ -88,7 +93,13 @@ def test_iter_stdout() -> None:
         lines = list(iter_stdout(venv, "python", "tests/common/scripts/empty.py"))
         assert lines == []
         with pytest.raises(CalledProcessError) as cpe:
-            list(iter_stdout(venv, "python", "tests/common/scripts/no_stdout_no_stderr_with_fail.py"))
+            list(
+                iter_stdout(
+                    venv,
+                    "python",
+                    "tests/common/scripts/no_stdout_no_stderr_with_fail.py",
+                )
+            )
         # empty stdout
         assert cpe.value.output == ""
         assert cpe.value.stderr == ""

@@ -3,29 +3,89 @@ import contextlib
 from copy import copy, deepcopy
 import makefun
 import inspect
-from typing import AsyncIterable, AsyncIterator, ClassVar, Callable, Dict, Iterable, Iterator, List, Sequence, Tuple, Union, Any, Optional
+from typing import (
+    AsyncIterable,
+    AsyncIterator,
+    ClassVar,
+    Callable,
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    Sequence,
+    Tuple,
+    Union,
+    Any,
+    Optional,
+)
 from typing_extensions import Self
 
 from dlt.common.configuration.resolve import inject_section
 from dlt.common.configuration.specs import known_sections
 from dlt.common.configuration.specs.config_section_context import ConfigSectionContext
-from dlt.common.normalizers.json.relational import DataItemNormalizer as RelationalNormalizer, RelationalNormalizerConfigPropagation
+from dlt.common.normalizers.json.relational import (
+    DataItemNormalizer as RelationalNormalizer,
+    RelationalNormalizerConfigPropagation,
+)
 from dlt.common.schema import Schema
 from dlt.common.schema.typing import TColumnName
-from dlt.common.typing import AnyFun, DictStrAny, StrAny, TDataItem, TDataItems, NoneType
+from dlt.common.typing import (
+    AnyFun,
+    DictStrAny,
+    StrAny,
+    TDataItem,
+    TDataItems,
+    NoneType,
+)
 from dlt.common.configuration.container import Container
-from dlt.common.pipeline import PipelineContext, StateInjectableContext, SupportsPipelineRun, resource_state, source_state, pipeline_state
-from dlt.common.utils import graph_find_scc_nodes, flatten_list_or_items, get_callable_name, graph_edges_to_nodes, multi_context_manager, uniq_id
+from dlt.common.pipeline import (
+    PipelineContext,
+    StateInjectableContext,
+    SupportsPipelineRun,
+    resource_state,
+    source_state,
+    pipeline_state,
+)
+from dlt.common.utils import (
+    graph_find_scc_nodes,
+    flatten_list_or_items,
+    get_callable_name,
+    graph_edges_to_nodes,
+    multi_context_manager,
+    uniq_id,
+)
 
-from dlt.extract.typing import (DataItemWithMeta, ItemTransformFunc, ItemTransformFunctionWithMeta, TDecompositionStrategy, TableNameMeta,
-                                FilterItem, MapItem, YieldMapItem, ValidateItem)
+from dlt.extract.typing import (
+    DataItemWithMeta,
+    ItemTransformFunc,
+    ItemTransformFunctionWithMeta,
+    TDecompositionStrategy,
+    TableNameMeta,
+    FilterItem,
+    MapItem,
+    YieldMapItem,
+    ValidateItem,
+)
 from dlt.extract.pipe import Pipe, ManagedPipeIterator, TPipeStep
 from dlt.extract.schema import DltResourceSchema, TTableSchemaTemplate
 from dlt.extract.incremental import Incremental, IncrementalResourceWrapper
 from dlt.extract.exceptions import (
-    InvalidTransformerDataTypeGeneratorFunctionRequired, InvalidParentResourceDataType, InvalidParentResourceIsAFunction, InvalidResourceDataType, InvalidResourceDataTypeIsNone, InvalidTransformerGeneratorFunction,
-    DataItemRequiredForDynamicTableHints, InvalidResourceDataTypeAsync, InvalidResourceDataTypeBasic,
-    InvalidResourceDataTypeMultiplePipes, ParametrizedResourceUnbound, ResourceNameMissing, ResourceNotATransformer, ResourcesNotFoundError, DeletingResourcesNotSupported)
+    InvalidTransformerDataTypeGeneratorFunctionRequired,
+    InvalidParentResourceDataType,
+    InvalidParentResourceIsAFunction,
+    InvalidResourceDataType,
+    InvalidResourceDataTypeIsNone,
+    InvalidTransformerGeneratorFunction,
+    DataItemRequiredForDynamicTableHints,
+    InvalidResourceDataTypeAsync,
+    InvalidResourceDataTypeBasic,
+    InvalidResourceDataTypeMultiplePipes,
+    ParametrizedResourceUnbound,
+    ResourceNameMissing,
+    ResourceNotATransformer,
+    ResourcesNotFoundError,
+    DeletingResourcesNotSupported,
+)
 
 
 def with_table_name(item: TDataItems, table_name: str) -> DataItemWithMeta:
@@ -35,6 +95,7 @@ def with_table_name(item: TDataItems, table_name: str) -> DataItemWithMeta:
 
 class DltResource(Iterable[TDataItem], DltResourceSchema):
     """Implements dlt resource. Contains a data pipe that wraps a generating item and table schema that can be adjusted"""
+
     Empty: ClassVar["DltResource"] = None
     source_name: str
     """Name of the source that contains this instance of the source, set when added to DltResourcesDict"""
@@ -48,7 +109,7 @@ class DltResource(Iterable[TDataItem], DltResourceSchema):
         selected: bool,
         incremental: IncrementalResourceWrapper = None,
         section: str = None,
-        args_bound: bool = False
+        args_bound: bool = False,
     ) -> None:
         self.section = section
         self.selected = selected
@@ -69,7 +130,7 @@ class DltResource(Iterable[TDataItem], DltResourceSchema):
         table_schema_template: TTableSchemaTemplate = None,
         selected: bool = True,
         data_from: Union["DltResource", Pipe] = None,
-        incremental: IncrementalResourceWrapper = None
+        incremental: IncrementalResourceWrapper = None,
     ) -> "DltResource":
         if data is None:
             raise InvalidResourceDataTypeIsNone(name, data, NoneType)  # type: ignore
@@ -78,7 +139,13 @@ class DltResource(Iterable[TDataItem], DltResourceSchema):
             return data
 
         if isinstance(data, Pipe):
-            return cls(data, table_schema_template, selected, incremental=incremental, section=section)
+            return cls(
+                data,
+                table_schema_template,
+                selected,
+                incremental=incremental,
+                section=section,
+            )
 
         if callable(data):
             name = name or get_callable_name(data)
@@ -106,7 +173,14 @@ class DltResource(Iterable[TDataItem], DltResourceSchema):
         # create resource from iterator, iterable or generator function
         if isinstance(data, (Iterable, Iterator)) or callable(data):
             pipe = Pipe.from_data(name, data, parent=parent_pipe)
-            return cls(pipe, table_schema_template, selected, incremental=incremental, section=section, args_bound=not callable(data))
+            return cls(
+                pipe,
+                table_schema_template,
+                selected,
+                incremental=incremental,
+                section=section,
+                args_bound=not callable(data),
+            )
         else:
             # some other data type that is not supported
             raise InvalidResourceDataType(name, data, type(data), f"The data type is {type(data).__name__}")
@@ -178,8 +252,9 @@ class DltResource(Iterable[TDataItem], DltResourceSchema):
     def select_tables(self, *table_names: Iterable[str]) -> "DltResource":
         """For resources that dynamically dispatch data to several tables allows to select tables that will receive data, effectively filtering out other data items.
 
-            Both `with_table_name` marker and data-based (function) table name hints are supported.
+        Both `with_table_name` marker and data-based (function) table name hints are supported.
         """
+
         def _filter(item: TDataItem, meta: Any = None) -> bool:
             is_in_meta = isinstance(meta, TableNameMeta) and meta.table_name in table_names
             is_in_dyn = self._table_name_hint_fun and self._table_name_hint_fun(item) in table_names
@@ -254,6 +329,7 @@ class DltResource(Iterable[TDataItem], DltResourceSchema):
         Returns:
             "DltResource": returns self
         """
+
         def _gen_wrap(gen: TPipeStep) -> TPipeStep:
             """Wrap a generator to take the first `max_items` records"""
             nonlocal max_items
@@ -270,12 +346,17 @@ class DltResource(Iterable[TDataItem], DltResourceSchema):
                 if inspect.isgenerator(gen):
                     gen.close()
             return
+
         # transformers should be limited by their input, so we only limit non-transformers
         if not self.is_transformer:
             self._pipe.replace_gen(_gen_wrap(self._pipe.gen))
         return self
 
-    def add_step(self, item_transform: ItemTransformFunctionWithMeta[TDataItems], insert_at: int = None) -> "DltResource":  # noqa: A003
+    def add_step(
+        self,
+        item_transform: ItemTransformFunctionWithMeta[TDataItems],
+        insert_at: int = None,
+    ) -> "DltResource":  # noqa: A003
         if insert_at is None:
             self._pipe.append_step(item_transform)
         else:
@@ -299,8 +380,8 @@ class DltResource(Iterable[TDataItem], DltResourceSchema):
             if primary_key is not None:
                 incremental.primary_key = primary_key
 
-        if table_schema_template.get('validator') is not None:
-            self.validator = table_schema_template['validator']
+        if table_schema_template.get("validator") is not None:
+            self.validator = table_schema_template["validator"]
 
     def bind(self, *args: Any, **kwargs: Any) -> "DltResource":
         """Binds the parametrized resource to passed arguments. Modifies resource pipe in place. Does not evaluate generators or iterators."""
@@ -365,7 +446,7 @@ class DltResource(Iterable[TDataItem], DltResourceSchema):
     def __iter__(self) -> Iterator[TDataItem]:
         """Opens iterator that yields the data items from the resources in the same order as in Pipeline class.
 
-            A read-only state is provided, initialized from active pipeline state. The state is discarded after the iterator is closed.
+        A read-only state is provided, initialized from active pipeline state. The state is discarded after the iterator is closed.
         """
         # use the same state dict when opening iterator and when iterator is iterated
         container = Container()
@@ -389,8 +470,7 @@ class DltResource(Iterable[TDataItem], DltResourceSchema):
             pass
 
     def _clone(self, new_name: str = None, with_parent: bool = False) -> "DltResource":
-        """Creates a deep copy of a current resource, optionally renaming the resource. The clone will not be part of the source
-        """
+        """Creates a deep copy of a current resource, optionally renaming the resource. The clone will not be part of the source"""
         pipe = self._pipe
         if self._pipe and not self._pipe.is_empty:
             pipe = pipe._clone(new_name=new_name, with_parent=with_parent)
@@ -399,7 +479,7 @@ class DltResource(Iterable[TDataItem], DltResourceSchema):
             pipe,
             deepcopy(self._table_schema_template),
             selected=self.selected,
-            section=self.section
+            section=self.section,
         )
 
     def _get_config_section_context(self) -> ConfigSectionContext:
@@ -420,8 +500,12 @@ class DltResource(Iterable[TDataItem], DltResourceSchema):
             pipeline_name=pipeline_name,
             # do not emit middle config section to not overwrite the resource section
             # only sources emit middle config section
-            sections=(known_sections.SOURCES, "", self.source_name or default_schema_name or self.name),
-            source_state_key=self.source_name or default_schema_name or self.section or uniq_id()
+            sections=(
+                known_sections.SOURCES,
+                "",
+                self.source_name or default_schema_name or self.name,
+            ),
+            source_state_key=self.source_name or default_schema_name or self.section or uniq_id(),
         )
 
     def __str__(self) -> str:
@@ -485,7 +569,10 @@ class DltResource(Iterable[TDataItem], DltResourceSchema):
         if pos_only_len == 1 and first_ar.kind != first_ar.POSITIONAL_ONLY:
             return 2
         # first arg must be positional or kw_pos
-        if first_ar.kind not in (first_ar.POSITIONAL_ONLY, first_ar.POSITIONAL_OR_KEYWORD):
+        if first_ar.kind not in (
+            first_ar.POSITIONAL_ONLY,
+            first_ar.POSITIONAL_OR_KEYWORD,
+        ):
             return 3
         return 0
 
@@ -509,7 +596,7 @@ class DltResourceDict(Dict[str, DltResource]):
     @property
     def selected(self) -> Dict[str, DltResource]:
         """Returns a subset of all resources that will be extracted and loaded to the destination."""
-        return {k:v for k,v in self.items() if v.selected}
+        return {k: v for k, v in self.items() if v.selected}
 
     @property
     def extracted(self) -> Dict[str, DltResource]:
@@ -525,10 +612,7 @@ class DltResourceDict(Dict[str, DltResource]):
                         resource = self[pipe.name]
                     except KeyError:
                         # resource for pipe not found: return mock resource
-                        mock_template = DltResourceSchema.new_table_template(
-                            pipe.name,
-                            write_disposition=resource.write_disposition
-                        )
+                        mock_template = DltResourceSchema.new_table_template(pipe.name, write_disposition=resource.write_disposition)
                         resource = DltResource(pipe, mock_template, False, section=resource.section)
                         resource.source_name = resource.source_name
                     extracted[resource.name] = resource
@@ -638,7 +722,14 @@ class DltSource(Iterable[TDataItem]):
     * You can use a `run` method to load the data with a default instance of dlt pipeline.
     * You can get source read only state for the currently active Pipeline instance
     """
-    def __init__(self, name: str, section: str, schema: Schema, resources: Sequence[DltResource] = None) -> None:
+
+    def __init__(
+        self,
+        name: str,
+        section: str,
+        schema: Schema,
+        resources: Sequence[DltResource] = None,
+    ) -> None:
         self.name = name
         self.section = section
         """Tells if iterator associated with a source is exhausted"""
@@ -697,11 +788,10 @@ class DltSource(Iterable[TDataItem]):
     @root_key.setter
     def root_key(self, value: bool) -> None:
         if value is True:
-            RelationalNormalizer.update_normalizer_config(self._schema,
-                {"propagation": {
-                    "root": {
-                        "_dlt_id": TColumnName("_dlt_root_id")
-                    }}})
+            RelationalNormalizer.update_normalizer_config(
+                self._schema,
+                {"propagation": {"root": {"_dlt_id": TColumnName("_dlt_root_id")}}},
+            )
         else:
             if self.root_key:
                 propagation_config = RelationalNormalizer.get_normalizer_config(self._schema)["propagation"]
@@ -732,9 +822,7 @@ class DltSource(Iterable[TDataItem]):
         for r in self.selected_resources.values():
             # names must be normalized here
             with contextlib.suppress(DataItemRequiredForDynamicTableHints):
-                partial_table = self._schema.normalize_table_identifiers(
-                    r.compute_table_schema(item)
-                )
+                partial_table = self._schema.normalize_table_identifiers(r.compute_table_schema(item))
                 schema.update_table(partial_table)
         return schema
 
@@ -747,8 +835,8 @@ class DltSource(Iterable[TDataItem]):
     def decompose(self, strategy: TDecompositionStrategy) -> List["DltSource"]:
         """Decomposes source into a list of sources with a given strategy.
 
-            "none" will return source as is
-            "scc" will decompose the dag of selected pipes and their parent into strongly connected components
+        "none" will return source as is
+        "scc" will decompose the dag of selected pipes and their parent into strongly connected components
         """
         if strategy == "none":
             return [self]
@@ -796,9 +884,9 @@ class DltSource(Iterable[TDataItem]):
     def __iter__(self) -> Iterator[TDataItem]:
         """Opens iterator that yields the data items from all the resources within the source in the same order as in Pipeline class.
 
-            A read-only state is provided, initialized from active pipeline state. The state is discarded after the iterator is closed.
+        A read-only state is provided, initialized from active pipeline state. The state is discarded after the iterator is closed.
 
-            A source config section is injected to allow secrets/config injection as during regular extraction.
+        A source config section is injected to allow secrets/config injection as during regular extraction.
         """
         # use the same state dict when opening iterator and when iterator is iterated
         mock_state, _ = pipeline_state(Container(), {})
@@ -818,7 +906,7 @@ class DltSource(Iterable[TDataItem]):
         return ConfigSectionContext(
             pipeline_name=pipeline_name,
             sections=(known_sections.SOURCES, self.section, self.name),
-            source_state_key=self.name
+            source_state_key=self.name,
         )
 
     def __getattr__(self, resource_name: str) -> DltResource:

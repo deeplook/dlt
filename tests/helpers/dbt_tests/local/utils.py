@@ -1,4 +1,3 @@
-
 import contextlib
 from typing import Iterator, NamedTuple
 
@@ -24,7 +23,6 @@ class DBTDestinationInfo(NamedTuple):
 
 
 def setup_rasa_runner(profile_name: str, dataset_name: str = None, override_values: StrAny = None) -> DBTPackageRunner:
-
     C = DBTRunnerConfiguration()
     C.package_location = "https://github.com/scale-vector/rasa_semantic_schema.git"  # "/home/rudolfix/src/dbt/rasa_semantic_schema"
     C.package_repository_branch = "dlt-dbt-runner-ci-do-not-delete"
@@ -41,7 +39,7 @@ def setup_rasa_runner(profile_name: str, dataset_name: str = None, override_valu
         DestinationClientDwhConfiguration(dataset_name=dataset_name or FIXTURES_DATASET_NAME),
         TEST_STORAGE_ROOT,
         package_profile_name=profile_name,
-        config=C
+        config=C,
     )
     # now C is resolved
     init_test_logging(C.runtime)

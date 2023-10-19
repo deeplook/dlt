@@ -13,9 +13,16 @@ from tests.cases import arrow_table_all_data_types, TArrowFormat
 from dlt.common.storages import LoadStorage
 
 
-
 @pytest.mark.parametrize(
-    ("item_type", "is_list"), [("pandas", False), ("table", False), ("record_batch", False), ("pandas", True), ("table", True), ("record_batch", True)]
+    ("item_type", "is_list"),
+    [
+        ("pandas", False),
+        ("table", False),
+        ("record_batch", False),
+        ("pandas", True),
+        ("table", True),
+        ("record_batch", True),
+    ],
 )
 def test_extract_and_normalize(item_type: TArrowFormat, is_list: bool):
     item, records = arrow_table_all_data_types(item_type)
@@ -29,24 +36,23 @@ def test_extract_and_normalize(item_type: TArrowFormat, is_list: bool):
         else:
             yield item
 
-
     pipeline.extract(some_data())
     norm_storage = pipeline._get_normalize_storage()
     extract_files = [fn for fn in norm_storage.list_files_to_normalize_sorted() if fn.endswith(".parquet")]
 
     assert len(extract_files) == 1
 
-    with norm_storage.storage.open_file(extract_files[0], 'rb') as f:
+    with norm_storage.storage.open_file(extract_files[0], "rb") as f:
         extracted_bytes = f.read()
 
     info = pipeline.normalize()
 
-    assert info.row_counts['some_data'] == len(records)
+    assert info.row_counts["some_data"] == len(records)
 
     load_id = pipeline.list_normalized_load_packages()[0]
     storage = pipeline._get_load_storage()
     jobs = storage.list_new_jobs(load_id)
-    with storage.storage.open_file(jobs[0], 'rb') as f:
+    with storage.storage.open_file(jobs[0], "rb") as f:
         normalized_bytes = f.read()
 
         # Normalized is linked/copied exactly and should be the same as the extracted file
@@ -64,16 +70,16 @@ def test_extract_and_normalize(item_type: TArrowFormat, is_list: bool):
     schema = pipeline.default_schema
 
     # Check schema detection
-    schema_columns = schema.tables['some_data']['columns']
+    schema_columns = schema.tables["some_data"]["columns"]
     assert set(df_tbl.columns) == set(schema_columns)
-    assert schema_columns['date']['data_type'] == 'date'
-    assert schema_columns['int']['data_type'] == 'bigint'
-    assert schema_columns['float']['data_type'] == 'double'
-    assert schema_columns['decimal']['data_type'] == 'decimal'
-    assert schema_columns['time']['data_type'] == 'time'
-    assert schema_columns['binary']['data_type'] == 'binary'
-    assert schema_columns['string']['data_type'] == 'text'
-    assert schema_columns['json']['data_type'] == 'complex'
+    assert schema_columns["date"]["data_type"] == "date"
+    assert schema_columns["int"]["data_type"] == "bigint"
+    assert schema_columns["float"]["data_type"] == "double"
+    assert schema_columns["decimal"]["data_type"] == "decimal"
+    assert schema_columns["time"]["data_type"] == "time"
+    assert schema_columns["binary"]["data_type"] == "binary"
+    assert schema_columns["string"]["data_type"] == "text"
+    assert schema_columns["json"]["data_type"] == "complex"
 
 
 @pytest.mark.parametrize("item_type", ["pandas", "table", "record_batch"])
@@ -102,7 +108,7 @@ def test_add_map(item_type: TArrowFormat):
         yield item
 
     def map_func(item):
-        return item.filter(pa.compute.equal(item['int'], 1))
+        return item.filter(pa.compute.equal(item["int"], 1))
 
     # Add map that filters the table
     some_data.add_map(map_func)
@@ -110,4 +116,4 @@ def test_add_map(item_type: TArrowFormat):
     result = list(some_data())
 
     assert len(result) == 1
-    assert result[0]['int'][0].as_py() == 1
+    assert result[0]["int"][0].as_py() == 1

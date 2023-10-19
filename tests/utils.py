@@ -13,7 +13,9 @@ from dlt.common.configuration.container import Container
 from dlt.common.configuration.providers import DictionaryProvider
 from dlt.common.configuration.resolve import resolve_configuration
 from dlt.common.configuration.specs import RunConfiguration
-from dlt.common.configuration.specs.config_providers_context import ConfigProvidersContext
+from dlt.common.configuration.specs.config_providers_context import (
+    ConfigProvidersContext,
+)
 from dlt.common.runtime.logger import init_logging
 from dlt.common.runtime.telemetry import start_telemetry, stop_telemetry
 from dlt.common.storages import FileStorage
@@ -27,7 +29,19 @@ TEST_STORAGE_ROOT = "_storage"
 
 
 # destination constants
-IMPLEMENTED_DESTINATIONS = {"athena", "duckdb", "bigquery", "redshift", "postgres", "snowflake", "filesystem", "weaviate", "dummy", "motherduck", "mssql"}
+IMPLEMENTED_DESTINATIONS = {
+    "athena",
+    "duckdb",
+    "bigquery",
+    "redshift",
+    "postgres",
+    "snowflake",
+    "filesystem",
+    "weaviate",
+    "dummy",
+    "motherduck",
+    "mssql",
+}
 NON_SQL_DESTINATIONS = {"filesystem", "weaviate", "dummy", "motherduck"}
 SQL_DESTINATIONS = IMPLEMENTED_DESTINATIONS - NON_SQL_DESTINATIONS
 
@@ -53,6 +67,7 @@ for destination in SQL_DESTINATIONS:
 for destination in ACTIVE_DESTINATIONS:
     assert destination in IMPLEMENTED_DESTINATIONS, f"Unknown active destination {destination}"
 
+
 def TEST_DICT_CONFIG_PROVIDER():
     # add test dictionary provider
     providers_context = Container()[ConfigProvidersContext]
@@ -63,7 +78,8 @@ def TEST_DICT_CONFIG_PROVIDER():
         providers_context.add_provider(provider)
         return provider
 
-class MockHttpResponse():
+
+class MockHttpResponse:
     def __init__(self, status_code: int) -> None:
         self.status_code = status_code
 
@@ -165,9 +181,11 @@ def clean_test_storage(init_normalize: bool = False, init_loader: bool = False, 
     storage.create_folder(".")
     if init_normalize:
         from dlt.common.storages import NormalizeStorage
+
         NormalizeStorage(True)
     if init_loader:
         from dlt.common.storages import LoadStorage
+
         LoadStorage(True, "jsonl", LoadStorage.ALL_SUPPORTED_FILE_FORMATS)
     return storage
 
@@ -179,6 +197,7 @@ def create_schema_with_name(schema_name) -> Schema:
 
 def assert_no_dict_key_starts_with(d: StrAny, key_prefix: str) -> None:
     assert all(not key.startswith(key_prefix) for key in d.keys())
+
 
 def skip_if_not_active(destination: str) -> None:
     assert destination in IMPLEMENTED_DESTINATIONS, f"Unknown skipped destination {destination}"
@@ -193,22 +212,15 @@ def is_running_in_github_fork() -> bool:
     return is_github_actions and ":" in head_ref and not head_ref.startswith(repo.split("/")[0])
 
 
-skipifspawn = pytest.mark.skipif(
-    multiprocessing.get_start_method() != "fork", reason="process fork not supported"
-)
+skipifspawn = pytest.mark.skipif(multiprocessing.get_start_method() != "fork", reason="process fork not supported")
 
-skipifpypy = pytest.mark.skipif(
-    platform.python_implementation() == "PyPy", reason="won't run in PyPy interpreter"
-)
+skipifpypy = pytest.mark.skipif(platform.python_implementation() == "PyPy", reason="won't run in PyPy interpreter")
 
-skipifnotwindows = pytest.mark.skipif(
-    platform.system() != "Windows", reason="runs only on windows"
-)
+skipifnotwindows = pytest.mark.skipif(platform.system() != "Windows", reason="runs only on windows")
 
-skipifwindows = pytest.mark.skipif(
-    platform.system() == "Windows", reason="does not runs on windows"
-)
+skipifwindows = pytest.mark.skipif(platform.system() == "Windows", reason="does not runs on windows")
 
 skipifgithubfork = pytest.mark.skipif(
-    is_running_in_github_fork(), reason="Skipping test because it runs on a PR coming from fork"
+    is_running_in_github_fork(),
+    reason="Skipping test because it runs on a PR coming from fork",
 )

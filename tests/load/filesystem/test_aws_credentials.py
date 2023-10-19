@@ -10,8 +10,8 @@ from tests.common.configuration.utils import environment
 from tests.load.utils import ALL_FILESYSTEM_DRIVERS
 from tests.utils import preserve_environ, autouse_test_storage
 
-if 's3' not in ALL_FILESYSTEM_DRIVERS:
-    pytest.skip('s3 filesystem driver not configured', allow_module_level=True)
+if "s3" not in ALL_FILESYSTEM_DRIVERS:
+    pytest.skip("s3 filesystem driver not configured", allow_module_level=True)
 
 
 def test_aws_credentials_resolved_from_default(environment: Dict[str, str]) -> None:
@@ -19,9 +19,9 @@ def test_aws_credentials_resolved_from_default(environment: Dict[str, str]) -> N
 
     config = resolve_configuration(AwsCredentials())
 
-    assert config.aws_access_key_id == 'fake_access_key'
-    assert config.aws_secret_access_key == 'fake_secret_key'
-    assert config.aws_session_token == 'fake_session_token'
+    assert config.aws_access_key_id == "fake_access_key"
+    assert config.aws_secret_access_key == "fake_secret_key"
+    assert config.aws_session_token == "fake_session_token"
     # we do not set the profile
     assert config.profile_name is None
 
@@ -37,7 +37,7 @@ def test_aws_credentials_resolved_from_default(environment: Dict[str, str]) -> N
     # assert config.profile_name == "default"
 
 
-@pytest.mark.skipif('s3' not in ALL_FILESYSTEM_DRIVERS, reason='s3 filesystem driver not configured')
+@pytest.mark.skipif("s3" not in ALL_FILESYSTEM_DRIVERS, reason="s3 filesystem driver not configured")
 def test_aws_credentials_from_botocore(environment: Dict[str, str]) -> None:
     set_aws_credentials_env(environment)
 
@@ -48,7 +48,7 @@ def test_aws_credentials_from_botocore(environment: Dict[str, str]) -> None:
     c = AwsCredentials(session)
     assert c.profile_name is None
     assert c.aws_access_key_id == "fake_access_key"
-    assert c.region_name == session.get_config_variable('region')
+    assert c.region_name == session.get_config_variable("region")
     assert c.profile_name is None
     assert c.is_resolved()
     assert not c.is_partial()
@@ -63,7 +63,7 @@ def test_aws_credentials_from_botocore(environment: Dict[str, str]) -> None:
         c.parse_native_representation("boto3")
 
 
-@pytest.mark.skipif('s3' not in ALL_FILESYSTEM_DRIVERS, reason='s3 filesystem driver not configured')
+@pytest.mark.skipif("s3" not in ALL_FILESYSTEM_DRIVERS, reason="s3 filesystem driver not configured")
 def test_aws_credentials_from_boto3(environment: Dict[str, str]) -> None:
     try:
         import boto3
@@ -89,7 +89,7 @@ def test_aws_credentials_from_boto3(environment: Dict[str, str]) -> None:
     assert c.aws_access_key_id == "fake_access_key"
 
 
-@pytest.mark.skipif('s3' not in ALL_FILESYSTEM_DRIVERS, reason='s3 filesystem driver not configured')
+@pytest.mark.skipif("s3" not in ALL_FILESYSTEM_DRIVERS, reason="s3 filesystem driver not configured")
 def test_aws_credentials_for_profile(environment: Dict[str, str]) -> None:
     import botocore.exceptions
 
@@ -102,12 +102,12 @@ def test_aws_credentials_for_profile(environment: Dict[str, str]) -> None:
     c.profile_name = "dlt-ci-user"
     try:
         c = resolve_configuration(c)
-        assert digest128(c.aws_access_key_id) == 'S3r3CtEf074HjqVeHKj/'
+        assert digest128(c.aws_access_key_id) == "S3r3CtEf074HjqVeHKj/"
     except botocore.exceptions.ProfileNotFound:
         pytest.skip("This test requires dlt-ci-user aws profile to be present")
 
 
 def set_aws_credentials_env(environment: Dict[str, str]) -> None:
-    environment['AWS_ACCESS_KEY_ID'] = 'fake_access_key'
-    environment['AWS_SECRET_ACCESS_KEY'] = 'fake_secret_key'
-    environment['AWS_SESSION_TOKEN'] = 'fake_session_token'
+    environment["AWS_ACCESS_KEY_ID"] = "fake_access_key"
+    environment["AWS_SECRET_ACCESS_KEY"] = "fake_secret_key"
+    environment["AWS_SESSION_TOKEN"] = "fake_session_token"

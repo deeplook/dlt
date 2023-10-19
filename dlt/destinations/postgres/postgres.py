@@ -18,9 +18,8 @@ from dlt.destinations.sql_client import SqlClientBase
 from dlt.destinations.type_mapping import TypeMapper
 
 
-HINT_TO_POSTGRES_ATTR: Dict[TColumnHint, str] = {
-    "unique": "UNIQUE"
-}
+HINT_TO_POSTGRES_ATTR: Dict[TColumnHint, str] = {"unique": "UNIQUE"}
+
 
 class PostgresTypeMapper(TypeMapper):
     sct_to_unbound_dbt = {
@@ -40,7 +39,7 @@ class PostgresTypeMapper(TypeMapper):
         "timestamp": "timestamp (%i) with time zone",
         "decimal": "numeric(%i,%i)",
         "time": "time (%i) without time zone",
-        "wei": "numeric(%i,%i)"
+        "wei": "numeric(%i,%i)",
     }
 
     dbt_to_sct = {
@@ -77,9 +76,13 @@ class PostgresTypeMapper(TypeMapper):
 
 
 class PostgresStagingCopyJob(SqlStagingCopyJob):
-
     @classmethod
-    def generate_sql(cls, table_chain: Sequence[TTableSchema], sql_client: SqlClientBase[Any], params: Optional[SqlJobParams] = None) -> List[str]:
+    def generate_sql(
+        cls,
+        table_chain: Sequence[TTableSchema],
+        sql_client: SqlClientBase[Any],
+        params: Optional[SqlJobParams] = None,
+    ) -> List[str]:
         sql: List[str] = []
         for table in table_chain:
             with sql_client.with_staging_dataset(staging=True):
@@ -95,14 +98,10 @@ class PostgresStagingCopyJob(SqlStagingCopyJob):
 
 
 class PostgresClient(InsertValuesJobClient):
-
     capabilities: ClassVar[DestinationCapabilitiesContext] = capabilities()
 
     def __init__(self, schema: Schema, config: PostgresClientConfiguration) -> None:
-        sql_client = Psycopg2SqlClient(
-            config.normalize_dataset_name(schema),
-            config.credentials
-        )
+        sql_client = Psycopg2SqlClient(config.normalize_dataset_name(schema), config.credentials)
         super().__init__(schema, config, sql_client)
         self.config: PostgresClientConfiguration = config
         self.sql_client = sql_client

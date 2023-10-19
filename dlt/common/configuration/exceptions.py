@@ -20,11 +20,13 @@ class ConfigurationValueError(ConfigurationException, ValueError):
 
 class ContainerException(DltException):
     """base exception for all exceptions related to injectable container"""
+
     pass
 
 
 class ConfigProviderException(ConfigurationException):
     """base exceptions for all exceptions raised by config providers"""
+
     pass
 
 
@@ -47,13 +49,14 @@ class ConfigFieldMissingException(KeyError, ConfigurationException):
         for f, field_traces in self.traces.items():
             msg += f'\tfor field "{f}" config providers and keys were tried in following order:\n'
             for tr in field_traces:
-                msg += f'\t\tIn {tr.provider} key {tr.key} was not found.\n'
+                msg += f"\t\tIn {tr.provider} key {tr.key} was not found.\n"
         msg += "Please refer to https://dlthub.com/docs/general-usage/credentials for more information\n"
         return msg
 
 
 class UnmatchedConfigHintResolversException(ConfigurationException):
     """Raised when using `@resolve_type` on a field that doesn't exist in the spec"""
+
     def __init__(self, spec_name: str, field_names: Sequence[str]) -> None:
         self.field_names = field_names
         self.spec_name = spec_name
@@ -69,6 +72,7 @@ class UnmatchedConfigHintResolversException(ConfigurationException):
 
 class FinalConfigFieldException(ConfigurationException):
     """rises when field was annotated as final ie Final[str] and the value is modified by config provider"""
+
     def __init__(self, spec_name: str, field: str) -> None:
         super().__init__(f"Field {field} in spec {spec_name} is final but is being changed by a config provider")
 
@@ -80,7 +84,7 @@ class ConfigValueCannotBeCoercedException(ConfigurationValueError):
         self.field_name = field_name
         self.field_value = field_value
         self.hint = hint
-        super().__init__('Configured value for field %s cannot be coerced into type %s' % (field_name, str(hint)))
+        super().__init__("Configured value for field %s cannot be coerced into type %s" % (field_name, str(hint)))
 
 
 # class ConfigIntegrityException(ConfigurationException):
@@ -126,14 +130,21 @@ class ValueNotSecretException(ConfigurationException):
 
 
 class InvalidNativeValue(ConfigurationException):
-    def __init__(self, spec: Type[Any], native_value_type: Type[Any], embedded_sections: Tuple[str, ...], inner_exception: Exception) -> None:
+    def __init__(
+        self,
+        spec: Type[Any],
+        native_value_type: Type[Any],
+        embedded_sections: Tuple[str, ...],
+        inner_exception: Exception,
+    ) -> None:
         self.spec = spec
         self.native_value_type = native_value_type
         self.embedded_sections = embedded_sections
         self.inner_exception = inner_exception
         inner_msg = f" {self.inner_exception}" if inner_exception is not ValueError else ""
         super().__init__(
-            f"{spec.__name__} cannot parse the configuration value provided. The value is of type {native_value_type.__name__} and comes from the {embedded_sections} section(s).{inner_msg}")
+            f"{spec.__name__} cannot parse the configuration value provided. The value is of type {native_value_type.__name__} and comes from the {embedded_sections} section(s).{inner_msg}"
+        )
 
 
 class ContainerInjectableContextMangled(ContainerException):

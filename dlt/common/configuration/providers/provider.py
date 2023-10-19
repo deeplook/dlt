@@ -5,7 +5,6 @@ from dlt.common.configuration.exceptions import ConfigurationException
 
 
 class ConfigProvider(abc.ABC):
-
     @abc.abstractmethod
     def get_value(self, key: str, hint: Type[Any], pipeline_name: str, *sections: str) -> Tuple[Optional[Any], str]:
         pass

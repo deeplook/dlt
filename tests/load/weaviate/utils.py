@@ -37,9 +37,7 @@ def assert_class(
     # make sure expected columns are vectorized
     for column_name, column in columns.items():
         prop = properties[column_name]
-        assert prop["moduleConfig"][vectorizer_name]["skip"] == (
-            not column.get(VECTORIZE_HINT, False)
-        )
+        assert prop["moduleConfig"][vectorizer_name]["skip"] == (not column.get(VECTORIZE_HINT, False))
         # tokenization
         if TOKENIZATION_HINT in column:
             assert prop["tokenization"] == column[TOKENIZATION_HINT]  # type: ignore[literal-required]
@@ -62,9 +60,7 @@ def assert_class(
 
     # TODO: Remove this once we have a better way comparing the data
     drop_keys = ["_dlt_id", "_dlt_load_id"]
-    objects_without_dlt_keys = [
-        {k: v for k, v in obj.items() if k not in drop_keys} for obj in objects
-    ]
+    objects_without_dlt_keys = [{k: v for k, v in obj.items() if k not in drop_keys} for obj in objects]
 
     # pytest compares content wise but ignores order of elements of dict
     # assert sorted(objects_without_dlt_keys, key=lambda d: d['doc_id']) == sorted(data, key=lambda d: d['doc_id'])

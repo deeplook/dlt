@@ -4,8 +4,21 @@ from typing import Any, Dict
 import pytest
 from dlt.common.configuration import resolve_configuration
 from dlt.common.configuration.exceptions import ConfigFieldMissingException
-from dlt.common.configuration.specs import ConnectionStringCredentials, GcpServiceAccountCredentialsWithoutDefaults, GcpServiceAccountCredentials, GcpOAuthCredentialsWithoutDefaults, GcpOAuthCredentials, AwsCredentials
-from dlt.common.configuration.specs.exceptions import InvalidConnectionString, InvalidGoogleNativeCredentialsType, InvalidGoogleOauth2Json, InvalidGoogleServicesJson, OAuth2ScopesRequired
+from dlt.common.configuration.specs import (
+    ConnectionStringCredentials,
+    GcpServiceAccountCredentialsWithoutDefaults,
+    GcpServiceAccountCredentials,
+    GcpOAuthCredentialsWithoutDefaults,
+    GcpOAuthCredentials,
+    AwsCredentials,
+)
+from dlt.common.configuration.specs.exceptions import (
+    InvalidConnectionString,
+    InvalidGoogleNativeCredentialsType,
+    InvalidGoogleOauth2Json,
+    InvalidGoogleServicesJson,
+    OAuth2ScopesRequired,
+)
 from dlt.common.configuration.specs.run_configuration import RunConfiguration
 
 from tests.utils import preserve_environ
@@ -44,11 +57,14 @@ OAUTH_USER_INFO = """
     }
 """
 
-OAUTH_APP_USER_INFO = """
+OAUTH_APP_USER_INFO = (
+    """
 {
     "installed": %s
 }
-""" % OAUTH_USER_INFO
+"""
+    % OAUTH_USER_INFO
+)
 
 
 def test_connection_string_credentials_native_representation(environment) -> None:
@@ -98,7 +114,9 @@ def test_connection_string_letter_case(environment: Any) -> None:
     assert csc.to_native_representation() == dsn
 
 
-def test_connection_string_resolved_from_native_representation(environment: Any) -> None:
+def test_connection_string_resolved_from_native_representation(
+    environment: Any,
+) -> None:
     destination_dsn = "mysql+pymsql://localhost:5432/dlt_data"
     c = ConnectionStringCredentials()
     c.parse_native_representation(destination_dsn)
@@ -129,7 +147,9 @@ def test_connection_string_resolved_from_native_representation(environment: Any)
     assert c.password == "pwd"
 
 
-def test_connection_string_resolved_from_native_representation_env(environment: Any) -> None:
+def test_connection_string_resolved_from_native_representation_env(
+    environment: Any,
+) -> None:
     environment["CREDENTIALS"] = "mysql+pymsql://USER@/dlt_data"
     c = resolve_configuration(ConnectionStringCredentials())
     assert not c.is_partial()
@@ -175,7 +195,9 @@ def test_gcp_service_credentials_native_representation(environment) -> None:
     assert gcpc_2.default_credentials() is None
 
 
-def test_gcp_service_credentials_resolved_from_native_representation(environment: Any) -> None:
+def test_gcp_service_credentials_resolved_from_native_representation(
+    environment: Any,
+) -> None:
     gcpc = GcpServiceAccountCredentialsWithoutDefaults()
 
     # without PK
@@ -191,7 +213,6 @@ def test_gcp_service_credentials_resolved_from_native_representation(environment
 
 
 def test_gcp_oauth_credentials_native_representation(environment) -> None:
-
     with pytest.raises(InvalidGoogleNativeCredentialsType):
         GcpOAuthCredentials().parse_native_representation(1)
 
@@ -210,7 +231,6 @@ def test_gcp_oauth_credentials_native_representation(environment) -> None:
     assert gcoauth.refresh_token == "refresh_token"
     assert gcoauth.token is None
     assert gcoauth.scopes == ["email", "service"]
-
 
     # get native representation, it will also location
     _repr = gcoauth.to_native_representation()
@@ -231,7 +251,9 @@ def test_gcp_oauth_credentials_native_representation(environment) -> None:
     assert dict(gcpc_3) == dict(gcpc_2)
 
 
-def test_gcp_oauth_credentials_resolved_from_native_representation(environment: Any) -> None:
+def test_gcp_oauth_credentials_resolved_from_native_representation(
+    environment: Any,
+) -> None:
     gcpc = GcpOAuthCredentialsWithoutDefaults()
 
     # without refresh token
@@ -289,16 +311,16 @@ def test_run_configuration_slack_credentials(environment: Any) -> None:
 
 
 def test_aws_credentials_resolved(environment: Dict[str, str]) -> None:
-    environment['CREDENTIALS__AWS_ACCESS_KEY_ID'] = 'fake_access_key'
-    environment['CREDENTIALS__AWS_SECRET_ACCESS_KEY'] = 'fake_secret_key'
-    environment['CREDENTIALS__AWS_SESSION_TOKEN'] = 'fake_session_token'
-    environment['CREDENTIALS__PROFILE_NAME'] = 'fake_profile'
-    environment['CREDENTIALS__REGION_NAME'] = 'eu-central'
+    environment["CREDENTIALS__AWS_ACCESS_KEY_ID"] = "fake_access_key"
+    environment["CREDENTIALS__AWS_SECRET_ACCESS_KEY"] = "fake_secret_key"
+    environment["CREDENTIALS__AWS_SESSION_TOKEN"] = "fake_session_token"
+    environment["CREDENTIALS__PROFILE_NAME"] = "fake_profile"
+    environment["CREDENTIALS__REGION_NAME"] = "eu-central"
 
     config = resolve_configuration(AwsCredentials())
 
-    assert config.aws_access_key_id == 'fake_access_key'
-    assert config.aws_secret_access_key == 'fake_secret_key'
-    assert config.aws_session_token == 'fake_session_token'
-    assert config.profile_name == 'fake_profile'
+    assert config.aws_access_key_id == "fake_access_key"
+    assert config.aws_secret_access_key == "fake_secret_key"
+    assert config.aws_session_token == "fake_session_token"
+    assert config.profile_name == "fake_profile"
     assert config.region_name == "eu-central"

@@ -7,7 +7,6 @@ from dlt.common.storages.configuration import SchemaStorageConfiguration
 
 
 class LiveSchemaStorage(SchemaStorage):
-
     def __init__(self, config: SchemaStorageConfiguration = config.value, makedirs: bool = False) -> None:
         self.live_schemas: Dict[str, Schema] = {}
         super().__init__(config, makedirs)

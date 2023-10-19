@@ -8,19 +8,36 @@ from dlt.common import json, pendulum, Decimal
 from dlt.common.arithmetics import numeric_default_context
 from dlt.common.configuration.exceptions import ConfigFieldMissingException
 from dlt.common.configuration.resolve import resolve_configuration
-from dlt.common.configuration.specs import GcpServiceAccountCredentials, GcpServiceAccountCredentialsWithoutDefaults, GcpOAuthCredentials, GcpOAuthCredentialsWithoutDefaults
+from dlt.common.configuration.specs import (
+    GcpServiceAccountCredentials,
+    GcpServiceAccountCredentialsWithoutDefaults,
+    GcpOAuthCredentials,
+    GcpOAuthCredentialsWithoutDefaults,
+)
 from dlt.common.configuration.specs import gcp_credentials
 from dlt.common.configuration.specs.exceptions import InvalidGoogleNativeCredentialsType
 from dlt.common.storages import FileStorage
 from dlt.common.utils import digest128, uniq_id, custom_environ
 
-from dlt.destinations.bigquery.bigquery import BigQueryClient, BigQueryClientConfiguration
-from dlt.destinations.exceptions import LoadJobNotExistsException, LoadJobTerminalException
+from dlt.destinations.bigquery.bigquery import (
+    BigQueryClient,
+    BigQueryClientConfiguration,
+)
+from dlt.destinations.exceptions import (
+    LoadJobNotExistsException,
+    LoadJobTerminalException,
+)
 
 from tests.utils import TEST_STORAGE_ROOT, delete_test_storage, preserve_environ
 from tests.common.utils import json_case_path as common_json_case_path
 from tests.common.configuration.utils import environment
-from tests.load.utils import expect_load_file, prepare_table, yield_client_with_storage, cm_yield_client_with_storage
+from tests.load.utils import (
+    expect_load_file,
+    prepare_table,
+    yield_client_with_storage,
+    cm_yield_client_with_storage,
+)
+
 
 @pytest.fixture(scope="module")
 def client() -> Iterator[BigQueryClient]:
@@ -42,7 +59,7 @@ def test_service_credentials_with_default(environment: Any) -> None:
     # resolve will miss values and try to find default credentials on the machine
     with pytest.raises(ConfigFieldMissingException) as py_ex:
         resolve_configuration(gcpc)
-    assert py_ex.value.fields == ['project_id', 'private_key', 'client_email']
+    assert py_ex.value.fields == ["project_id", "private_key", "client_email"]
 
     # prepare real service.json
     services_str, dest_path = prepare_service_json()
@@ -106,7 +123,12 @@ def test_oauth_credentials_with_default(environment: Any) -> None:
     # resolve will miss values and try to find default credentials on the machine
     with pytest.raises(ConfigFieldMissingException) as py_ex:
         resolve_configuration(gcoauth)
-    assert py_ex.value.fields == ['client_id', 'client_secret', 'refresh_token', 'project_id']
+    assert py_ex.value.fields == [
+        "client_id",
+        "client_secret",
+        "refresh_token",
+        "project_id",
+    ]
 
     # prepare real service.json
     oauth_str, _ = prepare_oauth_json()
@@ -180,7 +202,10 @@ def test_get_oauth_access_token() -> None:
 
 
 def test_bigquery_configuration() -> None:
-    config = resolve_configuration(BigQueryClientConfiguration(dataset_name="dataset"), sections=("destination", "bigquery"))
+    config = resolve_configuration(
+        BigQueryClientConfiguration(dataset_name="dataset"),
+        sections=("destination", "bigquery"),
+    )
     assert config.location == "US"
     assert config.get_location() == "US"
     assert config.http_timeout == 15.0
@@ -190,16 +215,25 @@ def test_bigquery_configuration() -> None:
 
     # credentials location is deprecated
     os.environ["CREDENTIALS__LOCATION"] = "EU"
-    config = resolve_configuration(BigQueryClientConfiguration(dataset_name="dataset"), sections=("destination", "bigquery"))
+    config = resolve_configuration(
+        BigQueryClientConfiguration(dataset_name="dataset"),
+        sections=("destination", "bigquery"),
+    )
     assert config.location == "US"
     assert config.credentials.location == "EU"
     # but if it is set, we propagate it to the config
     assert config.get_location() == "EU"
     os.environ["LOCATION"] = "ATLANTIS"
-    config = resolve_configuration(BigQueryClientConfiguration(dataset_name="dataset"), sections=("destination", "bigquery"))
+    config = resolve_configuration(
+        BigQueryClientConfiguration(dataset_name="dataset"),
+        sections=("destination", "bigquery"),
+    )
     assert config.get_location() == "ATLANTIS"
     os.environ["DESTINATION__FILE_UPLOAD_TIMEOUT"] = "20000"
-    config = resolve_configuration(BigQueryClientConfiguration(dataset_name="dataset"), sections=("destination", "bigquery"))
+    config = resolve_configuration(
+        BigQueryClientConfiguration(dataset_name="dataset"),
+        sections=("destination", "bigquery"),
+    )
     assert config.file_upload_timeout == 20000.0
 
     # default fingerprint is empty
@@ -230,30 +264,38 @@ def test_bigquery_job_errors(client: BigQueryClient, file_storage: FileStorage) 
     load_json = {
         "_dlt_id": uniq_id(),
         "_dlt_root_id": uniq_id(),
-        "sender_id":'90238094809sajlkjxoiewjhduuiuehd',
-        "timestamp": str(pendulum.now())
+        "sender_id": "90238094809sajlkjxoiewjhduuiuehd",
+        "timestamp": str(pendulum.now()),
     }
     job = expect_load_file(client, file_storage, json.dumps(load_json), user_table_name)
 
     # start a job from the same file. it should fallback to retrieve job silently
-    r_job = client.start_file_load(client.schema.get_table(user_table_name), file_storage.make_full_path(job.file_name()), uniq_id())
+    r_job = client.start_file_load(
+        client.schema.get_table(user_table_name),
+        file_storage.make_full_path(job.file_name()),
+        uniq_id(),
+    )
     assert r_job.state() == "completed"
 
 
-@pytest.mark.parametrize('location', ["US", "EU"])
+@pytest.mark.parametrize("location", ["US", "EU"])
 def test_bigquery_location(location: str, file_storage: FileStorage) -> None:
     with cm_yield_client_with_storage("bigquery", default_config_values={"location": location}) as client:
         user_table_name = prepare_table(client)
         load_json = {
             "_dlt_id": uniq_id(),
             "_dlt_root_id": uniq_id(),
-            "sender_id": '90238094809sajlkjxoiewjhduuiuehd',
-            "timestamp": str(pendulum.now())
+            "sender_id": "90238094809sajlkjxoiewjhduuiuehd",
+            "timestamp": str(pendulum.now()),
         }
         job = expect_load_file(client, file_storage, json.dumps(load_json), user_table_name)
 
         # start a job from the same file. it should fallback to retrieve job silently
-        client.start_file_load(client.schema.get_table(user_table_name), file_storage.make_full_path(job.file_name()), uniq_id())
+        client.start_file_load(
+            client.schema.get_table(user_table_name),
+            file_storage.make_full_path(job.file_name()),
+            uniq_id(),
+        )
         canonical_name = client.sql_client.make_qualified_table_name(user_table_name, escape=False)
         t = client.sql_client.native_connection.get_table(canonical_name)
         assert t.location == location
@@ -265,8 +307,8 @@ def test_loading_errors(client: BigQueryClient, file_storage: FileStorage) -> No
     load_json: Dict[str, Any] = {
         "_dlt_id": uniq_id(),
         "_dlt_root_id": uniq_id(),
-        "sender_id":'90238094809sajlkjxoiewjhduuiuehd',
-        "timestamp": str(pendulum.now())
+        "sender_id": "90238094809sajlkjxoiewjhduuiuehd",
+        "timestamp": str(pendulum.now()),
     }
     insert_json = copy(load_json)
     insert_json["_unk_"] = None
@@ -288,7 +330,7 @@ def test_loading_errors(client: BigQueryClient, file_storage: FileStorage) -> No
     # numeric overflow on bigint
     insert_json = copy(load_json)
     # 2**64//2 - 1 is a maximum bigint value
-    insert_json["metadata__rasa_x_id"] = 2**64//2
+    insert_json["metadata__rasa_x_id"] = 2**64 // 2
     job = expect_load_file(client, file_storage, json.dumps(insert_json), user_table_name, status="failed")
     assert "Could not convert value" in job.exception()
 
@@ -296,11 +338,17 @@ def test_loading_errors(client: BigQueryClient, file_storage: FileStorage) -> No
     insert_json = copy(load_json)
     # default decimal is (38, 9) (128 bit), use local context to generate decimals with 38 precision
     with numeric_default_context():
-        below_limit = Decimal(10**29) - Decimal('0.001')
+        below_limit = Decimal(10**29) - Decimal("0.001")
         above_limit = Decimal(10**29)
     # this will pass
     insert_json["parse_data__intent__id"] = below_limit
-    job = expect_load_file(client, file_storage, json.dumps(insert_json), user_table_name, status="completed")
+    job = expect_load_file(
+        client,
+        file_storage,
+        json.dumps(insert_json),
+        user_table_name,
+        status="completed",
+    )
     # this will fail
     insert_json["parse_data__intent__id"] = above_limit
     job = expect_load_file(client, file_storage, json.dumps(insert_json), user_table_name, status="failed")
@@ -316,7 +364,11 @@ def test_loading_errors(client: BigQueryClient, file_storage: FileStorage) -> No
 def prepare_oauth_json() -> Tuple[str, str]:
     # prepare real service.json
     storage = FileStorage("_secrets", makedirs=True)
-    with open(common_json_case_path("oauth_client_secret_929384042504"), mode="r", encoding="utf-8") as f:
+    with open(
+        common_json_case_path("oauth_client_secret_929384042504"),
+        mode="r",
+        encoding="utf-8",
+    ) as f:
         oauth_str = f.read()
     dest_path = storage.save("oauth_client_secret_929384042504.json", oauth_str)
     return oauth_str, dest_path

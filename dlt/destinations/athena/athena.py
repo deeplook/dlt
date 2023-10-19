@@ -1,4 +1,17 @@
-from typing import Optional, ClassVar, Iterator, Any, AnyStr, Sequence, Tuple, List, Dict, Callable, Iterable, Type
+from typing import (
+    Optional,
+    ClassVar,
+    Iterator,
+    Any,
+    AnyStr,
+    Sequence,
+    Tuple,
+    List,
+    Dict,
+    Callable,
+    Iterable,
+    Type,
+)
 from copy import deepcopy
 import re
 
@@ -9,26 +22,56 @@ from datetime import datetime  # noqa: I251
 import pyathena
 from pyathena import connect
 from pyathena.connection import Connection
-from pyathena.error import OperationalError, DatabaseError, ProgrammingError, IntegrityError, Error
-from pyathena.formatter import DefaultParameterFormatter, _DEFAULT_FORMATTERS, Formatter, _format_date
+from pyathena.error import (
+    OperationalError,
+    DatabaseError,
+    ProgrammingError,
+    IntegrityError,
+    Error,
+)
+from pyathena.formatter import (
+    DefaultParameterFormatter,
+    _DEFAULT_FORMATTERS,
+    Formatter,
+    _format_date,
+)
 
 from dlt.common import logger
 from dlt.common.utils import without_none
 from dlt.common.data_types import TDataType
 from dlt.common.schema import TColumnSchema, Schema, TSchemaTables, TTableSchema
-from dlt.common.schema.typing import TTableSchema, TColumnType, TWriteDisposition, TTableFormat
+from dlt.common.schema.typing import (
+    TTableSchema,
+    TColumnType,
+    TWriteDisposition,
+    TTableFormat,
+)
 from dlt.common.schema.utils import table_schema_has_type, get_table_format
 from dlt.common.destination import DestinationCapabilitiesContext
 from dlt.common.destination.reference import LoadJob, FollowupJob
-from dlt.common.destination.reference import TLoadJobState, NewLoadJob, SupportsStagingDestination
+from dlt.common.destination.reference import (
+    TLoadJobState,
+    NewLoadJob,
+    SupportsStagingDestination,
+)
 from dlt.common.storages import FileStorage
 from dlt.common.data_writers.escape import escape_bigquery_identifier
 from dlt.destinations.sql_jobs import SqlStagingCopyJob
 
 from dlt.destinations.typing import DBApi, DBTransaction
-from dlt.destinations.exceptions import DatabaseTerminalException, DatabaseTransientException, DatabaseUndefinedRelation, LoadJobTerminalException
+from dlt.destinations.exceptions import (
+    DatabaseTerminalException,
+    DatabaseTransientException,
+    DatabaseUndefinedRelation,
+    LoadJobTerminalException,
+)
 from dlt.destinations.athena import capabilities
-from dlt.destinations.sql_client import SqlClientBase, DBApiCursorImpl, raise_database_error, raise_open_connection_error
+from dlt.destinations.sql_client import (
+    SqlClientBase,
+    DBApiCursorImpl,
+    raise_database_error,
+    raise_open_connection_error,
+)
 from dlt.destinations.typing import DBApiCursor
 from dlt.destinations.job_client_impl import SqlJobClientWithStaging
 from dlt.destinations.athena.configuration import AthenaClientConfiguration
@@ -46,13 +89,10 @@ class AthenaTypeMapper(TypeMapper):
         "timestamp": "timestamp",
         "bigint": "bigint",
         "binary": "binary",
-        "time": "string"
+        "time": "string",
     }
 
-    sct_to_dbt = {
-        "decimal": "decimal(%i,%i)",
-        "wei": "decimal(%i,%i)"
-    }
+    sct_to_dbt = {"decimal": "decimal(%i,%i)", "wei": "decimal(%i,%i)"}
 
     dbt_to_sct = {
         "varchar": "text",
@@ -101,14 +141,12 @@ def _format_pendulum_datetime(formatter: Formatter, escaper: Callable[[str], str
 
 
 class DLTAthenaFormatter(DefaultParameterFormatter):
-
     _INSTANCE: ClassVar["DLTAthenaFormatter"] = None
 
     def __new__(cls: Type["DLTAthenaFormatter"]) -> "DLTAthenaFormatter":
         if cls._INSTANCE:
             return cls._INSTANCE
         return super().__new__(cls)
-
 
     def __init__(self) -> None:
         if DLTAthenaFormatter._INSTANCE:
@@ -118,9 +156,7 @@ class DLTAthenaFormatter(DefaultParameterFormatter):
         formatters[datetime] = _format_pendulum_datetime
         formatters[Date] = _format_date
 
-        super(DefaultParameterFormatter, self).__init__(
-            mappings=formatters, default=None
-        )
+        super(DefaultParameterFormatter, self).__init__(mappings=formatters, default=None)
         DLTAthenaFormatter._INSTANCE = self
 
 
@@ -138,13 +174,14 @@ class DoNothingJob(LoadJob):
         # this part of code should be never reached
         raise NotImplementedError()
 
+
 class DoNothingFollowupJob(DoNothingJob, FollowupJob):
     """The second most lazy class of dlt"""
+
     pass
 
 
 class AthenaSQLClient(SqlClientBase[Connection]):
-
     capabilities: ClassVar[DestinationCapabilitiesContext] = capabilities()
     dbapi: ClassVar[DBApi] = pyathena
 
@@ -161,7 +198,8 @@ class AthenaSQLClient(SqlClientBase[Connection]):
             schema_name=self.dataset_name,
             s3_staging_dir=self.config.query_result_bucket,
             work_group=self.config.athena_work_group,
-            **native_credentials)
+            **native_credentials,
+        )
         return self._conn
 
     def close_connection(self) -> None:
@@ -246,11 +284,11 @@ class AthenaSQLClient(SqlClientBase[Connection]):
     @staticmethod
     def _convert_to_old_pyformat(new_style_string: str, args: Tuple[Any, ...]) -> Tuple[str, Dict[str, Any]]:
         # create a list of keys
-        keys = ["arg"+str(i) for i, _ in enumerate(args)]
+        keys = ["arg" + str(i) for i, _ in enumerate(args)]
         # create an old style string and replace placeholders
         old_style_string, count = re.subn(r"%s", lambda _: "%(" + keys.pop(0) + ")s", new_style_string)
         # create a dictionary mapping keys to args
-        mapping = dict(zip(["arg"+str(i) for i, _ in enumerate(args)], args))
+        mapping = dict(zip(["arg" + str(i) for i, _ in enumerate(args)], args))
         # raise if there is a mismatch between args and string
         if count != len(args):
             raise DatabaseTransientException(OperationalError())
@@ -285,7 +323,6 @@ class AthenaSQLClient(SqlClientBase[Connection]):
 
 
 class AthenaClient(SqlJobClientWithStaging, SupportsStagingDestination):
-
     capabilities: ClassVar[DestinationCapabilitiesContext] = capabilities()
 
     def __init__(self, schema: Schema, config: AthenaClientConfiguration) -> None:
@@ -294,10 +331,7 @@ class AthenaClient(SqlJobClientWithStaging, SupportsStagingDestination):
         # we actually that {table_name} is first, no {schema_name} is allowed
         self.table_prefix_layout = path_utils.get_table_prefix_layout(config.staging_config.layout, [])
 
-        sql_client = AthenaSQLClient(
-            config.normalize_dataset_name(schema),
-            config
-        )
+        sql_client = AthenaSQLClient(config.normalize_dataset_name(schema), config)
         super().__init__(schema, config, sql_client)
         self.sql_client: AthenaSQLClient = sql_client  # type: ignore
         self.config: AthenaClientConfiguration = config
@@ -314,8 +348,12 @@ class AthenaClient(SqlJobClientWithStaging, SupportsStagingDestination):
     def _get_column_def_sql(self, c: TColumnSchema, table_format: TTableFormat = None) -> str:
         return f"{self.sql_client.escape_ddl_identifier(c['name'])} {self.type_mapper.to_db_type(c, table_format)}"
 
-    def _get_table_update_sql(self, table_name: str, new_columns: Sequence[TColumnSchema], generate_alter: bool) -> List[str]:
-
+    def _get_table_update_sql(
+        self,
+        table_name: str,
+        new_columns: Sequence[TColumnSchema],
+        generate_alter: bool,
+    ) -> List[str]:
         bucket = self.config.staging_config.bucket_url
         dataset = self.sql_client.dataset_name
 
@@ -334,15 +372,19 @@ class AthenaClient(SqlJobClientWithStaging, SupportsStagingDestination):
         # use qualified table names
         qualified_table_name = self.sql_client.make_qualified_ddl_table_name(table_name)
         if is_iceberg and not generate_alter:
-            sql.append(f"""CREATE TABLE {qualified_table_name}
+            sql.append(
+                f"""CREATE TABLE {qualified_table_name}
                     ({columns})
                     LOCATION '{location}'
-                    TBLPROPERTIES ('table_type'='ICEBERG', 'format'='parquet');""")
+                    TBLPROPERTIES ('table_type'='ICEBERG', 'format'='parquet');"""
+            )
         elif not generate_alter:
-            sql.append(f"""CREATE EXTERNAL TABLE {qualified_table_name}
+            sql.append(
+                f"""CREATE EXTERNAL TABLE {qualified_table_name}
                     ({columns})
                     STORED AS PARQUET
-                    LOCATION '{location}';""")
+                    LOCATION '{location}';"""
+            )
         # alter table to add new columns at the end
         else:
             sql.append(f"""ALTER TABLE {qualified_table_name} ADD COLUMNS ({columns});""")
@@ -354,7 +396,7 @@ class AthenaClient(SqlJobClientWithStaging, SupportsStagingDestination):
         if table_schema_has_type(table, "time"):
             raise LoadJobTerminalException(
                 file_path,
-                "Athena cannot load TIME columns from parquet tables. Please convert `datetime.time` objects in your data to `str` or `datetime.datetime`."
+                "Athena cannot load TIME columns from parquet tables. Please convert `datetime.time` objects in your data to `str` or `datetime.datetime`.",
             )
         job = super().start_file_load(table, file_path, load_id)
         if not job:
@@ -399,7 +441,7 @@ class AthenaClient(SqlJobClientWithStaging, SupportsStagingDestination):
     def get_load_table(self, table_name: str, staging: bool = False) -> TTableSchema:
         table = super().get_load_table(table_name, staging)
         if self.config.force_iceberg:
-            table["table_format"] ="iceberg"
+            table["table_format"] = "iceberg"
         if staging and table.get("table_format", None) == "iceberg":
             table.pop("table_format")
         return table

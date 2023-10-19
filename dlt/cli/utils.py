@@ -32,7 +32,10 @@ def parse_init_script(command: str, script_source: str, init_script_name: str) -
     visitor = PipelineScriptVisitor(script_source)
     visitor.visit_passes(tree)
     if len(visitor.mod_aliases) == 0:
-        raise CliCommandException(command, f"The pipeline script {init_script_name} does not import dlt and does not seem to run any pipelines")
+        raise CliCommandException(
+            command,
+            f"The pipeline script {init_script_name} does not import dlt and does not seem to run any pipelines",
+        )
 
     return visitor
 
@@ -46,7 +49,7 @@ def ensure_git_command(command: str) -> None:
         raise CliCommandException(
             command,
             "'git' command is not available. Install and setup git with the following the guide %s" % "https://docs.github.com/en/get-started/quickstart/set-up-git",
-            imp_ex
+            imp_ex,
         ) from imp_ex
 
 

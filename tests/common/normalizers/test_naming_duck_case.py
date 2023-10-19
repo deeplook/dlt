@@ -1,7 +1,9 @@
 import pytest
 
 from dlt.common.normalizers.naming.duck_case import NamingConvention
-from dlt.common.normalizers.naming.snake_case import NamingConvention as SnakeNamingConvention
+from dlt.common.normalizers.naming.snake_case import (
+    NamingConvention as SnakeNamingConvention,
+)
 
 
 @pytest.fixture
@@ -21,4 +23,4 @@ def test_normalize_identifier(naming_unlimited: NamingConvention) -> None:
 
 
 def test_alphabet_reduction(naming_unlimited: NamingConvention) -> None:
-    assert naming_unlimited.normalize_identifier("A\nB\"C\rD") == "A_B_C_D"
+    assert naming_unlimited.normalize_identifier('A\nB"C\rD') == "A_B_C_D"

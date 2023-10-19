@@ -19,7 +19,7 @@ from .provider import ConfigProvider, ConfigProviderException, get_key_name
 
 CONFIG_TOML = "config.toml"
 SECRETS_TOML = "secrets.toml"
-SECRETS_TOML_KEY = 'dlt_secrets_toml'
+SECRETS_TOML_KEY = "dlt_secrets_toml"
 
 
 class BaseTomlProvider(ConfigProvider):
@@ -33,7 +33,7 @@ class BaseTomlProvider(ConfigProvider):
     def get_value(self, key: str, hint: Type[Any], pipeline_name: str, *sections: str) -> Tuple[Optional[Any], str]:
         full_path = sections + (key,)
         if pipeline_name:
-            full_path = (pipeline_name, ) + full_path
+            full_path = (pipeline_name,) + full_path
         full_key = self.get_key_name(key, pipeline_name, *sections)
         node: Union[TOMLContainer, TOMLItem] = self._toml
         try:
@@ -48,7 +48,7 @@ class BaseTomlProvider(ConfigProvider):
 
     def set_value(self, key: str, value: Any, pipeline_name: str, *sections: str) -> None:
         if pipeline_name:
-            sections = (pipeline_name, ) + sections
+            sections = (pipeline_name,) + sections
 
         if isinstance(value, TOMLContainer):
             if key is None:
@@ -85,7 +85,6 @@ class BaseTomlProvider(ConfigProvider):
 
 
 class StringTomlProvider(BaseTomlProvider):
-
     def __init__(self, toml_string: str) -> None:
         super().__init__(StringTomlProvider.loads(toml_string))
 
@@ -146,7 +145,6 @@ class VaultTomlProvider(BaseTomlProvider):
 
         value, _ = super().get_value(key, hint, pipeline_name, *sections)
         if value is None:
-
             # only secrets hints are handled
             if self.only_secrets and not is_secret_hint(hint) and hint is not AnyType:
                 return None, full_key
@@ -155,7 +153,6 @@ class VaultTomlProvider(BaseTomlProvider):
                 # loads dlt_secrets_toml for particular pipeline
                 lookup_fk = self.get_key_name(SECRETS_TOML_KEY, pipeline_name)
                 self._update_from_vault(lookup_fk, "", AnyType, pipeline_name, ())
-
 
             # generate auxiliary paths to get from vault
             for known_section in [known_sections.SOURCES, known_sections.DESTINATION]:
@@ -180,7 +177,7 @@ class VaultTomlProvider(BaseTomlProvider):
                 # first query the shortest paths so the longer paths can override it
                 _lookup_paths(None, known_section)  # check sources and sources.<source_name>
                 if pipeline_name:
-                    _lookup_paths(pipeline_name, known_section) # check <pipeline_name>.sources and <pipeline_name>.sources.<source_name>
+                    _lookup_paths(pipeline_name, known_section)  # check <pipeline_name>.sources and <pipeline_name>.sources.<source_name>
 
         value, _ = super().get_value(key, hint, pipeline_name, *sections)
         # skip checking the exact path if we check only toml fragments
@@ -203,7 +200,14 @@ class VaultTomlProvider(BaseTomlProvider):
     def _look_vault(self, full_key: str, hint: type) -> str:
         pass
 
-    def _update_from_vault(self, full_key: str, key: str, hint: type, pipeline_name: str, sections: Tuple[str, ...]) -> None:
+    def _update_from_vault(
+        self,
+        full_key: str,
+        key: str,
+        hint: type,
+        pipeline_name: str,
+        sections: Tuple[str, ...],
+    ) -> None:
         if full_key in self._vault_lookups:
             return
         # print(f"tries '{key}' {pipeline_name} | {sections} at '{full_key}'")
@@ -215,6 +219,7 @@ class VaultTomlProvider(BaseTomlProvider):
     @property
     def is_empty(self) -> bool:
         return False
+
 
 class TomlFileProvider(BaseTomlProvider):
     def __init__(self, file_name: str, project_dir: str = None, add_global_config: bool = False) -> None:
@@ -269,7 +274,6 @@ class TomlFileProvider(BaseTomlProvider):
 
 
 class ConfigTomlProvider(TomlFileProvider):
-
     def __init__(self, project_dir: str = None, add_global_config: bool = False) -> None:
         super().__init__(CONFIG_TOML, project_dir=project_dir, add_global_config=add_global_config)
 
@@ -287,7 +291,6 @@ class ConfigTomlProvider(TomlFileProvider):
 
 
 class SecretsTomlProvider(TomlFileProvider):
-
     def __init__(self, project_dir: str = None, add_global_config: bool = False) -> None:
         super().__init__(SECRETS_TOML, project_dir=project_dir, add_global_config=add_global_config)
 

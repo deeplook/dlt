@@ -24,12 +24,25 @@ class DataItemStorage(ABC):
             self.buffered_writers[writer_id] = writer
         return writer
 
-    def write_data_item(self, load_id: str, schema_name: str, table_name: str, item: TDataItems, columns: TTableSchemaColumns) -> None:
+    def write_data_item(
+        self,
+        load_id: str,
+        schema_name: str,
+        table_name: str,
+        item: TDataItems,
+        columns: TTableSchemaColumns,
+    ) -> None:
         writer = self.get_writer(load_id, schema_name, table_name)
         # write item(s)
         writer.write_data_item(item, columns)
 
-    def write_empty_file(self, load_id: str, schema_name: str, table_name: str, columns: TTableSchemaColumns) -> None:
+    def write_empty_file(
+        self,
+        load_id: str,
+        schema_name: str,
+        table_name: str,
+        columns: TTableSchemaColumns,
+    ) -> None:
         writer = self.get_writer(load_id, schema_name, table_name)
         writer.write_empty_file(columns)
 

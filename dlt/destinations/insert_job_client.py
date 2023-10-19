@@ -90,7 +90,6 @@ class InsertValuesLoadJob(LoadJob, FollowupJob):
 
 
 class InsertValuesJobClient(SqlJobClientWithStaging):
-
     def restore_file_load(self, file_path: str) -> LoadJob:
         """Returns a completed SqlLoadJob or InsertValuesJob
 

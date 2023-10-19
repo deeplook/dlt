@@ -1,13 +1,34 @@
 import contextlib
-from typing import Callable, Sequence, Iterable, Optional, Any, List, Dict, Tuple, Union, TypedDict
+from typing import (
+    Callable,
+    Sequence,
+    Iterable,
+    Optional,
+    Any,
+    List,
+    Dict,
+    Tuple,
+    Union,
+    TypedDict,
+)
 from itertools import chain
 
 from dlt.common.jsonpath import resolve_paths, TAnyJsonPath, compile_paths
 from dlt.common.exceptions import TerminalException
-from dlt.common.schema.utils import group_tables_by_resource, compile_simple_regexes, compile_simple_regex
+from dlt.common.schema.utils import (
+    group_tables_by_resource,
+    compile_simple_regexes,
+    compile_simple_regex,
+)
 from dlt.common.schema.typing import TSimpleRegex
 from dlt.common.typing import REPattern
-from dlt.common.pipeline import TSourceState, reset_resource_state, _sources_state, _delete_source_state_keys, _get_matching_resources
+from dlt.common.pipeline import (
+    TSourceState,
+    reset_resource_state,
+    _sources_state,
+    _delete_source_state_keys,
+    _get_matching_resources,
+)
 from dlt.common.destination.reference import WithStagingDataset
 
 from dlt.destinations.exceptions import DatabaseUndefinedRelation
@@ -31,6 +52,7 @@ def retry_load(retry_on_pipeline_steps: Sequence[TPipelineStep] = ("load",)) -> 
         retry_on_pipeline_steps (Tuple[TPipelineStep, ...], optional): which pipeline steps are allowed to be repeated. Default: "load"
 
     """
+
     def _retry_load(ex: BaseException) -> bool:
         # do not retry in normalize or extract stages
         if isinstance(ex, PipelineStepFailed) and ex.step not in retry_on_pipeline_steps:
@@ -80,7 +102,7 @@ class DropCommand:
         resources = set(resources)
         resource_names = []
         if drop_all:
-            self.resource_pattern = compile_simple_regex(TSimpleRegex('re:.*'))  # Match everything
+            self.resource_pattern = compile_simple_regex(TSimpleRegex("re:.*"))  # Match everything
         elif resources:
             self.resource_pattern = compile_simple_regexes(TSimpleRegex(r) for r in resources)
         else:
@@ -102,25 +124,28 @@ class DropCommand:
 
         self.drop_all = drop_all
         self.info: _DropInfo = dict(
-            tables=[t['name'] for t in self.tables_to_drop], resource_states=[], state_paths=[],
+            tables=[t["name"] for t in self.tables_to_drop],
+            resource_states=[],
+            state_paths=[],
             resource_names=resource_names,
-            schema_name=self.schema.name, dataset_name=self.pipeline.dataset_name,
+            schema_name=self.schema.name,
+            dataset_name=self.pipeline.dataset_name,
             drop_all=drop_all,
             resource_pattern=self.resource_pattern,
-            warnings=[]
+            warnings=[],
         )
         if self.resource_pattern and not resource_tables:
-            self.info['warnings'].append(
+            self.info["warnings"].append(
                 f"Specified resource(s) {str(resources)} did not select any table(s) in schema {self.schema.name}. Possible resources are: {list(group_tables_by_resource(data_tables).keys())}"
             )
         self._new_state = self._create_modified_state()
 
     @property
     def is_empty(self) -> bool:
-        return len(self.info['tables']) == 0 and len(self.info["state_paths"]) == 0 and len(self.info["resource_states"]) == 0
+        return len(self.info["tables"]) == 0 and len(self.info["state_paths"]) == 0 and len(self.info["resource_states"]) == 0
 
     def _drop_destination_tables(self) -> None:
-        table_names = [tbl['name'] for tbl in self.tables_to_drop]
+        table_names = [tbl["name"] for tbl in self.tables_to_drop]
         with self.pipeline._sql_job_client(self.schema) as client:
             client.drop_tables(*table_names)
             # also delete staging but ignore if staging does not exist
@@ -131,7 +156,7 @@ class DropCommand:
 
     def _delete_pipeline_tables(self) -> None:
         for tbl in self.tables_to_drop:
-            del self.schema_tables[tbl['name']]
+            del self.schema_tables[tbl["name"]]
         self.schema.bump_version()
 
     def _list_state_paths(self, source_state: Dict[str, Any]) -> List[str]:
@@ -146,14 +171,14 @@ class DropCommand:
             # drop table states
             if self.drop_state and self.resource_pattern:
                 for key in _get_matching_resources(self.resource_pattern, source_state):
-                    self.info['resource_states'].append(key)
+                    self.info["resource_states"].append(key)
                     reset_resource_state(key, source_state)
             # drop additional state paths
             resolved_paths = resolve_paths(self.state_paths_to_drop, source_state)
             if self.state_paths_to_drop and not resolved_paths:
-                self.info['warnings'].append(f"State paths {self.state_paths_to_drop} did not select any paths in source {source_name}")
+                self.info["warnings"].append(f"State paths {self.state_paths_to_drop} did not select any paths in source {source_name}")
             _delete_source_state_keys(resolved_paths, source_state)
-            self.info['state_paths'].extend(f"{source_name}.{p}" for p in resolved_paths)
+            self.info["state_paths"].extend(f"{source_name}.{p}" for p in resolved_paths)
         return state  # type: ignore[return-value]
 
     def _drop_state_keys(self) -> None:
@@ -195,6 +220,6 @@ def drop(
     schema_name: str = None,
     state_paths: TAnyJsonPath = (),
     drop_all: bool = False,
-    state_only: bool = False
+    state_only: bool = False,
 ) -> None:
     return DropCommand(pipeline, resources, schema_name, state_paths, drop_all, state_only)()

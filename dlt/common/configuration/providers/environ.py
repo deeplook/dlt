@@ -8,8 +8,8 @@ from .provider import ConfigProvider, get_key_name
 
 SECRET_STORAGE_PATH: str = "/run/secrets/%s"
 
-class EnvironProvider(ConfigProvider):
 
+class EnvironProvider(ConfigProvider):
     @staticmethod
     def get_key_name(key: str, *sections: str) -> str:
         return get_key_name(key, "__", *sections).upper()

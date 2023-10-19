@@ -1,4 +1,14 @@
-from typing import Any, Callable, ClassVar, List, Literal, Optional, Tuple, Set, get_args
+from typing import (
+    Any,
+    Callable,
+    ClassVar,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Set,
+    get_args,
+)
 
 from dlt.common.configuration.utils import serialize_value
 from dlt.common.configuration import configspec
@@ -17,7 +27,12 @@ from dlt.common.wei import EVM_DECIMAL_PRECISION
 TLoaderFileFormat = Literal["jsonl", "puae-jsonl", "insert_values", "sql", "parquet", "reference", "arrow"]
 ALL_SUPPORTED_FILE_FORMATS: Set[TLoaderFileFormat] = set(get_args(TLoaderFileFormat))
 # file formats used internally by dlt
-INTERNAL_LOADER_FILE_FORMATS: Set[TLoaderFileFormat] = {"puae-jsonl", "sql", "reference", "arrow"}
+INTERNAL_LOADER_FILE_FORMATS: Set[TLoaderFileFormat] = {
+    "puae-jsonl",
+    "sql",
+    "reference",
+    "arrow",
+}
 # file formats that may be chosen by the user
 EXTERNAL_LOADER_FILE_FORMATS: Set[TLoaderFileFormat] = set(get_args(TLoaderFileFormat)) - INTERNAL_LOADER_FILE_FORMATS
 
@@ -25,6 +40,7 @@ EXTERNAL_LOADER_FILE_FORMATS: Set[TLoaderFileFormat] = set(get_args(TLoaderFileF
 @configspec
 class DestinationCapabilitiesContext(ContainerInjectableContext):
     """Injectable destination capabilities required for many Pipeline stages ie. normalize"""
+
     preferred_loader_file_format: TLoaderFileFormat
     supported_loader_file_formats: List[TLoaderFileFormat]
     preferred_staging_file_format: Optional[TLoaderFileFormat]
@@ -52,7 +68,9 @@ class DestinationCapabilitiesContext(ContainerInjectableContext):
     can_create_default: ClassVar[bool] = False
 
     @staticmethod
-    def generic_capabilities(preferred_loader_file_format: TLoaderFileFormat = None) -> "DestinationCapabilitiesContext":
+    def generic_capabilities(
+        preferred_loader_file_format: TLoaderFileFormat = None,
+    ) -> "DestinationCapabilitiesContext":
         caps = DestinationCapabilitiesContext()
         caps.preferred_loader_file_format = preferred_loader_file_format
         caps.supported_loader_file_formats = ["jsonl", "insert_values", "parquet"]
